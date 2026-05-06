@@ -90,8 +90,10 @@ src/
 - [x] CI/CD pipeline
 - [x] Integration tests with MSW
 - [x] E2E tests with Playwright
+- [x] Teams schema
 - [ ] Teams CRUD
 - [ ] Teams test suite
+- [ ] Mission Records schema
 - [ ] Mission records CRUD
 - [ ] Mission test suite
 - [ ] GitHub Pages deployment
