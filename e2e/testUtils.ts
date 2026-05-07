@@ -1,6 +1,7 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { rankAbbreviations } from "../src/lib/rankAbbreviations"
-import type { Personnel } from "../src/lib/types"
+import { e2eTestTeams, TEST_PERSONNEL_NAMES, TEST_TEAM_DESIGNATIONS } from "./mockData";
+import { Personnel, Team } from "./interface";
 
 export function extractName(person: Record<string, unknown>){
     const prefix = person.prefix ? `${person.prefix} ` : '';
@@ -12,7 +13,7 @@ export function extractName(person: Record<string, unknown>){
     }
 }
 
-export async function seedTestPersonnel(supabase: SupabaseClient, persons: any[]) {
+export async function seedTestPersonnel(supabase: SupabaseClient, persons: Personnel[]) {
     // clean up previous runs
     const TestPersonnel = await fetchTestPersonnel(supabase);
     await deleteTestPersonnel(supabase, TestPersonnel);
@@ -32,7 +33,7 @@ export async function fetchTestPersonnel(supabase: SupabaseClient) {
     const { data, error } = await supabase
         .from('personnel')
         .select()
-        .in('middle_name', ['Test'])
+        .in('suffix', TEST_PERSONNEL_NAMES)
         .order('last_name', { ascending: true });
 
     if(error) throw new Error(`Failed to fetch personnel: ${error.message}`);
@@ -40,7 +41,7 @@ export async function fetchTestPersonnel(supabase: SupabaseClient) {
     return data;
 }
 
-export async function deleteTestPersonnel(supabase: SupabaseClient, persons: any[]) {
+export async function deleteTestPersonnel(supabase: SupabaseClient, persons: Personnel[]) {
     if(persons.length === 0) return;
 
     await Promise.all(persons.map(person =>
@@ -54,16 +55,13 @@ export async function deleteTestPersonnel(supabase: SupabaseClient, persons: any
 
 export async function seedTestTeams(supabase: SupabaseClient) {
     // Clean up previous runs
-    await deleteTestTeams(supabase);
+    const testTeams = await fetchTestTeams(supabase);
+    await deleteTestTeams(supabase, testTeams);
 
     // Insert test teams
     const { data, error } = await supabase
         .from('teams')
-        .insert([
-            { designation: 'SG-Test-1', status: 'active' },
-            { designation: 'SG-Test-2', status: 'active' },
-            { designation: 'SG-Unassigned-Test', status: 'inactive' }
-        ]).select();
+        .insert(e2eTestTeams).select();
 
     if(error) throw new Error(`Failed to insert test teams: ${error.message}`);
     if(!data || data.length === 0) throw new Error('No team data returned after insert');
@@ -75,7 +73,7 @@ export async function fetchTestTeams(supabase: SupabaseClient) {
     const { data, error } = await supabase
         .from('teams')
         .select()
-        .in('designation', ['SG-Test-1', 'SG-Test-2', 'SG-Unassigned-Test'])
+        .in('designation', TEST_TEAM_DESIGNATIONS)
         .order('designation', { ascending: true });
 
     if(error) throw new Error(`Failed to insert test teams: ${error.message}`);
@@ -83,17 +81,13 @@ export async function fetchTestTeams(supabase: SupabaseClient) {
     return data;
 }
 
-export async function deleteTestTeams(supabase: SupabaseClient) {
-    await supabase
-        .from('teams')
-        .delete()
-        .eq('designation', 'SG-Test-1');
-    await supabase
-        .from('teams')
-        .delete()
-        .eq('designation', 'SG-Test-2');
-    await supabase
-        .from('teams')
-        .delete()
-        .eq('designation', 'SG-Unassigned-Test');
+export async function deleteTestTeams(supabase: SupabaseClient, teams: Team[]) {
+    if(teams.length === 0) return;
+    
+    await Promise.all(teams.map(team =>
+        supabase
+            .from('teams')
+            .delete()
+            .eq('designation', team.designation)
+    ));
 }

@@ -37,7 +37,7 @@ test.afterAll(async () =>{
     // personnnel
     await deleteTestPersonnel(supabase, await fetchTestPersonnel(supabase));
     // teams
-    await deleteTestTeams(supabase);
+    await deleteTestTeams(supabase, await fetchTestTeams(supabase));
 });
 
 test.describe('read and verify', async () => {

@@ -5,7 +5,7 @@ export const e2eTestRecords = {
     first_name: "Samuel",
     middle_name: "Test",
     last_name: "Ybarra",
-    suffix: "Jr.",
+    suffix: "TEST1",
     personnel_type: "military",
     rank: "Second Lieutenant",
     team_id: "team-sg-test",
@@ -23,7 +23,7 @@ export const e2eTestRecords = {
         first_name: 'Carl',
         middle_name: 'Test',
         last_name: 'Baker',
-        suffix: 'III',
+        suffix: 'TEST',
         personnel_type: 'military'
     },
     e2eTestRec3 : {
@@ -36,7 +36,7 @@ export const e2eTestRecords = {
         first_name: 'Samantha',
         middle_name: 'Test',
         last_name: 'Shepard',
-        suffix: 'PHD',
+        suffix: 'TEST',
         personnel_type: 'civilian'
     },
     e2eTestMilitary: {
@@ -49,7 +49,7 @@ export const e2eTestRecords = {
         first_name: 'E2E',
         middle_name: 'Test',
         last_name: 'Military',
-        suffix: 'Tester',
+        suffix: 'TEST',
         personnel_type: 'military'
     },
     e2eTestCivilian : {
@@ -62,7 +62,26 @@ export const e2eTestRecords = {
         first_name: 'Civilian',
         middle_name: 'Test',
         last_name: 'Fields',
-        suffix: 'PHD',
+        suffix: 'TEST',
         personnel_type: 'civilian'
     }
 }
+
+export const TEST_PERSONNEL_NAMES = Object.values(e2eTestRecords).map(p => p.suffix);
+
+export const e2eTestTeams = [
+    {
+        designation: 'SG-Test-1',
+        status: 'active'
+    },
+    {
+        designation: 'SG-Test-2',
+        status: 'active'
+    },
+    {
+        designation: 'SG-Unassigned-Test',
+        status: 'inactive'
+    }
+]
+
+export const TEST_TEAM_DESIGNATIONS = e2eTestTeams.map(t => t.designation);
