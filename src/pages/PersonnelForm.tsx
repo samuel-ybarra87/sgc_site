@@ -197,7 +197,6 @@ export default function PersonnelForm() {
           <div className="form-group">
             <label htmlFor="team">Team: </label>
             <select id="team" name="team_id" value={form.team_id} onChange={handleChange}>
-              <option value="">None</option>
               {teams.map((team) => (
                 <option key={team.id} value={team.id}>{team.designation}</option>
               ))}

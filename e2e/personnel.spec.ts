@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 import { PATHS } from "../src/lib/paths"
 import { e2eTestRecords } from "../src/lib/mockData"
-import { extractName } from './testUtils';
+import { deleteTestTeams, extractName, fetchTestTeams, seedTestTeams } from './testUtils';
 
 dotenv.config();
 
@@ -12,16 +12,18 @@ const supabase = createClient(
   process.env.VITE_SUPABASE_ANON_KEY!
 );
 
+// personnel
 const e2eTestRec = e2eTestRecords.e2eTestRec;
 const e2eTestRec2 = e2eTestRecords.e2eTestRec2;
 const e2eTestRec3 = e2eTestRecords.e2eTestRec3;
 const e2eTestMilitary = e2eTestRecords.e2eTestMilitary;
+const e2eTestCivilian = e2eTestRecords.e2eTestCivilian;
 
-test.describe('read and verify', () => {
+test.describe('read and verify', async () => {
     const displayName = extractName(e2eTestRec).displayName;
     const link = extractName(e2eTestRec).link;
-    // const rec2Link = extractName(e2eTestRec2).link;
-    // const rec3Link = extractName(e2eTestRec3).link;
+    const civilian_link = extractName(e2eTestCivilian).link;
+    const civilianName = extractName(e2eTestCivilian).displayName;
 
     test.describe.configure({ mode: 'serial' });
     
@@ -42,14 +44,47 @@ test.describe('read and verify', () => {
             .delete()
             .eq('first_name', e2eTestRec3.first_name)
             .eq('last_name', e2eTestRec3.last_name);
-
-        // Insert fresh data
         await supabase
             .from('personnel')
-            .insert([e2eTestRec, e2eTestRec2, e2eTestRec3]);
+            .delete()
+            .eq('first_name', e2eTestCivilian.first_name)
+            .eq('last_name', e2eTestCivilian.last_name);
+
+        // fetchTestTeams
+        const testTeams = await fetchTestTeams(supabase);
+        const testTeam1 = testTeams![0];
+        const testTeam2 = testTeams![1];
+
+        const records = [
+            { ...e2eTestRec, team_id: testTeam1.id },
+            { ...e2eTestRec2, team_id: testTeam1.id },
+            { ...e2eTestRec3, team_id: testTeam1.id },
+            { ...e2eTestCivilian, team_id: testTeam2.id }
+        ].map(({ teams, ...insertable }) => insertable);
+
+        // Insert personnel with team IDs
+        const { error } = await supabase
+            .from('personnel')
+            .insert(records);
+
+        if(error) throw new Error(`Failed to insert personnel: ${error.message}`);
+
+        // Update e2eTestRecords
+        e2eTestRec.team_id = testTeam1.id;
+        e2eTestRec.teams.designation = testTeam1.designation;
+
+        e2eTestRec2.team_id = testTeam1.id;
+        e2eTestRec2.teams.designation = testTeam1.designation;
+
+        e2eTestRec3.team_id = testTeam1.id;
+        e2eTestRec3.teams.designation = testTeam1.designation;
+
+        e2eTestCivilian.team_id = testTeam2.id;
+        e2eTestCivilian.teams.designation = testTeam2.designation;
     });
 
     test.afterAll(async () =>{
+        // personnnel
         await supabase
             .from('personnel')
             .delete()
@@ -65,6 +100,11 @@ test.describe('read and verify', () => {
             .delete()
             .eq('first_name', e2eTestRec3.first_name)
             .eq('last_name', e2eTestRec3.last_name);
+        await supabase
+            .from('personnel')
+            .delete()
+            .eq('first_name', e2eTestCivilian.first_name)
+            .eq('last_name', e2eTestCivilian.last_name);
     });
 
     test('displays personnel list on personnel home page', async ({ page }) => {
@@ -78,19 +118,31 @@ test.describe('read and verify', () => {
         // Assertions...
         await expect(page).toHaveURL(PATHS.PERSONNEL_LIST);
         await expect(heading).toBeVisible();
-        await expect(sam).toBeVisible();
+        await expect(sam).toBeVisible(); // Can't be found?
     });
 
     test('navigates to personnel detail page from personnel home page', async({ page }) =>{
         await page.goto(PATHS.PERSONNEL_LIST);
-        
+
         await page.getByRole('link', { name: link }).click();
 
         await expect(page.getByRole('heading', { name: displayName })).toBeVisible();
         await expect(page.getByText(new RegExp(`Rank: ${e2eTestRec.rank}`))).toBeVisible();
-        await expect(page.getByText(new RegExp(`Team: ${e2eTestRec.team}`))).toBeVisible();
+        await expect(page.getByText(new RegExp(`Team: ${e2eTestRec.teams.designation}`))).toBeVisible();
         await expect(page.getByText(new RegExp(`Role: ${e2eTestRec.role}`))).toBeVisible();
         await expect(page.getByText(new RegExp(`Status: ${e2eTestRec.status}`))).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Back' })).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Edit' })).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Delete' })).toBeVisible();
+
+        await page.goto(PATHS.PERSONNEL_LIST);
+        await page.getByRole('link', { name: civilian_link }).click();
+
+        await expect(page.getByRole('heading', { name: civilianName })).toBeVisible();
+        await expect(page.getByText(/Civilian Contractor/)).toBeVisible();
+        await expect(page.getByText(new RegExp(`Team: ${e2eTestCivilian.teams.designation}`))).toBeVisible();
+        await expect(page.getByText(new RegExp(`Role: ${e2eTestCivilian.role}`))).toBeVisible();
+        await expect(page.getByText(new RegExp(`Status: ${e2eTestCivilian.status}`))).toBeVisible();
         await expect(page.getByRole('button', { name: 'Back' })).toBeVisible();
         await expect(page.getByRole('button', { name: 'Edit' })).toBeVisible();
         await expect(page.getByRole('button', { name: 'Delete' })).toBeVisible();
@@ -115,7 +167,7 @@ test.describe('read and verify', () => {
         
         await expect(page.getByRole('heading', { name: displayName })).toBeVisible();
         await expect(page.getByText(new RegExp(`Rank: ${e2eTestRec.rank}`))).toBeVisible();
-        await expect(page.getByText(new RegExp(`Team: ${e2eTestRec.team}`))).toBeVisible();
+        await expect(page.getByText(new RegExp(`Team: ${e2eTestRec.teams.designation}`))).toBeVisible();
         await expect(page.getByText(new RegExp(`Role: ${e2eTestRec.role}`))).toBeVisible();
         await expect(page.getByText(new RegExp(`Status: ${e2eTestRec.status}`))).toBeVisible();
         
@@ -125,7 +177,7 @@ test.describe('read and verify', () => {
 
         await expect(page.getByRole('heading', { name: extractName(e2eTestRec2).displayName })).toBeVisible();
         await expect(page.getByText(new RegExp(`Rank: ${e2eTestRec2.rank}`))).toBeVisible();
-        await expect(page.getByText(new RegExp(`Team: ${e2eTestRec2.team}`))).toBeVisible();
+        await expect(page.getByText(new RegExp(`Team: ${e2eTestRec2.teams.designation}`))).toBeVisible();
         await expect(page.getByText(new RegExp(`Role: ${e2eTestRec2.role}`))).toBeVisible();
         await expect(page.getByText(new RegExp(`Status: ${e2eTestRec2.status}`))).toBeVisible();
         
@@ -135,7 +187,7 @@ test.describe('read and verify', () => {
         
         await expect(page.getByRole('heading', { name: extractName(e2eTestRec3).displayName })).toBeVisible();
         await expect(page.getByText(/Civilian Contractor/)).toBeVisible();
-        await expect(page.getByText(new RegExp(`Team: ${e2eTestRec3.team}`))).toBeVisible();
+        await expect(page.getByText(new RegExp(`Team: ${e2eTestRec3.teams.designation}`))).toBeVisible();
         await expect(page.getByText(new RegExp(`Role: ${e2eTestRec3.role}`))).toBeVisible();
         await expect(page.getByText(new RegExp(`Status: ${e2eTestRec3.status}`))).toBeVisible();
     });
@@ -155,7 +207,7 @@ test.describe('read and verify', () => {
         await expect(page.getByLabel('Suffix')).toHaveValue(`${e2eTestRec.suffix}`);
         await expect(page.getByLabel('Rank')).toHaveValue(`${e2eTestRec.rank}`);
         await expect(page.getByLabel('Role')).toHaveValue(`${e2eTestRec.role}`);
-        await expect(page.getByLabel('Team')).toHaveValue(`${e2eTestRec.team}`);
+        await expect(page.getByLabel('Team')).toHaveValue(`${e2eTestRec.team_id}`);
         await expect(page.getByLabel('Personnel Type')).toHaveValue(`${e2eTestRec.personnel_type}`);
         await expect(page.getByLabel('Status')).toHaveValue(`${e2eTestRec.status}`);
     });
@@ -198,14 +250,28 @@ test.describe('read and verify', () => {
     });
 });
 
-test.describe('write then delete', () =>{
+test.describe('write then delete', async () =>{
     const link = extractName(e2eTestMilitary).link;
     const displayName = extractName(e2eTestMilitary).displayName;
 
     test.describe.configure({ mode: 'serial' });
 
+    test.beforeAll(async () =>{
+        const testTeams = await seedTestTeams(supabase);
+        const testTeam = testTeams![0];
+        console.log('Seeded team ID:', testTeam.id);
+        e2eTestMilitary.team_id = testTeam.id;
+        e2eTestMilitary.teams.designation = testTeam.designation;
+        console.log('e2eTestMilitary.team_id set to:', e2eTestMilitary.team_id);
+    });
+
+    test.afterAll(async () =>{
+        await deleteTestTeams(supabase);
+    });
+
     // Prevent skipped clean ups
     test.beforeEach(async () => {
+        // personnel
         await supabase
             .from('personnel')
             .delete()
@@ -215,6 +281,7 @@ test.describe('write then delete', () =>{
 
     // Clean database after tests
     test.afterEach(async () => {
+        // personnel
         await supabase
             .from('personnel')
             .delete()
@@ -238,7 +305,13 @@ test.describe('write then delete', () =>{
         await page.getByLabel('Last Name').fill(e2eTestMilitary.last_name ?? '');
         await page.getByLabel('Suffix').fill(e2eTestMilitary.suffix ?? '');
         await page.getByLabel('Role').fill(e2eTestMilitary.role ?? '');
-        await page.getByLabel('Team').fill(e2eTestMilitary.team ?? '');
+        // Select Team
+        const options = await page.getByLabel('Team').evaluate((select: HTMLSelectElement) => 
+                Array.from(select.options).map(o => ({ value: o.value, text: o.text }))
+        );
+        console.log('Available options:', options);
+        console.log('Looking for:', e2eTestMilitary.team_id);
+        await page.getByLabel('Team').selectOption(e2eTestMilitary.team_id ?? '');
         
         await page.getByRole("button", { name: "Save" }).click();
 
@@ -263,7 +336,13 @@ test.describe('write then delete', () =>{
         await page.getByLabel('Last Name').fill(e2eTestMilitary.last_name ?? '');
         await page.getByLabel('Suffix').fill(e2eTestMilitary.suffix ?? '');
         await page.getByLabel('Role').fill(e2eTestMilitary.role ?? '');
-        await page.getByLabel('Team').fill(e2eTestMilitary.team ?? '');
+        // Select Team
+        const options = await page.getByLabel('Team').evaluate((select: HTMLSelectElement) => 
+                Array.from(select.options).map(o => ({ value: o.value, text: o.text }))
+        );
+        console.log('Available options:', options);
+        console.log('Looking for:', e2eTestMilitary.team_id);
+        await page.getByLabel('Team').selectOption(e2eTestMilitary.team_id ?? '');
         
         await page.getByRole("button", { name: "Save" }).click();
 
@@ -296,7 +375,13 @@ test.describe('write then delete', () =>{
         await page.getByLabel('Last Name').fill(e2eTestMilitary.last_name ?? '');
         await page.getByLabel('Suffix').fill(e2eTestMilitary.suffix ?? '');
         await page.getByLabel('Role').fill(e2eTestMilitary.role ?? '');
-        await page.getByLabel('Team').fill(e2eTestMilitary.team ?? '');
+        // Select Team
+        const options = await page.getByLabel('Team').evaluate((select: HTMLSelectElement) => 
+                Array.from(select.options).map(o => ({ value: o.value, text: o.text }))
+        );
+        console.log('Available options:', options);
+        console.log('Looking for:', e2eTestMilitary.team_id);
+        await page.getByLabel('Team').selectOption(e2eTestMilitary.team_id ?? '');
         
         await page.getByRole("button", { name: "Save" }).click();
 
@@ -328,7 +413,13 @@ test.describe('write then delete', () =>{
         await page.getByLabel('Last Name').fill(e2eTestMilitary.last_name ?? '');
         await page.getByLabel('Suffix').fill(e2eTestMilitary.suffix ?? '');
         await page.getByLabel('Role').fill(e2eTestMilitary.role ?? '');
-        await page.getByLabel('Team').fill(e2eTestMilitary.team ?? '');
+        // Select Team
+        const options = await page.getByLabel('Team').evaluate((select: HTMLSelectElement) => 
+                Array.from(select.options).map(o => ({ value: o.value, text: o.text }))
+        );
+        console.log('Available options:', options);
+        console.log('Looking for:', e2eTestMilitary.team_id);
+        await page.getByLabel('Team').selectOption(e2eTestMilitary.team_id ?? '');
         
         await page.getByRole("button", { name: "Save" }).click();
 

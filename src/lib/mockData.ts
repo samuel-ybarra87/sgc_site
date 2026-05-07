@@ -7,7 +7,7 @@ export const mockEntry = {
     suffix: "Jr.",
     personnel_type: "military",
     rank: "Second Lieutenant",
-    team_id: "team-sg-2",
+    team_id: "team-sg-test",
     role: "Technical Expert",
     status: "active"
 };
@@ -114,12 +114,12 @@ export const mockPersonnel = [
 ];
 
 export const e2eTestRecords = {
-    e2eTestRec : mockEntry,
+    e2eTestRec : { ...mockEntry, teams: { designation: 'SG-Test' } },
     e2eTestRec2: {
         rank: 'Major',
         role: 'Combat Support',
-        team_id: 'team-sg-2',
-        teams: { designation: 'SG-2' },
+        team_id: 'team-sg-test',
+        teams: { designation: 'SG-Test' },
         status: 'kia',
         prefix: 'Mr.',
         first_name: 'Carl',
@@ -131,8 +131,8 @@ export const e2eTestRecords = {
     e2eTestRec3 : {
         rank: null,
         role: 'Computer Expert',
-        team_id: 'team-sg-2',
-        teams: { designation: 'SG-2' },
+        team_id: 'team-sg-test',
+        teams: { designation: 'SG-Test' },
         status: 'inactive',
         prefix: 'Dr.',
         first_name: 'Samantha',
@@ -161,9 +161,9 @@ export const e2eTestRecords = {
         teams: { designation: 'SG-Test' },
         status: 'active',
         prefix: 'Dr.',
-        first_name: 'E2E',
+        first_name: 'Civilian',
         middle_name: 'Full',
-        last_name: 'Test',
+        last_name: 'Fields',
         suffix: 'PHD',
         personnel_type: 'civilian'
     }
@@ -186,7 +186,7 @@ export const mockTeams = [
     {
         id: 'team-sg-test',
         designation: 'SG-Test',
-        commanding_officer: mockPersonnel[3].id,
+        commanding_officer: mockPersonnel[6].id,
         status: 'active'
     },
     {
