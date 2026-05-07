@@ -91,11 +91,17 @@ src/
 - [x] Integration tests with MSW
 - [x] E2E tests with Playwright
 - [x] Teams schema
+  - [x] Migrate personnel to use team_id foreign key
 - [ ] Teams CRUD
-- [ ] Teams test suite
+  - [ ] Teams unit test suite
+  - [ ] Teams integration test suite
+  - [ ] Teams e2e test suite
 - [ ] Mission Records schema
+  - [ ] Create many to many relationship between personnel and teams tables
 - [ ] Mission records CRUD
-- [ ] Mission test suite
+  - [ ] Missions unit test suite
+  - [ ] Missions integration test suite
+  - [ ] Missions e2e test suite
 - [ ] GitHub Pages deployment
 - [ ] Styling
 - [ ] Role-based access control

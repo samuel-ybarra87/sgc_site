@@ -2,8 +2,16 @@ import { test, expect } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 import { PATHS } from "../src/lib/paths"
-import { e2eTestRecords } from "../src/lib/mockData"
-import { deleteTestTeams, extractName, fetchTestTeams, seedTestTeams } from './testUtils';
+import { e2eTestRecords } from "./mockData"
+import {
+    deleteTestPersonnel,
+    deleteTestTeams,
+    extractName,
+    fetchTestPersonnel,
+    fetchTestTeams,
+    seedTestPersonnel,
+    seedTestTeams
+} from './testUtils';
 
 dotenv.config();
 
@@ -19,37 +27,26 @@ const e2eTestRec3 = e2eTestRecords.e2eTestRec3;
 const e2eTestMilitary = e2eTestRecords.e2eTestMilitary;
 const e2eTestCivilian = e2eTestRecords.e2eTestCivilian;
 
+test.describe.configure({ mode: 'serial' });
+
+test.beforeAll(async () =>{
+    await seedTestTeams(supabase);
+});
+
+test.afterAll(async () =>{
+    // personnnel
+    await deleteTestPersonnel(supabase, await fetchTestPersonnel(supabase));
+    // teams
+    await deleteTestTeams(supabase);
+});
+
 test.describe('read and verify', async () => {
     const displayName = extractName(e2eTestRec).displayName;
     const link = extractName(e2eTestRec).link;
     const civilian_link = extractName(e2eTestCivilian).link;
     const civilianName = extractName(e2eTestCivilian).displayName;
-
-    test.describe.configure({ mode: 'serial' });
     
     test.beforeAll(async () => {
-        // Clean leftover records from previous runs
-        await supabase
-            .from('personnel')
-            .delete()
-            .eq('first_name', e2eTestRec.first_name)
-            .eq('last_name', e2eTestRec.last_name);
-        await supabase
-            .from('personnel')
-            .delete()
-            .eq('first_name', e2eTestRec2.first_name)
-            .eq('last_name', e2eTestRec2.last_name);
-        await supabase
-            .from('personnel')
-            .delete()
-            .eq('first_name', e2eTestRec3.first_name)
-            .eq('last_name', e2eTestRec3.last_name);
-        await supabase
-            .from('personnel')
-            .delete()
-            .eq('first_name', e2eTestCivilian.first_name)
-            .eq('last_name', e2eTestCivilian.last_name);
-
         // fetchTestTeams
         const testTeams = await fetchTestTeams(supabase);
         const testTeam1 = testTeams![0];
@@ -63,11 +60,7 @@ test.describe('read and verify', async () => {
         ].map(({ teams, ...insertable }) => insertable);
 
         // Insert personnel with team IDs
-        const { error } = await supabase
-            .from('personnel')
-            .insert(records);
-
-        if(error) throw new Error(`Failed to insert personnel: ${error.message}`);
+        await seedTestPersonnel(supabase, records);
 
         // Update e2eTestRecords
         e2eTestRec.team_id = testTeam1.id;
@@ -81,30 +74,6 @@ test.describe('read and verify', async () => {
 
         e2eTestCivilian.team_id = testTeam2.id;
         e2eTestCivilian.teams.designation = testTeam2.designation;
-    });
-
-    test.afterAll(async () =>{
-        // personnnel
-        await supabase
-            .from('personnel')
-            .delete()
-            .eq('first_name', e2eTestRec.first_name)
-            .eq('last_name', e2eTestRec.last_name);
-        await supabase
-            .from('personnel')
-            .delete()
-            .eq('first_name', e2eTestRec2.first_name)
-            .eq('last_name', e2eTestRec2.last_name);
-        await supabase
-            .from('personnel')
-            .delete()
-            .eq('first_name', e2eTestRec3.first_name)
-            .eq('last_name', e2eTestRec3.last_name);
-        await supabase
-            .from('personnel')
-            .delete()
-            .eq('first_name', e2eTestCivilian.first_name)
-            .eq('last_name', e2eTestCivilian.last_name);
     });
 
     test('displays personnel list on personnel home page', async ({ page }) => {
@@ -254,24 +223,15 @@ test.describe('write then delete', async () =>{
     const link = extractName(e2eTestMilitary).link;
     const displayName = extractName(e2eTestMilitary).displayName;
 
-    test.describe.configure({ mode: 'serial' });
-
     test.beforeAll(async () =>{
-        const testTeams = await seedTestTeams(supabase);
+        const testTeams = await fetchTestTeams(supabase);
         const testTeam = testTeams![0];
-        console.log('Seeded team ID:', testTeam.id);
         e2eTestMilitary.team_id = testTeam.id;
         e2eTestMilitary.teams.designation = testTeam.designation;
-        console.log('e2eTestMilitary.team_id set to:', e2eTestMilitary.team_id);
-    });
-
-    test.afterAll(async () =>{
-        await deleteTestTeams(supabase);
     });
 
     // Prevent skipped clean ups
     test.beforeEach(async () => {
-        // personnel
         await supabase
             .from('personnel')
             .delete()
@@ -281,7 +241,6 @@ test.describe('write then delete', async () =>{
 
     // Clean database after tests
     test.afterEach(async () => {
-        // personnel
         await supabase
             .from('personnel')
             .delete()
@@ -299,19 +258,13 @@ test.describe('write then delete', async () =>{
         await page.getByLabel('Rank').selectOption(e2eTestMilitary.rank ?? '');
         await page.getByLabel('Personnel Type').selectOption(e2eTestMilitary.personnel_type ?? '');
         await page.getByLabel('Status').selectOption(e2eTestMilitary.status ?? '');
+        await page.getByLabel('Team').selectOption(e2eTestMilitary.team_id ?? '');
         // Fill fields
         await page.getByLabel('First Name').fill(e2eTestMilitary.first_name ?? '');
         await page.getByLabel('Middle Name').fill(e2eTestMilitary.middle_name ?? '');
         await page.getByLabel('Last Name').fill(e2eTestMilitary.last_name ?? '');
         await page.getByLabel('Suffix').fill(e2eTestMilitary.suffix ?? '');
         await page.getByLabel('Role').fill(e2eTestMilitary.role ?? '');
-        // Select Team
-        const options = await page.getByLabel('Team').evaluate((select: HTMLSelectElement) => 
-                Array.from(select.options).map(o => ({ value: o.value, text: o.text }))
-        );
-        console.log('Available options:', options);
-        console.log('Looking for:', e2eTestMilitary.team_id);
-        await page.getByLabel('Team').selectOption(e2eTestMilitary.team_id ?? '');
         
         await page.getByRole("button", { name: "Save" }).click();
 
@@ -330,19 +283,13 @@ test.describe('write then delete', async () =>{
         await page.getByLabel('Rank').selectOption(e2eTestMilitary.rank ?? '');
         await page.getByLabel('Personnel Type').selectOption(e2eTestMilitary.personnel_type ?? '');
         await page.getByLabel('Status').selectOption(e2eTestMilitary.status ?? '');
+        await page.getByLabel('Team').selectOption(e2eTestMilitary.team_id ?? '');
         // Fill fields
         await page.getByLabel('First Name').fill(e2eTestMilitary.first_name ?? '');
         await page.getByLabel('Middle Name').fill(e2eTestMilitary.middle_name ?? '');
         await page.getByLabel('Last Name').fill(e2eTestMilitary.last_name ?? '');
         await page.getByLabel('Suffix').fill(e2eTestMilitary.suffix ?? '');
         await page.getByLabel('Role').fill(e2eTestMilitary.role ?? '');
-        // Select Team
-        const options = await page.getByLabel('Team').evaluate((select: HTMLSelectElement) => 
-                Array.from(select.options).map(o => ({ value: o.value, text: o.text }))
-        );
-        console.log('Available options:', options);
-        console.log('Looking for:', e2eTestMilitary.team_id);
-        await page.getByLabel('Team').selectOption(e2eTestMilitary.team_id ?? '');
         
         await page.getByRole("button", { name: "Save" }).click();
 
@@ -369,19 +316,13 @@ test.describe('write then delete', async () =>{
         await page.getByLabel('Rank').selectOption(e2eTestMilitary.rank ?? '');
         await page.getByLabel('Personnel Type').selectOption(e2eTestMilitary.personnel_type ?? '');
         await page.getByLabel('Status').selectOption(e2eTestMilitary.status ?? '');
+        await page.getByLabel('Team').selectOption(e2eTestMilitary.team_id ?? '');
         // Fill fields
         await page.getByLabel('First Name').fill(e2eTestMilitary.first_name ?? '');
         await page.getByLabel('Middle Name').fill(e2eTestMilitary.middle_name ?? '');
         await page.getByLabel('Last Name').fill(e2eTestMilitary.last_name ?? '');
         await page.getByLabel('Suffix').fill(e2eTestMilitary.suffix ?? '');
         await page.getByLabel('Role').fill(e2eTestMilitary.role ?? '');
-        // Select Team
-        const options = await page.getByLabel('Team').evaluate((select: HTMLSelectElement) => 
-                Array.from(select.options).map(o => ({ value: o.value, text: o.text }))
-        );
-        console.log('Available options:', options);
-        console.log('Looking for:', e2eTestMilitary.team_id);
-        await page.getByLabel('Team').selectOption(e2eTestMilitary.team_id ?? '');
         
         await page.getByRole("button", { name: "Save" }).click();
 
@@ -407,19 +348,13 @@ test.describe('write then delete', async () =>{
         await page.getByLabel('Rank').selectOption(e2eTestMilitary.rank ?? '');
         await page.getByLabel('Personnel Type').selectOption(e2eTestMilitary.personnel_type ?? '');
         await page.getByLabel('Status').selectOption(e2eTestMilitary.status ?? '');
+        await page.getByLabel('Team').selectOption(e2eTestMilitary.team_id ?? '');
         // Fill fields
         await page.getByLabel('First Name').fill(e2eTestMilitary.first_name ?? '');
         await page.getByLabel('Middle Name').fill(e2eTestMilitary.middle_name ?? '');
         await page.getByLabel('Last Name').fill(e2eTestMilitary.last_name ?? '');
         await page.getByLabel('Suffix').fill(e2eTestMilitary.suffix ?? '');
         await page.getByLabel('Role').fill(e2eTestMilitary.role ?? '');
-        // Select Team
-        const options = await page.getByLabel('Team').evaluate((select: HTMLSelectElement) => 
-                Array.from(select.options).map(o => ({ value: o.value, text: o.text }))
-        );
-        console.log('Available options:', options);
-        console.log('Looking for:', e2eTestMilitary.team_id);
-        await page.getByLabel('Team').selectOption(e2eTestMilitary.team_id ?? '');
         
         await page.getByRole("button", { name: "Save" }).click();
 
