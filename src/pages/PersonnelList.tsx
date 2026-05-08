@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { Link, useNavigate } from 'react-router-dom';
 import { rankAbbreviations } from '../lib/rankAbbreviations';
 import type { Personnel } from '../lib/types';
+import { PATHS } from '../lib/paths';
 
 export default function PersonnelList() {
   const [personnel, setPersonnel] = useState<Personnel[]>([]);
@@ -32,7 +33,8 @@ export default function PersonnelList() {
   return (
     <div>
       <h1>SGC Personnel</h1>
-      <button onClick={() => navigate('/personnel/new')}>Add Personnel</button>
+      <button onClick={() => navigate(PATHS.HOME)}>Home</button>
+      <button onClick={() => navigate(PATHS.PERSONNEL_NEW)}>Add Personnel</button>
       {personnel.length === 0 ? (
         <p>No personnel records found.</p>
       ) : (

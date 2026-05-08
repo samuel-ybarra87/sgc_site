@@ -14,6 +14,8 @@ export type Personnel = {
   suffix: string | null;
   rank: string | null;
   role: string;
+  role_id: string;
+  roles: { name: string } | null;
   team_id: string | null;
   teams: { designation: string } | null;
   personnel_type: string;

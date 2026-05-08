@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { PATHS } from '../lib/paths';
 
 type TeamOptions = {
   id: string;
@@ -101,7 +102,7 @@ export default function PersonnelForm() {
         console.error(error);
         setSubmitError(error.message);
       } else {
-        navigate('/');
+        navigate(PATHS.PERSONNEL_LIST);
       }
     } else {
       const { error } = await supabase
@@ -110,7 +111,7 @@ export default function PersonnelForm() {
       if (error) {
         console.error(error);
         setSubmitError(error.message);
-      } else navigate('/');
+      } else navigate(PATHS.PERSONNEL_LIST);
     }
 
     setLoading(false);
@@ -233,7 +234,7 @@ export default function PersonnelForm() {
           <button type="submit" disabled={loading}>
             {loading ? 'Saving...' : 'Save'}
           </button>
-          <button type="button" onClick={() => navigate('/')}>Cancel</button>
+          <button type="button" onClick={() => navigate(PATHS.PERSONNEL_LIST)}>Cancel</button>
         </div>
       </form>
     </div>

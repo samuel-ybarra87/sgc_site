@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import type { Personnel } from '../lib/types';
+import { PATHS } from '../lib/paths';
 
 export default function PersonnelDetail() {
   const { id } = useParams();
@@ -14,7 +15,7 @@ export default function PersonnelDetail() {
     async function fetchPerson() {
       const { data, error } = await supabase
         .from('personnel')
-        .select('*, teams!personnel_team_id_fkey(designation)')
+        .select('*, teams!personnel_team_id_fkey(designation), roles!personnel_role_id_fkey(name)')
         .eq('id', id)
         .single();
       if (error) {
@@ -46,8 +47,11 @@ export default function PersonnelDetail() {
       .delete()
       .eq('id', person.id);
     
-    if (error) console.error(error);
-    else navigate('/');
+    if (error) {
+      console.error(error);
+      setError({ message: error.message, code: error.code });
+    }
+    else navigate(PATHS.PERSONNEL_LIST);
   }
 
   return (
@@ -61,10 +65,10 @@ export default function PersonnelDetail() {
       </h1>
       <p>{person.personnel_type == 'civilian' ? 'Civilian Contractor' : person.rank ? `Rank: ${person.rank}` : 'N/A' }</p>
       <p>Team: {person.teams?.designation ?? 'Unassigned'}</p>
-      <p>Role: {person.role}</p>
+      <p>Role: {person.roles?.name ?? person.role}</p>
       <p>Status: {person.status === "medical_leave" ? "Medical Leave" : `${person.status}`}</p>
-      <button onClick={() => navigate('/')}>Back</button>
-      <button onClick={() => navigate(`/personnel/${person.id}/edit`)}>Edit</button>
+      <button onClick={() => navigate(PATHS.PERSONNEL_LIST)}>Back</button>
+      <button onClick={() => navigate(PATHS.PERSONNEL_EDIT(person.id))}>Edit</button>
       <button onClick={handleDelete}>Delete</button>
     </div>
   );
