@@ -7,7 +7,7 @@ The in-universe premise: NORAD has contracted a developer to digitize the SGC's 
 ## Tech Stack
 
 - **Frontend:** React, TypeScript, Vite
-- **Backend:** Supabase (PostgreSQL, REST API)
+- **Backend/Data:** Supabase (PostgreSQL, auth/db/api)
 - **Testing:** Vitest, React Testing Library, userEvent
 - **CI/CD:** GitHub Actions
 
@@ -15,7 +15,7 @@ The in-universe premise: NORAD has contracted a developer to digitize the SGC's 
 
 - Full CRUD for SGC personnel records
 - Role-aware display (military rank abbreviations vs civilian titles)
-- Enum-enforced data integrity (rank, status, prefix, personnel type)
+- Enum-enforced data integrity (rank, status, prefix, personnel type, role, and team assignment)
 - Comprehensive unit test suite with mocked Supabase client
 - Automated CI pipeline on push to main, staging, and dev branches
 
@@ -105,3 +105,7 @@ src/
 - [ ] GitHub Pages deployment
 - [ ] Styling
 - [ ] Role-based access control
+
+## Why I Built This
+
+I built this project to improve my testing skills using tools that are more common in modern web development than Behat. My goal was to get practical experience with unit, integration, and end-to-end testing while building a full-stack CRUD application.
