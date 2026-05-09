@@ -8,6 +8,11 @@ type TeamOptions = {
   designation: string;
 };
 
+type RoleOptions = {
+  id: string;
+  name: string;
+}
+
 type PersonnelFormData = {
   prefix: string;
   first_name: string;
@@ -16,6 +21,7 @@ type PersonnelFormData = {
   suffix: string;
   rank: string;
   role: string;
+  role_id: string;
   team_id: string;
   personnel_type: string;
   status: string;
@@ -29,6 +35,7 @@ const defaultForm: PersonnelFormData = {
   suffix: '',
   rank: '',
   role: '',
+  role_id: '',
   team_id: '',
   personnel_type: 'military',
   status: 'active',
@@ -44,13 +51,25 @@ export default function PersonnelForm() {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const [teams, setTeams] = useState<TeamOptions[]>([]);
+  const [roles, setRoles] = useState<RoleOptions[]>([]);
 
   useEffect(() => {
+
+    async function fetchRoles() {
+      const { data, error } = await supabase
+        .from('roles')
+        .select('id, name')
+        .order('name', { ascending: true });
+      if (error) console.error(error);
+      else setRoles(data);
+    }
+    fetchRoles();
 
     async function fetchTeams() {
       const { data, error } = await supabase
         .from('teams')
-        .select('id, designation');
+        .select('id, designation')
+        .order('designation', { ascending: true });
       if (error) console.error(error);
       else setTeams(data);
     }
@@ -91,6 +110,8 @@ export default function PersonnelForm() {
       prefix: form.prefix === '' ? null : form.prefix,
       rank: form.rank === '' ? null : form.rank,
       team_id: form.team_id === '' ? null : form.team_id,
+      role_id: form.role_id === '' ? null : form.role_id,
+      role: form.role === '' ? null : form.role,
     }
 
     if (isEditing) {
@@ -190,8 +211,16 @@ export default function PersonnelForm() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="role">Role: </label>
-            <input id="role" name="role" value={form.role} onChange={handleChange} required />
+            <label htmlFor="role_id">Role: </label>
+            <select id="role_id" name="role_id" value={form.role_id ?? ''} onChange={handleChange}>
+              <option value="">Custom</option>
+              {roles.map(r => (
+                <option key={r.id} value={r.id}>{r.name}</option>
+              ))}
+            </select>
+            {!form.role_id && (
+              <input id="role" name="role" title="role" value={form.role} onChange={handleChange} required />
+            )}
           </div>
 
           <div className="form-group">

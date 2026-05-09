@@ -85,7 +85,7 @@ describe('PersonnelDetail', () => {
       const name = await screen.findByText(/Jack O'Neill/);
       const rank = await screen.findByText(/Colonel/);
       const team = await screen.findByText(/SG-1/);
-      const role = await screen.findByText(/Team Leader/);
+      const role = await screen.findByText(/Commanding Officer/);
       const status = await screen.findByText(/active/);
       expect(name).toBeInTheDocument();
       expect(rank).toBeInTheDocument();

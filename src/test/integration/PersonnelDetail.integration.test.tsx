@@ -25,7 +25,7 @@ describe('PersonnelDetail (integration)', () => {
         const heading = await screen.findByText(/Mr. Carl John Baker III/);
         const rank = await screen.findByText(/Rank: Second Lieutenant/);
         const team = await screen.findByText(/SG-2/);
-        const role = await screen.findByText(/Combat Support/);
+        const role = await screen.findByText(/Test Role/);
         const status = await screen.findByText(/active/);
         expect(heading).toBeInTheDocument();
         expect(rank).toBeInTheDocument();

@@ -55,7 +55,7 @@ describe('PersonnelForm (integration)', () => {
         await user.type(screen.getByLabelText('Middle Name:'), mockEntry.middle_name);
         await user.type(screen.getByLabelText('Last Name:'), mockEntry.last_name);
         await user.type(screen.getByLabelText('Suffix:'), mockEntry.suffix);
-        await user.type(screen.getByLabelText('Role:'), mockEntry.role);
+        await user.selectOptions(screen.getByLabelText('Role:'), mockEntry.role_id);
             // Select dropdown value
         await user.selectOptions(screen.getByLabelText('Team:'), mockEntry.team_id);
         await user.selectOptions(screen.getByLabelText('Rank:'), mockEntry.rank);
@@ -90,7 +90,7 @@ describe('PersonnelForm (integration)', () => {
 
         await user.type(screen.getByLabelText('First Name:'), mockEntry.first_name);
         await user.type(screen.getByLabelText('Last Name:'), mockEntry.last_name);
-        await user.type(screen.getByLabelText('Role:'), mockEntry.role);
+        await user.selectOptions(screen.getByLabelText('Role:'), mockEntry.role_id);
         await user.selectOptions(screen.getByLabelText('Team:'), mockEntry.team_id);
         await user.click(screen.getByText('Save'));
 
@@ -115,7 +115,7 @@ describe('PersonnelForm (integration)', () => {
         await user.type(screen.getByLabelText('Middle Name:'), mockEntry.middle_name);
         await user.type(screen.getByLabelText('Last Name:'), mockEntry.last_name);
         await user.type(screen.getByLabelText('Suffix:'), mockEntry.suffix);
-        await user.type(screen.getByLabelText('Role:'), mockEntry.role);
+        await user.selectOptions(screen.getByLabelText('Role:'), mockEntry.role_id);
             // Select dropdown value
         await user.selectOptions(screen.getByLabelText('Team:'), mockEntry.team_id);
         await user.selectOptions(screen.getByLabelText('Personnel Type:'), mockEntry.personnel_type);
@@ -161,7 +161,7 @@ describe('PersonnelForm (integration)', () => {
         expect(await screen.findByLabelText('Suffix:')).toHaveValue('');
         expect(await screen.findByLabelText('Rank:')).toHaveValue('Colonel');
         expect(await screen.findByLabelText('Team:')).toHaveDisplayValue('SG-1');
-        expect(await screen.findByLabelText('Role:')).toHaveValue('Team Leader');
+        expect(await screen.findByLabelText('Role:')).toHaveValue('test-commander');
         expect(await screen.findByLabelText('Personnel Type:')).toHaveValue("military");
         expect(await screen.findByLabelText('Status:')).toHaveValue('active');
     });

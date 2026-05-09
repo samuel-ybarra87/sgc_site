@@ -5,7 +5,7 @@ import PersonnelForm from '../pages/PersonnelForm';
 import { supabase } from '../lib/supabase';
 import userEvent from '@testing-library/user-event';
 import PersonnelList from '../pages/PersonnelList';
-import { mockEntry, mockPersonnel, mockTeams } from '../lib/mockData';
+import { mockEntry, mockPersonnel, mockRoles, mockTeams } from '../lib/mockData';
 import { PATHS, ROUTES } from '../lib/paths';
 
 const user = userEvent.setup();
@@ -25,6 +25,21 @@ describe('PersonnelForm', () => {
   });
 
   it('should show empty fields for new entries', () =>{
+    // roles
+    vi.mocked(supabase.from).mockReturnValueOnce({
+      select: vi.fn().mockReturnValueOnce({
+        order: vi.fn().mockReturnValueOnce({ data: mockRoles, error: null }),
+      }),
+    } as any);
+
+    // teams
+    vi.mocked(supabase.from).mockReturnValueOnce({
+      select: vi.fn().mockReturnValueOnce({
+        order: vi.fn().mockReturnValueOnce({ data: mockTeams, error: null }),
+      }),
+    } as any);
+    
+    // person
     vi.mocked(supabase.from).mockReturnValueOnce({
       select: vi.fn().mockReturnValueOnce({ data: [], error: null }),
     } as any);
@@ -42,7 +57,8 @@ describe('PersonnelForm', () => {
     expect(screen.getByLabelText('Suffix:')).toHaveValue('');
     expect(screen.getByLabelText('Rank:')).toHaveValue('');
     expect(screen.getByLabelText('Team:')).toHaveValue('');
-    expect(screen.getByLabelText('Role:')).toHaveValue('');
+    expect(screen.getByLabelText('Role:')).toHaveDisplayValue('Custom');
+    expect(screen.getByTitle('role')).toHaveValue('');
     expect(screen.getByLabelText('Personnel Type:')).toHaveValue('military');
     expect(screen.getByLabelText('Status:')).toHaveValue('active');
   });
@@ -51,8 +67,18 @@ describe('PersonnelForm', () => {
     // Save to mock db
     const insertMock = vi.fn().mockResolvedValueOnce({ error: null });
 
+    // roles
     vi.mocked(supabase.from).mockReturnValueOnce({
-      select: vi.fn().mockReturnValueOnce({ data: mockTeams, error: null }),
+      select: vi.fn().mockReturnValueOnce({
+        order: vi.fn().mockReturnValueOnce({ data: mockRoles, error: null }),
+      }),
+    } as any);
+
+    // teams
+    vi.mocked(supabase.from).mockReturnValueOnce({
+      select: vi.fn().mockReturnValueOnce({
+        order: vi.fn().mockReturnValueOnce({ data: mockTeams, error: null }),
+      }),
     } as any);
     
     vi.mocked(supabase.from).mockReturnValueOnce({
@@ -70,8 +96,8 @@ describe('PersonnelForm', () => {
     await user.type(screen.getByLabelText('Middle Name:'), mockEntry.middle_name);
     await user.type(screen.getByLabelText('Last Name:'), mockEntry.last_name);
     await user.type(screen.getByLabelText('Suffix:'), mockEntry.suffix);
-    await user.type(screen.getByLabelText('Role:'), mockEntry.role);
       // Select dropdown value
+    await user.selectOptions(screen.getByLabelText('Role:'), mockEntry.role_id)
     await user.selectOptions(screen.getByLabelText('Team:'), mockEntry.team_id);
     await user.selectOptions(screen.getByLabelText('Rank:'), mockEntry.rank);
     await user.selectOptions(screen.getByLabelText('Prefix:'), mockEntry.prefix);
@@ -88,8 +114,18 @@ describe('PersonnelForm', () => {
   it('should display error message when insert fails', async () => {
     const insertMock = vi.fn().mockResolvedValueOnce({ error: { message: 'insert failed' } });
 
+    // roles
     vi.mocked(supabase.from).mockReturnValueOnce({
-      select: vi.fn().mockReturnValueOnce({ data: mockTeams, error: null }),
+      select: vi.fn().mockReturnValueOnce({
+        order: vi.fn().mockReturnValueOnce({ data: mockRoles, error: null }),
+      }),
+    } as any);
+
+    // teams
+    vi.mocked(supabase.from).mockReturnValueOnce({
+      select: vi.fn().mockReturnValueOnce({
+        order: vi.fn().mockReturnValueOnce({ data: mockTeams, error: null }),
+      }),
     } as any);
     
     vi.mocked(supabase.from).mockReturnValueOnce({
@@ -104,7 +140,7 @@ describe('PersonnelForm', () => {
 
     await user.type(screen.getByLabelText('First Name:'), mockEntry.first_name);
     await user.type(screen.getByLabelText('Last Name:'), mockEntry.last_name);
-    await user.type(screen.getByLabelText('Role:'), mockEntry.role);
+    await user.selectOptions(screen.getByLabelText('Role:'), mockEntry.role_id);
     await user.selectOptions(screen.getByLabelText('Team:'), mockEntry.team_id);
     await user.click(screen.getByText('Save'));
 
@@ -113,11 +149,21 @@ describe('PersonnelForm', () => {
     expect(error).toBeInTheDocument();
   });
 
-  it('should convert empty prefix, and rank to null on submit', async () => {
+  it('should convert empty prefix, rank, and role_id to null on submit', async () => {
     const insertMock = vi.fn().mockResolvedValueOnce({ error: null });
 
+    // roles
     vi.mocked(supabase.from).mockReturnValueOnce({
-      select: vi.fn().mockReturnValueOnce({ data: mockTeams, error: null }),
+      select: vi.fn().mockReturnValueOnce({
+        order: vi.fn().mockReturnValueOnce({ data: mockRoles, error: null }),
+      }),
+    } as any);
+
+    // teams
+    vi.mocked(supabase.from).mockReturnValueOnce({
+      select: vi.fn().mockReturnValueOnce({
+        order: vi.fn().mockReturnValueOnce({ data: mockTeams, error: null }),
+      }),
     } as any);
     
     vi.mocked(supabase.from).mockReturnValueOnce({
@@ -130,20 +176,31 @@ describe('PersonnelForm', () => {
       </MemoryRouter>
     );
 
+    await user.selectOptions(screen.getByLabelText('Role:'), '');
+    await user.selectOptions(screen.getByLabelText('Team:'), mockEntry.team_id);
+    await user.type(screen.getByTitle('role'), 'test-custom-role');
     await user.type(screen.getByLabelText('First Name:'), mockEntry.first_name);
     await user.type(screen.getByLabelText('Last Name:'), mockEntry.last_name);
-    await user.type(screen.getByLabelText('Role:'), mockEntry.role);
-    await user.selectOptions(screen.getByLabelText('Team:'), mockEntry.team_id);
     await user.click(screen.getByText('Save'));
 
     expect(insertMock).toHaveBeenCalledWith(
-      expect.objectContaining({ prefix: null, rank: null })
+      expect.objectContaining({ prefix: null, rank: null, role_id: null, role: 'test-custom-role' })
     );
   });
 
   it('should show an error message if team is blank', async () => {
+    // roles
     vi.mocked(supabase.from).mockReturnValueOnce({
-      select: vi.fn().mockReturnValueOnce({ data: mockTeams, error: null }),
+      select: vi.fn().mockReturnValueOnce({
+        order: vi.fn().mockReturnValueOnce({ data: mockRoles, error: null }),
+      }),
+    } as any);
+
+    // teams
+    vi.mocked(supabase.from).mockReturnValueOnce({
+      select: vi.fn().mockReturnValueOnce({
+        order: vi.fn().mockReturnValueOnce({ data: mockTeams, error: null }),
+      }),
     } as any);
 
     render(
@@ -154,7 +211,7 @@ describe('PersonnelForm', () => {
 
     await user.type(screen.getByLabelText('First Name:'), mockEntry.first_name);
     await user.type(screen.getByLabelText('Last Name:'), mockEntry.last_name);
-    await user.type(screen.getByLabelText('Role:'), mockEntry.role);
+    await user.selectOptions(screen.getByLabelText('Role:'), mockEntry.role_id);
     await user.click(screen.getByText('Save'));
 
     const errorMsg = await screen.findByText(/Please select a team./);
@@ -162,8 +219,18 @@ describe('PersonnelForm', () => {
   });
 
   it('should show values of record to edit', async () =>{
+    // roles
     vi.mocked(supabase.from).mockReturnValueOnce({
-      select: vi.fn().mockReturnValueOnce({ data: mockTeams, error: null }),
+      select: vi.fn().mockReturnValueOnce({
+        order: vi.fn().mockReturnValueOnce({ data: mockRoles, error: null }),
+      }),
+    } as any);
+
+    // teams
+    vi.mocked(supabase.from).mockReturnValueOnce({
+      select: vi.fn().mockReturnValueOnce({
+        order: vi.fn().mockReturnValueOnce({ data: mockTeams, error: null }),
+      }),
     } as any);
     
     vi.mocked(supabase.from).mockReturnValueOnce({
@@ -189,15 +256,25 @@ describe('PersonnelForm', () => {
     expect(await screen.findByLabelText('Suffix:')).toHaveValue('');
     expect(await screen.findByLabelText('Rank:')).toHaveValue('Colonel');
     expect(await screen.findByLabelText('Team:')).toHaveDisplayValue('SG-1');
-    expect(await screen.findByLabelText('Role:')).toHaveValue('Team Leader');
+    expect(await screen.findByLabelText('Role:')).toHaveValue('test-commander');
     expect(await screen.findByLabelText('Personnel Type:')).toHaveValue("military");
     expect(await screen.findByLabelText('Status:')).toHaveValue('active');
   });
 
   it('should update values into database after clicking save', async () => {
     // Populate mock database with data
+    // roles
     vi.mocked(supabase.from).mockReturnValueOnce({
-      select: vi.fn().mockReturnValueOnce({ data: mockTeams, error: null }),
+      select: vi.fn().mockReturnValueOnce({
+        order: vi.fn().mockReturnValueOnce({ data: mockRoles, error: null }),
+      }),
+    } as any);
+
+    // teams
+    vi.mocked(supabase.from).mockReturnValueOnce({
+      select: vi.fn().mockReturnValueOnce({
+        order: vi.fn().mockReturnValueOnce({ data: mockTeams, error: null }),
+      }),
     } as any);
 
     vi.mocked(supabase.from).mockReturnValueOnce({
@@ -236,8 +313,18 @@ describe('PersonnelForm', () => {
 
   it('should navigate back to personnel list when cancelling', async () =>{
     // Populate mock database with data
+    // roles
     vi.mocked(supabase.from).mockReturnValueOnce({
-      select: vi.fn().mockReturnValueOnce({ data: mockTeams, error: null }),
+      select: vi.fn().mockReturnValueOnce({
+        order: vi.fn().mockReturnValueOnce({ data: mockRoles, error: null }),
+      }),
+    } as any);
+
+    // teams
+    vi.mocked(supabase.from).mockReturnValueOnce({
+      select: vi.fn().mockReturnValueOnce({
+        order: vi.fn().mockReturnValueOnce({ data: mockTeams, error: null }),
+      }),
     } as any);
     
     vi.mocked(supabase.from).mockReturnValueOnce({

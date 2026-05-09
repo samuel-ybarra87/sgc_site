@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import { mockPersonnel, mockTeams } from '../lib/mockData';
+import { mockPersonnel, mockRoles, mockTeams } from '../lib/mockData';
 
 export const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 
@@ -21,5 +21,6 @@ function createCrudHandlers(resource: string, mockData: Record<string, unknown>[
 export const handlers = [
   ...createCrudHandlers('personnel', mockPersonnel),
   ...createCrudHandlers('teams', mockTeams),
+  ...createCrudHandlers('roles', mockRoles),
   // ...createCrudHandlers('missions', mockMissions)
 ];

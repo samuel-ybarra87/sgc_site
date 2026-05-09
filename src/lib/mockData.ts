@@ -1,4 +1,18 @@
 // Mock data
+
+// Roles
+export const mockRoles = [
+    {
+        id: 'test-role',
+        name: 'Test Role'
+    },
+    {
+        id: 'test-commander',
+        name: 'Commanding Officer'
+    }
+]
+
+// Add Personnel
 export const mockEntry = {
     prefix: "Mr.",
     first_name: "Samuel",
@@ -8,15 +22,19 @@ export const mockEntry = {
     personnel_type: "military",
     rank: "Second Lieutenant",
     team_id: "team-sg-test",
-    role: "Technical Expert",
+    role: null,
+    role_id: "test-role",
     status: "active"
 };
 
+// Personnel
 export const mockPersonnel = [
     {
         id: '1',
         rank: 'Colonel',
-        role: 'Team Leader',
+        role: null,
+        role_id: 'test-commander',
+        roles: { name: mockRoles[1].name },
         team_id: 'team-sg-1',
         teams: { designation: 'SG-1' },
         status: 'active',
@@ -30,7 +48,9 @@ export const mockPersonnel = [
     {
         id: '2',
         rank: null,
-        role: 'Archeology Expert',
+        role: null,
+        role_id: 'test-role',
+        roles: { name: mockRoles[0].name },
         team_id: 'team-sg-1',
         teams: { designation: 'SG-1' },
         status: 'active',
@@ -44,7 +64,9 @@ export const mockPersonnel = [
     {
         id: '3',
         rank: 'Second Lieutenant',
-        role: 'Combat Support',
+        role: null,
+        role_id: 'test-role',
+        roles: { name: mockRoles[0].name },
         team_id: 'team-sg-2',
         teams: { designation: 'SG-2' },
         status: 'active',
@@ -59,6 +81,8 @@ export const mockPersonnel = [
         id: '4',
         rank: null,
         role: 'Computer Expert',
+        role_id: null,
+        roles: null,
         team_id: 'team-sg-2',
         teams: { designation: 'SG-2' },
         status: 'active',
@@ -73,6 +97,8 @@ export const mockPersonnel = [
         id: '5',
         rank: '',
         role: 'broken',
+        role_id: null,
+        roles: null,
         team_id: '',
         teams: { designation: '' },
         status: 'active',
@@ -86,7 +112,9 @@ export const mockPersonnel = [
     {
         id: '6',
         rank: null,
-        role: 'Combat Expert',
+        role: null,
+        role_id: 'test-role',
+        roles: { name: mockRoles[0].name },
         team_id: 'team-sg-1',
         teams: { designation: 'SG-1' },
         status: 'active',
@@ -100,7 +128,9 @@ export const mockPersonnel = [
     {
         id: '7',
         rank: 'Lieutenant General',
-        role: 'Base Commanding Officer',
+        role: null,
+        role_id: 'test-commander',
+        roles: { name: mockRoles[1].name },
         team_id: 'team-sg-command',
         teams: { designation: 'SGC' },
         status: 'active',
