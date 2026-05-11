@@ -4,6 +4,10 @@ export interface Team {
   status: string;
 };
 
+export interface Role {
+  name: string;
+};
+
 export interface Personnel {
   prefix: string | null;
   first_name: string;
@@ -12,6 +16,7 @@ export interface Personnel {
   suffix: string | null;
   rank: string | null;
   role: string;
+  role_id: string | null;
   team_id: string | null;
   personnel_type: string;
   status: string;

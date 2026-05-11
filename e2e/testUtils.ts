@@ -1,7 +1,7 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { rankAbbreviations } from "../src/lib/rankAbbreviations"
-import { e2eTestTeams, TEST_PERSONNEL_NAMES, TEST_TEAM_DESIGNATIONS } from "./mockData";
-import { Personnel, Team } from "./interface";
+import { e2eTestTeams, TEST_PERSONNEL_NAMES, TEST_ROLE_NAMES, TEST_TEAM_DESIGNATIONS } from "./mockData";
+import { Personnel, Role, Team } from "./interface";
 
 export function extractName(person: Record<string, unknown>){
     const prefix = person.prefix ? `${person.prefix} ` : '';
@@ -11,6 +11,17 @@ export function extractName(person: Record<string, unknown>){
         link : person.personnel_type == 'military' ? `${abbrev}${name}` : `${prefix}${name}`,
         displayName : `${prefix}${name}`,
     }
+}
+
+export async function deleteTestData(supabase: SupabaseClient){
+    await supabase
+        .from('personnel')
+        .update({ team_id: null, role_id: null })
+        .eq('suffix', 'TEST');
+    
+    await deleteTestPersonnel(supabase, await fetchTestPersonnel(supabase));
+    await deleteTestRoles(supabase, await fetchTestRoles(supabase));
+    await deleteTestTeams(supabase, await fetchTestTeams(supabase));
 }
 
 export async function seedTestPersonnel(supabase: SupabaseClient, persons: Personnel[]) {
@@ -76,7 +87,7 @@ export async function fetchTestTeams(supabase: SupabaseClient) {
         .in('designation', TEST_TEAM_DESIGNATIONS)
         .order('designation', { ascending: true });
 
-    if(error) throw new Error(`Failed to insert test teams: ${error.message}`);
+    if(error) throw new Error(`Failed to fetch test teams: ${error.message}`);
 
     return data;
 }
@@ -89,5 +100,45 @@ export async function deleteTestTeams(supabase: SupabaseClient, teams: Team[]) {
             .from('teams')
             .delete()
             .eq('designation', team.designation)
+    ));
+}
+
+export async function seedTestRoles(supabase: SupabaseClient, roles: Role[]) {
+    // Clean up previous runs
+    const TestRoles = await fetchTestRoles(supabase);
+    await deleteTestRoles(supabase, TestRoles);
+    
+    // Insert test roles
+    const { data, error } = await supabase
+        .from('roles')
+        .insert(roles).select();
+
+    if(error) throw new Error(`Failed to insert test roles: ${error.message}`);
+    if(!data || data.length === 0) throw new Error('No roles data returned after insert');
+
+    return data;
+}
+
+export async function fetchTestRoles(supabase: SupabaseClient) {
+    const { data, error } = await supabase
+        .from('roles')
+        .select()
+        .in('name', TEST_ROLE_NAMES)
+        .like('name', 'Test%')
+        .order('name', { ascending: true });
+
+    if(error) throw new Error(`Failed to fetch roles: ${error.message}`);
+
+    return data;
+}
+
+export async function deleteTestRoles(supabase: SupabaseClient, roles: Role[]) {
+    if(roles.length === 0) return;
+
+    await Promise.all(roles.map(role =>
+        supabase
+            .from('roles')
+            .delete()
+            .eq('name', role.name)
     ));
 }

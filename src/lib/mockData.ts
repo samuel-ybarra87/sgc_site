@@ -22,7 +22,7 @@ export const mockEntry = {
     personnel_type: "military",
     rank: "Second Lieutenant",
     team_id: "team-sg-test",
-    role: null,
+    role: '',
     role_id: "test-role",
     status: "active"
 };
@@ -32,7 +32,7 @@ export const mockPersonnel = [
     {
         id: '1',
         rank: 'Colonel',
-        role: null,
+        role: '',
         role_id: 'test-commander',
         roles: { name: mockRoles[1].name },
         team_id: 'team-sg-1',
@@ -48,7 +48,7 @@ export const mockPersonnel = [
     {
         id: '2',
         rank: null,
-        role: null,
+        role: '',
         role_id: 'test-role',
         roles: { name: mockRoles[0].name },
         team_id: 'team-sg-1',
@@ -64,7 +64,7 @@ export const mockPersonnel = [
     {
         id: '3',
         rank: 'Second Lieutenant',
-        role: null,
+        role: '',
         role_id: 'test-role',
         roles: { name: mockRoles[0].name },
         team_id: 'team-sg-2',
@@ -112,7 +112,7 @@ export const mockPersonnel = [
     {
         id: '6',
         rank: null,
-        role: null,
+        role: '',
         role_id: 'test-role',
         roles: { name: mockRoles[0].name },
         team_id: 'team-sg-1',
@@ -128,7 +128,7 @@ export const mockPersonnel = [
     {
         id: '7',
         rank: 'Lieutenant General',
-        role: null,
+        role: '',
         role_id: 'test-commander',
         roles: { name: mockRoles[1].name },
         team_id: 'team-sg-command',

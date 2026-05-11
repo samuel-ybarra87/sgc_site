@@ -1,21 +1,25 @@
 // Mock Data
 export const e2eTestRecords = {
     e2eTestRec : {
-    prefix: "Mr.",
-    first_name: "Samuel",
-    middle_name: "Test",
-    last_name: "Ybarra",
-    suffix: "TEST1",
-    personnel_type: "military",
-    rank: "Second Lieutenant",
-    team_id: "team-sg-test",
-    teams: { designation: 'SG-Test' },
-    role: "Technical Expert",
-    status: "active"
+        prefix: "Mr.",
+        first_name: "Samuel",
+        middle_name: "Test",
+        last_name: "Ybarra",
+        suffix: "TEST1",
+        personnel_type: "military",
+        rank: "Colonel",
+        team_id: "team-sg-test",
+        teams: { designation: 'SG-Test' },
+        role: '',
+        role_id: 'test-commander-role',
+        roles: { name: 'Commanding Officer' },
+        status: "active"
     },
     e2eTestRec2: {
         rank: 'Major',
-        role: 'Combat Support',
+        role: '',
+        role_id: 'test-role',
+        roles: { name: 'Test Role' },
         team_id: 'team-sg-test',
         teams: { designation: 'SG-Test' },
         status: 'kia',
@@ -29,6 +33,8 @@ export const e2eTestRecords = {
     e2eTestRec3 : {
         rank: null,
         role: 'Computer Expert',
+        role_id: null,
+        roles: { name: null },
         team_id: 'team-sg-test',
         teams: { designation: 'SG-Test' },
         status: 'inactive',
@@ -41,7 +47,9 @@ export const e2eTestRecords = {
     },
     e2eTestMilitary: {
         rank: 'Airman Basic',
-        role: 'Test Role',
+        role: '',
+        role_id: 'test-role',
+        roles: { name: 'Test Role' },
         team_id: 'team-sg-test',
         teams: { designation: 'SG-Test' },
         status: 'active',
@@ -54,7 +62,9 @@ export const e2eTestRecords = {
     },
     e2eTestCivilian : {
         rank: null,
-        role: 'Test Role',
+        role: '',
+        role_id: 'test-role',
+        roles: { name: 'Test Role' },
         team_id: 'team-sg-test',
         teams: { designation: 'SG-Test' },
         status: 'active',
@@ -85,3 +95,11 @@ export const e2eTestTeams = [
 ]
 
 export const TEST_TEAM_DESIGNATIONS = e2eTestTeams.map(t => t.designation);
+
+export const e2eTestRoles = [
+    {
+        name: 'Test Role'
+    }
+]
+
+export const TEST_ROLE_NAMES = e2eTestRoles.map(r => r.name);

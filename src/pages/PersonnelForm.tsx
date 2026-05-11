@@ -111,7 +111,7 @@ export default function PersonnelForm() {
       rank: form.rank === '' ? null : form.rank,
       team_id: form.team_id === '' ? null : form.team_id,
       role_id: form.role_id === '' ? null : form.role_id,
-      role: form.role === '' ? null : form.role,
+      role: form.role === '' ? '' : form.role,
     }
 
     if (isEditing) {
