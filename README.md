@@ -92,7 +92,7 @@ src/
 - [x] E2E tests with Playwright
 - [x] Teams schema
   - [x] Migrate personnel to use team_id foreign key
-- [ ] Teams CRUD
+- [x] Teams CRUD
   - [ ] Teams unit test suite
   - [ ] Teams integration test suite
   - [ ] Teams e2e test suite
