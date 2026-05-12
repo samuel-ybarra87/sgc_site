@@ -14,8 +14,11 @@ The in-universe premise: NORAD has contracted a developer to digitize the SGC's 
 ## Features
 
 - Full CRUD for SGC personnel records
+- Full CRUD for SGC Teams
 - Role-aware display (military rank abbreviations vs civilian titles)
-- Enum-enforced data integrity (rank, status, prefix, personnel type, role, and team assignment)
+- Enum-enforced data integrity
+  - Personnel fields (rank, status, prefix, personnel type, role, and team assignment)
+  - Teams (commanding_officer)
 - Comprehensive unit test suite with mocked Supabase client
 - Automated CI pipeline on push to main, staging, and dev branches
 
@@ -56,21 +59,28 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 ```
 e2e/
+  interface.ts            # Test Objects for mock entries
+  mockData.ts             # Temp values for E2E tests
   personnel.spec.ts
-  testUtils.ts
+  testUtils.ts            # Helper functions for E2E tests
 src/
   lib/
     mockData.ts           # Temp values for tests
     paths.ts              # paths and routes for easier management
     rankAbbreviations.ts  # Military rank lookup (Air Force specific)
     supabase.ts           # Supabase client
+    types.ts              # Test Objects for mock database
   mocks/
     handlers.ts
     server.ts
   pages/
+    Homepage.tsx
     PersonnelList.tsx
     PersonnelDetail.tsx
     PersonnelForm.tsx
+    TeamDetail.tsx
+    TeamForm.tsx
+    TeamList.tsx
   test/
     integration/
       PersonnelDetail.integration.test.tsx
@@ -80,6 +90,8 @@ src/
     PersonnelForm.test.tsx
     PersonnelList.test.tsx
     setup.ts
+    TeamForm.test.tsx
+    TeamList.test.tsx
     testUtils.ts
 ```
 
