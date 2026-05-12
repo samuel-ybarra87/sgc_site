@@ -35,7 +35,7 @@ export default function TeamsList() {
       <button onClick={() => navigate(PATHS.HOME)}>Home</button>
       <button onClick={() => navigate(PATHS.TEAM_NEW)}>Add Team</button>
       {teams.length === 0 ? (
-        <p>No personnel records found.</p>
+        <p>No team records found.</p>
       ) : (
         <div>
           <ul>

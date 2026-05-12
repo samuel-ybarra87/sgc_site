@@ -76,7 +76,7 @@ export default function TeamForm() {
         setLoading(true);
 
         if(!form.commanding_officer){
-            setSubmitError('Please select a commanding_officer.');
+            setSubmitError('Please select a Commanding Officer.');
             setLoading(false);
             return;
         }

@@ -1,12 +1,14 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, it, expect } from 'vitest';
-import PersonnelList from '../../pages/PersonnelList';
 import { http, HttpResponse } from 'msw';
 import { server } from '../../mocks/server';
-import PersonnelDetail from '../../pages/PersonnelDetail';
 import userEvent from '@testing-library/user-event';
+import Homepage from '../../pages/Homepage'
+import PersonnelDetail from '../../pages/PersonnelDetail';
 import PersonnelForm from '../../pages/PersonnelForm';
+import PersonnelList from '../../pages/PersonnelList';
+import { PATHS, ROUTES } from '../../lib/paths';
 
 const user = userEvent.setup();
 
@@ -58,10 +60,10 @@ describe('PersonnelList (integration)', () => {
 
     it('navigates to personnel detail when a record is clicked', async () => {
         render(
-            <MemoryRouter initialEntries={['/']}>
+            <MemoryRouter initialEntries={[PATHS.PERSONNEL_LIST]}>
             <Routes>
-                <Route path="/" element={<PersonnelList />} />
-                <Route path="/personnel/:id" element={<PersonnelDetail />} />
+                <Route path={PATHS.PERSONNEL_LIST} element={<PersonnelList />} />
+                <Route path={ROUTES.PERSONNEL_DETAIL} element={<PersonnelDetail />} />
             </Routes>
             </MemoryRouter>
         );
@@ -75,10 +77,10 @@ describe('PersonnelList (integration)', () => {
 
     it('navigates to personnel form when Add Personnel button is clicked', async () => {
         render(
-            <MemoryRouter initialEntries={['/']}>
+            <MemoryRouter initialEntries={[PATHS.PERSONNEL_LIST]}>
                 <Routes>
-                    <Route path="/" element={<PersonnelList />} />
-                    <Route path="/personnel/new" element={<PersonnelForm />} />
+                    <Route path={PATHS.PERSONNEL_LIST} element={<PersonnelList />} />
+                    <Route path={PATHS.PERSONNEL_NEW} element={<PersonnelForm />} />
                 </Routes>
             </MemoryRouter>
         );
@@ -88,5 +90,22 @@ describe('PersonnelList (integration)', () => {
 
         const nameField = await screen.findByLabelText('First Name:');
         expect(nameField).toBeInTheDocument();
+    });
+
+    it('navigates to homepage when Home button is clicked', async ()=>{
+        render(
+            <MemoryRouter initialEntries={[PATHS.PERSONNEL_LIST]}>
+                <Routes>
+                    <Route path={PATHS.PERSONNEL_LIST} element={<PersonnelList />} />
+                    <Route path={PATHS.HOME} element={<Homepage />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        const homeButton = await screen.findByText(/Home/);
+        await user.click(homeButton);
+
+        const header = await screen.findByText('Stargate Command Records');
+        expect(header).toBeInTheDocument();
     });
 });

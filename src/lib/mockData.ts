@@ -143,6 +143,13 @@ export const mockPersonnel = [
     }
 ];
 
+// Add Team
+export const mockTeamEntry = {
+    designation: 'SG-Mock-Test',
+    commanding_officer: mockPersonnel[6].id,
+    status: 'active'
+};
+
 // Teams
 export const mockTeams = [
     {
