@@ -105,7 +105,7 @@ src/
 - [x] Teams schema
   - [x] Migrate personnel to use team_id foreign key
 - [x] Teams CRUD
-  - [ ] Teams unit test suite
+  - [x] Teams unit test suite
   - [ ] Teams integration test suite
   - [ ] Teams e2e test suite
 - [ ] Mission Records schema
