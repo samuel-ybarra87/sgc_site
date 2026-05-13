@@ -14,7 +14,8 @@ export default function TeamsList() {
     async function fetchTeams() {
       const { data, error } = await supabase
       .from('teams')
-      .select('*');
+      .select('*')
+      .order('designation', { ascending: true});
       if (error) {
         console.error(error);
         setError(error.message);
@@ -40,7 +41,7 @@ export default function TeamsList() {
         <div>
           <ul>
             {teams.map((t) => (
-              <li key={t.id}>
+              <li key={t.designation}>
                 <Link to={`/teams/${t.id}`}>
                   {t.designation}
                 </Link>

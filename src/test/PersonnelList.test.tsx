@@ -15,7 +15,9 @@ vi.mock('../lib/supabase', () => ({
 describe('PersonnelList', () => {
   it('displays a message when no records are found', async () => {
     vi.mocked(supabase.from).mockReturnValueOnce({
-        select: vi.fn().mockResolvedValueOnce({ data: [], error: null }),
+        select: vi.fn().mockReturnValueOnce({
+          order: vi.fn().mockResolvedValueOnce({ data: [], error: null }),
+        }),
     } as any);
 
     render(
@@ -30,7 +32,9 @@ describe('PersonnelList', () => {
 
   it('displays no records message when fetch fails', async () =>{
     vi.mocked(supabase.from).mockReturnValueOnce({
-      select: vi.fn().mockResolvedValueOnce({ data: null, error: { message: 'connection failed' } }),
+      select: vi.fn().mockReturnValueOnce({
+        order: vi.fn().mockResolvedValueOnce({ data: null, error: { message: 'connection failed' } }),
+      }),
     } as any);
 
     render(
@@ -45,7 +49,9 @@ describe('PersonnelList', () => {
 
   it('displays personnel records when data is returned', async () =>{
     vi.mocked(supabase.from).mockReturnValueOnce({
-        select: vi.fn().mockResolvedValueOnce({ data: mockPersonnel, error: null }),
+      select: vi.fn().mockReturnValueOnce({
+        order: vi.fn().mockResolvedValueOnce({ data: mockPersonnel, error: null }),
+      })
     } as any);
 
     render(

@@ -267,8 +267,10 @@ describe('TeamForm', () => {
     } as any);
 
     vi.mocked(supabase.from).mockReturnValueOnce({
-            select: vi.fn().mockResolvedValueOnce({ data: mockTeams, error: null }),
-        } as any);
+        select: vi.fn().mockReturnValueOnce({
+          order: vi.fn().mockResolvedValueOnce({ data: mockTeams, error: null } ),
+        }),
+    } as any);
 
     render(
         <MemoryRouter initialEntries={[PATHS.TEAM_EDIT(mockTeams[1].id)]}>

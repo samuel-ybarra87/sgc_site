@@ -31,6 +31,15 @@ form {
     margin-bottom: 16px;
 }
 
+.display-group{
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  text-align: justify;
+  margin-left: 30%;
+  margin-bottom: 16px;
+}
+
 label {
   font-size: 14px;
   font-weight: 500;
@@ -72,4 +81,31 @@ button[type="submit"] {
 button[type="button"] {
   background: var(--bg);
   color: var(--text);
+}
+
+h3{
+  padding: 16px;
+  border: 1px solid var(--accent-border);
+  background-color: var(--accent-bg);
+}
+
+h4{
+  padding: 8px;
+  color: rgb(0, 212, 250);
+}
+
+li{
+  list-style-type: none;
+  padding: 8px 16px;
+}
+
+a{
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  font-size: 16px;
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
 }

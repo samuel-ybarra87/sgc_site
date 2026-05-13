@@ -15,7 +15,8 @@ export default function PersonnelList() {
     async function fetchPersonnel() {
       const { data, error } = await supabase
       .from('personnel')
-      .select('*');
+      .select('*')
+      .order('last_name', { ascending: true });
       if (error) {
         console.error(error);
         setError(error.message);

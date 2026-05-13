@@ -63,13 +63,21 @@ export default function PersonnelDetail() {
         {person.last_name}
         {person.suffix ? ` ${ person.suffix}` : ''}
       </h1>
-      <p>{person.personnel_type == 'civilian' ? 'Civilian Contractor' : person.rank ? `Rank: ${person.rank}` : 'N/A' }</p>
-      <p>Team: {person.teams?.designation ?? 'Unassigned'}</p>
-      <p>Role: {person.roles?.name ?? person.role}</p>
-      <p>Status: {person.status === "medical_leave" ? "Medical Leave" : `${person.status}`}</p>
-      <button onClick={() => navigate(PATHS.PERSONNEL_LIST)}>Back</button>
-      <button onClick={() => navigate(PATHS.PERSONNEL_EDIT(person.id))}>Edit</button>
-      <button onClick={handleDelete}>Delete</button>
+      
+      <div className="display-group">
+        <ul>
+          <li>{person.personnel_type == 'civilian' ? 'Civilian Contractor' : person.rank ? `Rank: ${person.rank}` : 'N/A' }</li>
+          <li>Team: {person.teams?.designation ?? 'Unassigned'}</li>
+          <li>Role: {person.roles?.name ?? person.role}</li>
+          <li>Status: {person.status === "medical_leave" ? "Medical Leave" : `${person.status}`}</li>
+        </ul>
+      </div>
+
+      <div className="form-actions">
+        <button onClick={() => navigate(PATHS.PERSONNEL_LIST)}>Back</button>
+        <button onClick={() => navigate(PATHS.PERSONNEL_EDIT(person.id))}>Edit</button>
+        <button onClick={handleDelete}>Delete</button>
+      </div>
     </div>
   );
 }

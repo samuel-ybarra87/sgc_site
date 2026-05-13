@@ -336,8 +336,10 @@ describe('PersonnelForm', () => {
     } as any);
 
     vi.mocked(supabase.from).mockReturnValueOnce({
-            select: vi.fn().mockResolvedValueOnce({ data: mockPersonnel, error: null }),
-        } as any);
+      select: vi.fn().mockReturnValueOnce({
+        order: vi.fn().mockResolvedValueOnce({ data: mockPersonnel, error: null }),
+      })
+    } as any);
 
     render(
         <MemoryRouter initialEntries={[PATHS.PERSONNEL_EDIT(mockPersonnel[1].id)]}>

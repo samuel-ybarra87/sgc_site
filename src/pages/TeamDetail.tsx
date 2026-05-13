@@ -4,20 +4,35 @@ import { supabase } from '../lib/supabase';
 import { PATHS } from '../lib/paths';
 import type { Personnel, Team } from '../lib/types';
 
+interface TeamInfo extends Team {
+  commanding_officer_details: Personnel | null;
+  members: Personnel[];
+}
+
 export default function TeamDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [team, setTeams] = useState<Team | null>(null);
+  const [team, setTeams] = useState<TeamInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<{ message: string; code: string } | null>(null);
 
-  const [person, setPersonnel] = useState<Personnel | null>(null);
-
   useEffect(() => {
     async function fetchData() {
+      setLoading(true);
+
       const { data, error } = await supabase
         .from('teams')
-        .select()
+        .select(`
+          *,
+          commanding_officer_details:personnel!teams_commanding_officer_fkey(
+            *,
+            roles:roles(name)
+          ),
+          members:personnel!personnel_team_id_fkey(
+            *,
+            roles:roles(name)
+          )
+        `)
         .eq('id', id)
         .single();
 
@@ -34,23 +49,6 @@ export default function TeamDetail() {
       
       setTeams(data);
       setLoading(false);
-
-      if(!data.commanding_officer) return;
-
-      const { data: personData, error: personError } = await supabase
-            .from('personnel')
-            .select()
-            .eq('id', data.commanding_officer)
-            .single();
-        if(personError) {
-            if(personError.code === 'PGRST116'){
-                setPersonnel(null);
-            } else {
-                console.log(personError);
-                setError({ message: 'An unexpected error occurred.', code: '500' });
-            }
-            return;
-        } else setPersonnel(personData);
     }
 
     fetchData();
@@ -87,20 +85,61 @@ export default function TeamDetail() {
     else navigate(PATHS.TEAM_LIST);
   }
 
+  const person = team.commanding_officer_details;
+
   return (
     <div>
       <h1>{team.designation}</h1>
-      <p>Commanding Officer: {person ? (
-        <>
-            {person.rank ? `${person.rank} ` : '' }
-            {`${person.first_name} `}
-            {person.middle_name ? ` ${person.middle_name} ` : ''} 
-            {person.last_name}
-            {person.suffix ? ` ${ person.suffix}` : ''}
-        </>
-      ): 'Unassigned'}
-      </p>
-      <p>Status: {team.status}</p>
+        {team.designation !== 'Unassigned' ? <h3><u>Current Members</u></h3> : <h3>Members</h3>}
+      <ul>
+        <li>
+            {person ? (
+              <p>Commanding Officer: <></>
+                  {person.rank ? `${person.rank} ` : ''}
+                  {`${person.first_name} `}
+                  {person.middle_name ? ` ${person.middle_name}` : ''}
+                  {person.last_name}
+                  {person.suffix ? ` ${person.suffix}` : ''}
+              </p>
+            ) : '' }
+        </li>
+      </ul>
+      {team.members
+        .filter(m => m.id !== team.commanding_officer)
+        .filter(m => m.status === 'active')
+        .map(member =>
+          <ul key={`${member.last_name}, ${member.first_name}`}>
+            <li>
+              {member.roles ? member.roles.name : member.role}: <></>
+              {member.personnel_type === 'military' ? member.rank : member.prefix} <></>
+              {member.first_name} <></>
+              {member.middle_name ? ` ${member.middle_name}` : ''}
+              {member.last_name}
+              {member.suffix ? ` ${member.suffix}` : ''}
+            </li>
+          </ul>
+      )}
+      <h4>Status: {team.status}</h4>
+      {team.members.filter(m => m.status !== 'active').length !== 0 ? (
+        <div>
+          {team.designation !== 'Unassigned' ? <h3><u>Other Members</u></h3> : '' }
+          {team.members
+            .filter(m => m.status !== 'active')
+            .map(member =>
+              <ul key={`${member.last_name}, ${member.first_name}`}>
+                <li>
+                  {member.roles ? member.roles.name : member. role}: <></>
+                  {member.personnel_type === 'military' ? member.rank : member.prefix} <></>
+                  {member.first_name} <></>
+                  {member.middle_name ? ` ${member.middle_name}` : ''}
+                  {member.last_name}
+                  {member.suffix ? ` ${member.suffix}` : ''}<> </>
+                  <b>({member.status.toUpperCase()})</b>
+                </li>
+              </ul>
+            )}
+        </div>
+      ) : ''}
       <button onClick={() => navigate(PATHS.TEAM_LIST)}>Back</button>
       <button onClick={() => navigate(PATHS.TEAM_EDIT(team.id))}>Edit</button>
       <button onClick={handleDelete}>Delete</button>
