@@ -140,6 +140,54 @@ export const mockPersonnel = [
         last_name: 'Hammond',
         suffix: '',
         personnel_type: 'military'
+    },
+    {
+        id: '8',
+        rank: 'Major',
+        role: '',
+        role_id: 'test-commander',
+        roles: { name: mockRoles[1].name },
+        team_id: 'team-sg-2',
+        teams: { designation: 'SG-2' },
+        status: 'deceased',
+        prefix: 'Mr.',
+        first_name: 'Charles',
+        middle_name: '',
+        last_name: 'Kawalsky',
+        suffix: '',
+        personnel_type: 'military'
+    },
+    {
+        id: '9',
+        rank: null,
+        role: 'Guest',
+        role_id: null,
+        roles: null,
+        team_id: 'team-unassigned',
+        teams: { designation: 'Unassigned' },
+        status: 'active',
+        prefix: 'Ms.',
+        first_name: 'Vala',
+        middle_name: '',
+        last_name: 'Maldaran',
+        suffix: '',
+        personnel_type: 'civilian'
+    },
+    {
+        id: '10',
+        rank: 'Major',
+        role: '',
+        role_id: 'test-role',
+        roles: { name: mockRoles[0].name },
+        team_id: 'team-unassigned',
+        teams: { designation: 'Unassigned' },
+        status: 'transferred',
+        prefix: 'Mr.',
+        first_name: 'John',
+        middle_name: '',
+        last_name: 'Shepard',
+        suffix: '',
+        personnel_type: 'military'
     }
 ];
 
@@ -167,7 +215,7 @@ export const mockTeams = [
     {
         id: 'team-sg-test',
         designation: 'SG-Test',
-        commanding_officer: mockPersonnel[6].id,
+        commanding_officer: null,
         status: 'active'
     },
     {
@@ -181,5 +229,52 @@ export const mockTeams = [
         designation: 'SGC',
         commanding_officer: mockPersonnel[6].id,
         status: 'active'
+    }
+]
+
+export const mockTeamData = [
+    {
+        ...mockTeams[0],
+        commanding_officer_details: mockPersonnel[0],
+        members: [
+            mockPersonnel[0],
+            mockPersonnel[1],
+            mockPersonnel[5],
+            {
+                id: '0',
+                rank: 'Captain',
+                role: 'Chief Science Officer',
+                role_id: null,
+                roles: null,
+                team_id: 'team-sg-1',
+                teams: { designation: 'SG-1' },
+                status: 'active',
+                prefix: 'Dr.',
+                first_name: 'Samantha',
+                middle_name: '',
+                last_name: 'Carter',
+                suffix: 'PHD',
+                personnel_type: 'military'
+            }
+        ]
+    },
+    {
+        ...mockTeams[2],
+        commanding_officer: mockPersonnel[0].id,
+        commanding_officer_details: { ...mockPersonnel[0], team_id: 'team-sg-test', teams: { name: 'SG-Test' } },
+        members: [
+            { ...mockPersonnel[0], team_id: 'team-sg-test', teams: { name: 'SG-Test' } },
+            { ...mockPersonnel[2], team_id: 'team-sg-test', teams: { name: 'SG-Test' } },
+            { ...mockPersonnel[3], team_id: 'team-sg-test', teams: { name: 'SG-Test' } },
+            { ...mockPersonnel[9], team_id: 'team-sg-test', teams: { name: 'SG-Test' } },
+        ]
+    },
+    {
+        ...mockTeams[3],
+        commanding_officer_details: null,
+        members:[
+            mockPersonnel[8],
+            mockPersonnel[9],
+        ]
     }
 ]

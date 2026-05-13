@@ -5,9 +5,8 @@ import TeamForm from '../pages/TeamForm';
 import { supabase } from '../lib/supabase';
 import userEvent from '@testing-library/user-event';
 import TeamList from '../pages/TeamList';
-import { mockTeamEntry, mockPersonnel, mockRoles, mockTeams } from '../lib/mockData';
+import { mockTeamEntry, mockPersonnel, mockTeams } from '../lib/mockData';
 import { PATHS, ROUTES } from '../lib/paths';
-import { rankAbbreviations } from '../lib/rankAbbreviations';
 
 const user = userEvent.setup();
 

@@ -110,16 +110,16 @@ export default function TeamDetail() {
         .map(member =>
           <ul key={`${member.last_name}, ${member.first_name}`}>
             <li>
-              {member.roles ? member.roles.name : member.role}: <></>
-              {member.personnel_type === 'military' ? member.rank : member.prefix} <></>
-              {member.first_name} <></>
-              {member.middle_name ? ` ${member.middle_name}` : ''}
+              {`${member.roles ? member.roles.name : member.role}: `}
+              {`${member.personnel_type === 'military' ? member.rank : member.prefix || '' } `}
+              {member.first_name}
+              {`${member.middle_name ? ` ${member.middle_name} ` : ' '}`}
               {member.last_name}
               {member.suffix ? ` ${member.suffix}` : ''}
             </li>
           </ul>
       )}
-      <h4>Status: {team.status}</h4>
+      {team.designation !== 'Unassigned' ? <h4>Status: {team.status}</h4> : '' }
       {team.members.filter(m => m.status !== 'active').length !== 0 ? (
         <div>
           {team.designation !== 'Unassigned' ? <h3><u>Other Members</u></h3> : '' }
@@ -128,12 +128,12 @@ export default function TeamDetail() {
             .map(member =>
               <ul key={`${member.last_name}, ${member.first_name}`}>
                 <li>
-                  {member.roles ? member.roles.name : member. role}: <></>
-                  {member.personnel_type === 'military' ? member.rank : member.prefix} <></>
-                  {member.first_name} <></>
-                  {member.middle_name ? ` ${member.middle_name}` : ''}
+                  {`${member.roles ? member.roles.name : member.role}: `}
+                  {`${member.personnel_type === 'military' ? member.rank : member.prefix || '' } `}
+                  {member.first_name}
+                  {`${member.middle_name ? ` ${member.middle_name} ` : ' '}`}
                   {member.last_name}
-                  {member.suffix ? ` ${member.suffix}` : ''}<> </>
+                  {member.suffix ? ` ${member.suffix} ` : ' '}
                   <b>({member.status.toUpperCase()})</b>
                 </li>
               </ul>
