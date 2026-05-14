@@ -83,13 +83,18 @@ src/
     TeamList.tsx
   test/
     integration/
+      Homepage.integration.test.tesx
       PersonnelDetail.integration.test.tsx
       PersonnelForm.integration.test.tsx
       PersonnelList.integration.test.tsx
+      TeamDetail.integration.test.tsx
+      TeamForm.integration.test.tsx
+      TeamList.integration.test.tsx
     PersonnelDetail.test.tsx
     PersonnelForm.test.tsx
     PersonnelList.test.tsx
     setup.ts
+    TeamDetail.test.tsx
     TeamForm.test.tsx
     TeamList.test.tsx
     testUtils.ts

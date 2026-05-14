@@ -3,6 +3,7 @@ import { server } from '../mocks/server';
 import { supabaseUrl } from '../mocks/handlers';
 
 export const PERSONNEL = `${supabaseUrl}/rest/v1/personnel`;
+export const TEAM = `${supabaseUrl}/rest/v1/teams`
 
 export function setupPostCapture(endpoint: string) {
   let capturedBody: unknown;

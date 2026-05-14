@@ -26,6 +26,7 @@ describe('Homepage (integration)', () => {
 
         const jack = await screen.findByText(/Col Jack O'Neill/);
         expect(jack).toBeInTheDocument(); 
+        expect(await screen.findByRole('button', { name: 'Home' }));
     });
 
     it('navigates to Team List from Homepage', async () =>{
@@ -42,6 +43,8 @@ describe('Homepage (integration)', () => {
         const team = await screen.findByRole('link', { name: 'TEAM LIST' });
         await user.click(team);
 
-        // Team list 
+        const sg1 = await screen.findByText('SG-1');
+        expect(sg1).toBeInTheDocument();
+        expect(await screen.findByRole('button', { name: 'Home' }));
     });
 });

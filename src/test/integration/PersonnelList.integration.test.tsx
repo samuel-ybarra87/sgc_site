@@ -15,10 +15,16 @@ const user = userEvent.setup();
 describe('PersonnelList (integration)', () => {
     it('fetches and displays personnel records from the API', async () =>{
         render(
-            <MemoryRouter>
-                <PersonnelList />
+            <MemoryRouter initialEntries={[PATHS.HOME]}>
+                <Routes>
+                    <Route path={PATHS.PERSONNEL_LIST} element={<PersonnelList />} />
+                    <Route path={PATHS.HOME} element={<Homepage />} />
+                </Routes>
             </MemoryRouter>
         );
+
+        const personnel = await screen.findByRole('link', { name: 'PERSONNEL LIST' });
+        await user.click(personnel);
 
         const jack = await screen.findByText(/Col Jack O'Neill/);
         expect(jack).toBeInTheDocument();
@@ -44,7 +50,7 @@ describe('PersonnelList (integration)', () => {
     it('displays no records message when API returns error', async () => {
         server.use(
             http.get(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/personnel`, () => {
-            return new HttpResponse(null, { status: 500 });
+                return new HttpResponse(null, { status: 500 });
             })
         );
 
@@ -61,10 +67,10 @@ describe('PersonnelList (integration)', () => {
     it('navigates to personnel detail when a record is clicked', async () => {
         render(
             <MemoryRouter initialEntries={[PATHS.PERSONNEL_LIST]}>
-            <Routes>
-                <Route path={PATHS.PERSONNEL_LIST} element={<PersonnelList />} />
-                <Route path={ROUTES.PERSONNEL_DETAIL} element={<PersonnelDetail />} />
-            </Routes>
+                <Routes>
+                    <Route path={PATHS.PERSONNEL_LIST} element={<PersonnelList />} />
+                    <Route path={ROUTES.PERSONNEL_DETAIL} element={<PersonnelDetail />} />
+                </Routes>
             </MemoryRouter>
         );
 
@@ -102,7 +108,7 @@ describe('PersonnelList (integration)', () => {
             </MemoryRouter>
         );
 
-        const homeButton = await screen.findByText(/Home/);
+        const homeButton = await screen.findByRole('button', { name: 'Home' });
         await user.click(homeButton);
 
         const header = await screen.findByText('Stargate Command Records');

@@ -37,7 +37,7 @@ describe('TeamDetail', () => {
           </MemoryRouter>
         );
 
-        const message = await screen.findByText('Personnel record not found.');
+        const message = await screen.findByText('Team record not found.');
         expect(message).toBeInTheDocument();
       });
 
@@ -137,7 +137,7 @@ describe('TeamDetail', () => {
       } as any);
 
       render(
-        <MemoryRouter initialEntries={[PATHS.PERSONNEL_DETAIL(mockTeamData[1].id)]}>
+        <MemoryRouter initialEntries={[PATHS.PERSONNEL_DETAIL(mockTeamData[2].id)]}>
           <Routes>
             <Route path={ROUTES.PERSONNEL_DETAIL} element={<TeamDetail />} />
           </Routes>

@@ -73,8 +73,8 @@ describe('PersonnelForm (integration)', () => {
         server.use(
             http.post(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/personnel`, () => {
                 return new HttpResponse(
-                JSON.stringify({ message: 'insert failed', code: '500' }),
-                { status: 500 }
+                    JSON.stringify({ message: 'insert failed', code: '500' }),
+                    { status: 500 }
                 );
             })
         );
@@ -138,6 +138,22 @@ describe('PersonnelForm (integration)', () => {
         });
     });
 
+    it('should show an error message if team is blank', async () => {
+        render(
+        <MemoryRouter>
+            <PersonnelForm />
+        </MemoryRouter>
+        );
+
+        await user.type(screen.getByLabelText('First Name:'), mockEntry.first_name);
+        await user.type(screen.getByLabelText('Last Name:'), mockEntry.last_name);
+        await user.selectOptions(screen.getByLabelText('Role:'), mockEntry.role_id);
+        await user.click(screen.getByText('Save'));
+
+        const errorMsg = await screen.findByText(/Please select a team./);
+        expect(errorMsg).toBeInTheDocument();
+    });
+
     it('navigates to edit form and show values of record to edit', async () =>{
         render(
             <MemoryRouter initialEntries={[PATHS.PERSONNEL_LIST]}>
@@ -193,23 +209,33 @@ describe('PersonnelForm (integration)', () => {
         // Test
         const heading = await screen.findByText('SGC Personnel');
         expect(heading).toBeInTheDocument();
-        expect(body()).toMatchObject({
-            id: mockPersonnel[1].id,
-            prefix: mockPersonnel[1].prefix,
-            first_name: mockPersonnel[1].first_name,
-            middle_name: mockPersonnel[1].middle_name,
-            last_name: mockPersonnel[1].last_name,
-            suffix: mockPersonnel[1].suffix,
-            personnel_type: mockPersonnel[1].personnel_type,
-            rank: mockPersonnel[1].rank,
-            team_id: mockPersonnel[1].team_id,
-            teams: mockPersonnel[1].teams,
-            role: mockPersonnel[1].role,
-            status: "kia",
-        });
+        expect(body()).toMatchObject({ ...mockPersonnel[1], status: "kia" });
     });
 
-    it('navigates back to personnel list when cancelling', async () =>{
+    it('navigates back to personnel list when cancelling (add)', async () =>{
+        render(
+            <MemoryRouter initialEntries={[PATHS.PERSONNEL_LIST]}>
+                <Routes>
+                    <Route path={PATHS.PERSONNEL_LIST} element={<PersonnelList />} />
+                    <Route path={PATHS.PERSONNEL_NEW} element={<PersonnelForm />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        // Navigate to add page
+        await user.click(await screen.findByRole('button', { name: 'Add Personnel' }));
+
+        // Cancel Update
+        await user.click(await screen.findByRole('button', { name: 'Cancel' }));
+
+        // Test
+        const heading = await screen.findByText('SGC Personnel');
+        const daniel = await screen.findByText(/Dr. Daniel Jackson PHD/);
+        expect(heading).toBeInTheDocument();
+        expect(daniel).toBeInTheDocument();
+    });
+
+    it('navigates back to personnel list when cancelling (edit)', async () =>{
         render(
             <MemoryRouter initialEntries={[PATHS.PERSONNEL_LIST]}>
                 <Routes>

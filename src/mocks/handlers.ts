@@ -1,15 +1,33 @@
 import { http, HttpResponse } from 'msw';
-import { mockPersonnel, mockRoles, mockTeams } from '../lib/mockData';
+import { mockPersonnel, mockRoles, mockTeamData, mockTeams } from '../lib/mockData';
 
 export const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 
-function createCrudHandlers(resource: string, mockData: Record<string, unknown>[]){
+function createCrudHandlers(
+  resource: string,
+  mockData: Record<string, unknown>[],
+  mockDetailData?: Record<string, unknown>[]
+){
   return [
     http.get(`${supabaseUrl}/rest/v1/${resource}`, ({ request }) =>{
       const url = new URL(request.url);
-      const id = url.searchParams.get('id'); // 'id' => `eq.${id}`
-      const index = id ? Number(id.slice(3)) - 1 : 0;
-      if (id) return HttpResponse.json(mockData[index]);
+      const select = url.searchParams.get('select');
+      const idParam = url.searchParams.get('id'); // 'id' => `eq.${id}`
+      
+      // Team Detail request
+      if(idParam && select && select.includes('commanding_officer_details')){
+        const idValue = idParam.split('.')[1]; // extract 'team-sg-1 from 'eq.team-sg-1'
+        const detail = mockDetailData?.find(t => t.id === idValue);
+        return HttpResponse.json(detail || {});
+      }
+      
+      // List views
+      if (idParam) {
+        const index = idParam.split('.')[1]; // extract id
+        const list = mockData.find(i => i.id === index);
+        return HttpResponse.json(list);
+      }
+
       return HttpResponse.json(mockData);
     }),
     http.delete(`${supabaseUrl}/rest/v1/${resource}`, () =>{
@@ -20,7 +38,7 @@ function createCrudHandlers(resource: string, mockData: Record<string, unknown>[
 
 export const handlers = [
   ...createCrudHandlers('personnel', mockPersonnel),
-  ...createCrudHandlers('teams', mockTeams),
+  ...createCrudHandlers('teams', mockTeams, mockTeamData),
   ...createCrudHandlers('roles', mockRoles),
   // ...createCrudHandlers('missions', mockMissions)
 ];
