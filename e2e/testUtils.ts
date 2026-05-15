@@ -10,6 +10,7 @@ export function extractName(person: Record<string, unknown>){
     return {
         link : person.personnel_type == 'military' ? `${abbrev}${name}` : `${prefix}${name}`,
         displayName : `${prefix}${name}`,
+        listName: `${person.personnel_type === 'military' ? person.rank : person.prefix} ${person.first_name}${person.middle_name ? ` ${person.middle_name} ` : ' '}${person.last_name} ${person.suffix}`
     }
 }
 
@@ -32,7 +33,8 @@ export async function seedTestPersonnel(supabase: SupabaseClient, persons: Perso
     // Insert test data
     const { data, error } = await supabase
         .from('personnel')
-        .insert(persons).select();
+        .insert(persons)
+        .select();
 
     if(error) throw new Error(`Failed to insert test personnel: ${error.message}`);
     if(!data || data.length === 0) throw new Error('No personnel data returned after insert');

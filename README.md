@@ -62,6 +62,7 @@ e2e/
   interface.ts            # Test Objects for mock entries
   mockData.ts             # Temp values for E2E tests
   personnel.spec.ts
+  teams.spec.ts
   testUtils.ts            # Helper functions for E2E tests
 src/
   lib/
@@ -111,8 +112,8 @@ src/
   - [x] Migrate personnel to use team_id foreign key
 - [x] Teams CRUD
   - [x] Teams unit test suite
-  - [ ] Teams integration test suite
-  - [ ] Teams e2e test suite
+  - [x] Teams integration test suite
+  - [x] Teams e2e test suite
 - [ ] Mission Records schema
   - [ ] Create many to many relationship between personnel and teams tables
 - [ ] Mission records CRUD

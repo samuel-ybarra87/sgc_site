@@ -5,7 +5,7 @@ export const e2eTestRecords = {
         first_name: "Samuel",
         middle_name: "Test",
         last_name: "Ybarra",
-        suffix: "TEST1",
+        suffix: "TEST",
         personnel_type: "military",
         rank: "Colonel",
         team_id: "team-sg-test",
@@ -74,6 +74,51 @@ export const e2eTestRecords = {
         last_name: 'Fields',
         suffix: 'TEST',
         personnel_type: 'civilian'
+    },
+    teamMember1 : {
+        rank: 'Major',
+        role: '',
+        role_id: 'test-role',
+        roles: { name: 'Test Role' },
+        team_id: 'team-sg-test',
+        teams: { designation: 'SG-Test' },
+        status: 'active',
+        prefix: 'Dr.',
+        first_name: 'John',
+        middle_name: '',
+        last_name: 'Smith',
+        suffix: 'TEST',
+        personnel_type: 'military'
+    },
+    teamMember2 : {
+        rank: 'Captain',
+        role: '',
+        role_id: 'test-role',
+        roles: { name: 'Test Role' },
+        team_id: 'team-sg-test',
+        teams: { designation: 'SG-Test' },
+        status: 'active',
+        prefix: 'Ms.',
+        first_name: 'Jane',
+        middle_name: '',
+        last_name: 'Smith',
+        suffix: 'TEST',
+        personnel_type: 'military'
+    },
+    teamMember3 : {
+        rank: null,
+        role: '',
+        role_id: 'test-role',
+        roles: { name: 'Test Role' },
+        team_id: 'team-sg-test',
+        teams: { designation: 'SG-Test' },
+        status: 'active',
+        prefix: 'Dr.',
+        first_name: 'Alex',
+        middle_name: '',
+        last_name: 'Smith',
+        suffix: 'TEST',
+        personnel_type: 'civilian'
     }
 }
 
@@ -82,15 +127,13 @@ export const TEST_PERSONNEL_NAMES = Object.values(e2eTestRecords).map(p => p.suf
 export const e2eTestTeams = [
     {
         designation: 'SG-Test-1',
+        commanding_officer: null,
         status: 'active'
     },
     {
         designation: 'SG-Test-2',
+        commanding_officer: null,
         status: 'active'
-    },
-    {
-        designation: 'SG-Unassigned-Test',
-        status: 'inactive'
     }
 ]
 

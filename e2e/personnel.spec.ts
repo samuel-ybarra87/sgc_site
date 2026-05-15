@@ -38,7 +38,7 @@ test.afterAll(async () =>{
     await deleteTestData(supabase);
 });
 
-test.describe('read and verify', async () => {
+test.describe('read and verify (Personnel)', async () => {
     const displayName = extractName(e2eTestRec).displayName;
     const link = extractName(e2eTestRec).link;
     const civilian_link = extractName(e2eTestCivilian).link;
@@ -75,21 +75,21 @@ test.describe('read and verify', async () => {
         // Update e2eTestRecords
         e2eTestRec.team_id = testTeam1.id;
         e2eTestRec.teams.designation = testTeam1.designation;
-        e2eTestRec.role_id = co.id
-        e2eTestRec.roles.name = co.name
+        e2eTestRec.role_id = co.id;
+        e2eTestRec.roles.name = co.name;
 
         e2eTestRec2.team_id = testTeam1.id;
         e2eTestRec2.teams.designation = testTeam1.designation;
-        e2eTestRec2.role_id = testRoles[0].id
-        e2eTestRec2.roles.name = testRoles[0].name
+        e2eTestRec2.role_id = testRoles[0].id;
+        e2eTestRec2.roles.name = testRoles[0].name;
 
         e2eTestRec3.team_id = testTeam1.id;
         e2eTestRec3.teams.designation = testTeam1.designation;
 
         e2eTestCivilian.team_id = testTeam2.id;
         e2eTestCivilian.teams.designation = testTeam2.designation;
-        e2eTestCivilian.role_id = testRoles[0].id
-        e2eTestCivilian.roles.name = testRoles[0].name
+        e2eTestCivilian.role_id = testRoles[0].id;
+        e2eTestCivilian.roles.name = testRoles[0].name;
     });
 
     test('displays personnel list on personnel home page', async ({ page }) => {
@@ -103,7 +103,7 @@ test.describe('read and verify', async () => {
         // Assertions...
         await expect(page).toHaveURL(PATHS.PERSONNEL_LIST);
         await expect(heading).toBeVisible();
-        await expect(sam).toBeVisible(); // Can't be found?
+        await expect(sam).toBeVisible();
     });
 
     test('navigates to personnel detail page from personnel home page', async({ page }) =>{
@@ -296,8 +296,6 @@ test.describe('write then delete', async () =>{
         
         await page.getByRole("button", { name: "Save" }).click();
 
-        await page.pause();
-
         await expect(page).toHaveURL(PATHS.PERSONNEL_LIST);
         await expect(page.getByText('SGC Personnel')).toBeVisible();
         await expect(page.getByText(link)).toBeVisible();
@@ -367,7 +365,6 @@ test.describe('write then delete', async () =>{
         await expect(page.getByText(link)).not.toBeVisible();
     });
 
-    // Delete cancelled stays on detail page
     test('cancelling delete stays on detail page', async ({ page }) =>{        
         await page.goto(PATHS.PERSONNEL_LIST);
 
