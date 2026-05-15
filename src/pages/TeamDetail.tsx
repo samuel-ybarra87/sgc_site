@@ -56,7 +56,7 @@ export default function TeamDetail() {
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error {error.code}: {error.message}</p>;
-  if (!team || Object.keys(team).length === 0) return <p>Team record not found.</p>;
+  if (!team || !team.id) return <p>Team record not found.</p>;
 
   async function handleDelete() {
     if(!team) return;
