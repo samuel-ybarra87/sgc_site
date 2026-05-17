@@ -96,8 +96,8 @@ export default function TeamDetail() {
             {person ? (
               <p>Commanding Officer: <></>
                   {person.rank ? `${person.rank} ` : ''}
-                  {`${person.first_name} `}
-                  {person.middle_name ? ` ${person.middle_name}` : ''}
+                  {person.first_name}
+                  {person.middle_name ? ` ${person.middle_name} ` : ' '}
                   {person.last_name}
                   {person.suffix ? ` ${person.suffix}` : ''}
               </p>

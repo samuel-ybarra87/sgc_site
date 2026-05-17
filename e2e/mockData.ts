@@ -3,7 +3,7 @@ export const e2eTestRecords = {
     e2eTestRec : {
         prefix: "Mr.",
         first_name: "Samuel",
-        middle_name: "Test",
+        middle_name: "Test1", // deleteTestData() will still find and remove this record
         last_name: "Ybarra",
         suffix: "TEST",
         personnel_type: "military",

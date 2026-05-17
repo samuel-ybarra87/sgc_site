@@ -10,8 +10,10 @@ import {
     fetchTestTeams,
     seedTestPersonnel,
     seedTestRoles,
-    seedTestTeams
+    seedTestTeams,
+    updateTeam
 } from './testUtils';
+import { Team } from './interface';
 
 dotenv.config();
 
@@ -111,8 +113,7 @@ test.beforeAll(async () =>{
     e2eTestCivilian.roles.name = testRoles[0].name;
 
     // teams
-    e2eTestTeam1.commanding_officer = teamLead.id;
-
+    e2eTestTeam1.commanding_officer = (await updateTeam(supabase, { ...e2eTestTeam1, commanding_officer: teamLead.id })).commanding_officer;
 });
 
 test.afterAll(async () =>{
@@ -193,8 +194,6 @@ test.describe('read and verify (Teams)', async () => {
 
         await page.getByRole('link', { name: e2eTestTeam2.designation }).click();
 
-        await page.pause();
-
         // headers
         await expect(page.getByRole('heading', { name: e2eTestTeam2.designation, level: 1 })).toBeVisible();
         await expect(page.getByRole('heading', { name: 'Current Members', level: 3 })).toBeVisible();
@@ -206,7 +205,17 @@ test.describe('read and verify (Teams)', async () => {
         await expect(page.getByRole('heading', { name: 'Other Members', level: 3 })).not.toBeVisible();
     });
 
-    test('edit button navigates to form with pre-populated data', async ({ page }) =>{});
+    test('edit button navigates to form with pre-populated data', async ({ page }) =>{
+        await page.goto(PATHS.TEAM_LIST);
+
+        await page.getByRole('link', { name: link }).click();
+
+        await page.getByRole('button', { name: 'Edit' }).click();
+
+        await expect(page.getByLabel('Designation')).toHaveValue(e2eTestTeam1.designation);
+        await expect(page.getByLabel('Commanding Officer')).toHaveValue((e2eTestTeam1 as Team).commanding_officer as string);
+        await expect(page.getByLabel('Status')).toHaveValue(e2eTestTeam1.status);
+    });
 
     test('cancel button on edit form returns to list view', async ({ page }) =>{});
 

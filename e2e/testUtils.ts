@@ -10,15 +10,21 @@ export function extractName(person: Record<string, unknown>){
     return {
         link : person.personnel_type == 'military' ? `${abbrev}${name}` : `${prefix}${name}`,
         displayName : `${prefix}${name}`,
-        listName: `${person.personnel_type === 'military' ? person.rank : person.prefix} ${person.first_name}${person.middle_name ? ` ${person.middle_name} ` : ' '}${person.last_name} ${person.suffix}`
+        listName: `${person.personnel_type === 'military' ? person.rank : person.prefix} ${person.first_name}${person.middle_name ? ` ${person.middle_name} ` : ' '}${person.last_name}${person.suffix ? ` ${person.suffix}` : '' }`
     }
 }
 
 export async function deleteTestData(supabase: SupabaseClient){
+    // Nullify
     await supabase
         .from('personnel')
         .update({ team_id: null, role_id: null })
         .eq('suffix', 'TEST');
+
+    await supabase
+        .from('teams')
+        .update({ commanding_officer: null })
+        .in('designation', TEST_TEAM_DESIGNATIONS);
     
     await deleteTestPersonnel(supabase, await fetchTestPersonnel(supabase));
     await deleteTestRoles(supabase, await fetchTestRoles(supabase));
@@ -74,10 +80,24 @@ export async function seedTestTeams(supabase: SupabaseClient) {
     // Insert test teams
     const { data, error } = await supabase
         .from('teams')
-        .insert(e2eTestTeams).select();
+        .insert(e2eTestTeams)
+        .select();
 
     if(error) throw new Error(`Failed to insert test teams: ${error.message}`);
     if(!data || data.length === 0) throw new Error('No team data returned after insert');
+
+    return data;
+}
+
+export async function updateTeam(supabase: SupabaseClient, team: Team) {
+    const { data, error } = await supabase
+        .from('teams')
+        .update({ commanding_officer: team.commanding_officer })
+        .eq('designation', team.designation)
+        .select()
+        .single();
+    
+    if(error) throw new Error(`Failed to update team: ${error.message}`);
 
     return data;
 }
