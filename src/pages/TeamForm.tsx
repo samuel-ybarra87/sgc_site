@@ -53,6 +53,7 @@ export default function TeamForm() {
 
         if (!isEditing) return;
 
+        let shouldUpdate = true;
         async function fetchTeams() {
             const { data, error } = await supabase
                 .from('teams')
@@ -60,11 +61,15 @@ export default function TeamForm() {
                 .eq('id', id)
                 .single();
             if (error) console.error(error);
-            else setForm(data);
-            setFetching(false);
+            else if (shouldUpdate) {
+                setForm(data);
+                setFetching(false);
+            }
         }
 
         fetchTeams();
+
+        return () => { shouldUpdate = false; }
     }, [id, isEditing]);
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {

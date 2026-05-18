@@ -30,6 +30,7 @@ const e2eTestCivilian = e2eTestRecords.e2eTestCivilian;
 test.describe.configure({ mode: 'serial' });
 
 test.beforeAll(async () =>{
+    await deleteTestData(supabase); // force deletion of mock data
     await seedTestTeams(supabase);
     await seedTestRoles(supabase, e2eTestRoles);
 });
@@ -211,14 +212,23 @@ test.describe('read and verify (Personnel)', async () => {
         await expect(page.getByText(link)).toBeVisible();
     });
 
-    test('Add Personnel button navigates to empty form', async ({ page }) =>{
-        await page.goto(PATHS.PERSONNEL_LIST);
-
+    test('Add Personnel button navigates to empty form', async ({ page }) =>{  
+        await page.goto(PATHS.HOME);
+        await page.getByRole('link', { name: 'PERSONNEL LIST' }).click();
         await page.getByRole('button', { name: 'Add Personnel' }).click();
 
         // Assertions...
         await expect(page).toHaveURL(PATHS.PERSONNEL_NEW);
         await expect(page.getByText('Add Personnel')).toBeVisible();
+        await expect(page.getByLabel('Prefix')).toHaveValue('');
+        await expect(page.getByLabel('First Name')).toHaveValue('');
+        await expect(page.getByLabel('Middle Name')).toHaveValue('');
+        await expect(page.getByLabel('Last Name')).toHaveValue('');
+        await expect(page.getByLabel('Suffix')).toHaveValue('');
+        await expect(page.getByLabel('Rank')).toHaveValue('');
+        await expect(page.getByLabel('Role')).toHaveValue('');
+        await expect(page.getByLabel('Team')).toHaveValue('');
+        await expect(page.getByLabel('Personnel Type')).toHaveValue('military');
         await expect(page.getByLabel('Status')).toHaveValue('active');
     });
 
@@ -276,9 +286,9 @@ test.describe('write then delete', async () =>{
             .eq('last_name', e2eTestMilitary.last_name);
     });
 
-    test('saving a new record navigates to list view', async ({ page }) =>{        
-        await page.goto(PATHS.PERSONNEL_LIST);
-
+    test('saving a new record navigates to list view', async ({ page }) =>{    
+        await page.goto(PATHS.HOME);
+        await page.getByRole('link', { name: 'PERSONNEL LIST' }).click();
         await page.getByRole('button', { name: 'Add Personnel' }).click();
 
         // Select Options
@@ -301,10 +311,8 @@ test.describe('write then delete', async () =>{
         await expect(page.getByText(link)).toBeVisible();
     });
 
-    test('saving an edited record navigates to list view', async ({ page }) =>{        
-        await page.goto(PATHS.PERSONNEL_LIST);
-
-        await page.getByRole('button', { name: 'Add Personnel' }).click();
+    test('saving an edited record navigates to list view', async ({ page }) =>{     
+        await page.goto(PATHS.PERSONNEL_NEW);
 
         // Select Options
         await page.getByLabel('Prefix').selectOption(e2eTestMilitary.prefix ?? '');
@@ -332,12 +340,15 @@ test.describe('write then delete', async () =>{
         await expect(page).toHaveURL(PATHS.PERSONNEL_LIST);
         await expect(page.getByText('SGC Personnel')).toBeVisible();
         await expect(page.getByText(link)).toBeVisible();
+
+        await page.getByRole("link", { name: link }).click();
+        
+        await expect(page.getByText(displayName)).toBeVisible();
+        await expect(page.getByText(new RegExp(/Status: kia/))).toBeVisible();
     });
 
     test('confirming delete returns to list view', async ({ page }) =>{        
-        await page.goto(PATHS.PERSONNEL_LIST);
-
-        await page.getByRole('button', { name: 'Add Personnel' }).click();
+        await page.goto(PATHS.PERSONNEL_NEW);
 
         // Select Options
         await page.getByLabel('Prefix').selectOption(e2eTestMilitary.prefix ?? '');
@@ -345,7 +356,7 @@ test.describe('write then delete', async () =>{
         await page.getByLabel('Personnel Type').selectOption(e2eTestMilitary.personnel_type ?? '');
         await page.getByLabel('Status').selectOption(e2eTestMilitary.status ?? '');
         await page.getByLabel('Team').selectOption(e2eTestMilitary.team_id ?? '');
-        await page.getByLabel('Role').selectOption(e2eTestMilitary.role_id);
+        await page.getByLabel('Role').selectOption(e2eTestMilitary.role_id ?? '');
         // Fill fields
         await page.getByLabel('First Name').fill(e2eTestMilitary.first_name ?? '');
         await page.getByLabel('Middle Name').fill(e2eTestMilitary.middle_name ?? '');
@@ -365,10 +376,8 @@ test.describe('write then delete', async () =>{
         await expect(page.getByText(link)).not.toBeVisible();
     });
 
-    test('cancelling delete stays on detail page', async ({ page }) =>{        
-        await page.goto(PATHS.PERSONNEL_LIST);
-
-        await page.getByRole('button', { name: 'Add Personnel' }).click();
+    test('cancelling delete stays on detail page', async ({ page }) =>{     
+        await page.goto(PATHS.PERSONNEL_NEW);
 
         // Select Options
         await page.getByLabel('Prefix').selectOption(e2eTestMilitary.prefix ?? '');

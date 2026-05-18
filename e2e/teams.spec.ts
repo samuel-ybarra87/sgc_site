@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 import { PATHS } from "../src/lib/paths"
-import { e2eTestRecords, e2eTestRoles, e2eTestTeams } from "./mockData"
+import { e2eTestRecords, e2eTestRoles, e2eTestTeams, TEST_TEAM_DESIGNATIONS } from "./mockData"
 import {
     deleteTestData,
     extractName,
@@ -30,6 +30,9 @@ const e2eTestMilitary = e2eTestRecords.e2eTestMilitary;
 const e2eTestCivilian = e2eTestRecords.e2eTestCivilian;
 // teams
 const SGC_MOCK_TEST = 'SGC-MOCK-TEST';
+const SGC_EDIT_TEST = 'SGC-EDIT-TEST';
+TEST_TEAM_DESIGNATIONS.push(SGC_MOCK_TEST);
+TEST_TEAM_DESIGNATIONS.push(SGC_EDIT_TEST);
 const e2eTestTeam1 = e2eTestTeams[0];
 const e2eTestTeam2 = e2eTestTeams[1];
 const members =[
@@ -41,6 +44,7 @@ const members =[
 test.describe.configure({ mode: 'serial' });
 
 test.beforeAll(async () =>{
+    await deleteTestData(supabase); // force clean up of mock data
     await seedTestTeams(supabase);
     await seedTestRoles(supabase, e2eTestRoles);
 
@@ -120,8 +124,9 @@ test.afterAll(async () =>{
     await deleteTestData(supabase);
 });
 
+const link = e2eTestTeam1.designation;
+
 test.describe('read and verify (Teams)', async () => {
-    const link = e2eTestTeam1.designation;
     
     test('displays team list on personnel home page', async ({ page }) => {
         // Test navigation
@@ -217,20 +222,141 @@ test.describe('read and verify (Teams)', async () => {
         await expect(page.getByLabel('Status')).toHaveValue(e2eTestTeam1.status);
     });
 
-    test('cancel button on edit form returns to list view', async ({ page }) =>{});
+    test('cancel button on edit form returns to list view', async ({ page }) =>{
+        await page.goto(PATHS.TEAM_LIST);
 
-    test('Add Team button navigates to empty form', async ({ page }) =>{});
+        await page.getByRole('link', { name: link }).click();
 
-    test('new form cancel button returns to list view', async ({ page }) =>{});
+        await page.getByRole('button', { name: 'Edit' }).click();
+
+        await page.getByRole('button', { name: 'Cancel' }).click();
+
+        await expect(page).toHaveURL(PATHS.TEAM_LIST);
+        await expect(page.getByText('SGC Team List')).toBeVisible();
+        await expect(page.getByText(link)).toBeVisible();
+    });
+
+    test('Add Team button navigates to empty form', async ({ page }) =>{
+        await page.goto(PATHS.TEAM_LIST);
+
+        await page.getByRole('button', { name: 'Add Team' }).click();
+
+        await expect(page).toHaveURL(PATHS.TEAM_NEW);
+        await expect(page.getByLabel('Designation')).toHaveValue('');
+        await expect(page.getByLabel('Commanding Officer')).toHaveValue('');
+        await expect(page.getByLabel('Status')).toHaveValue('active');
+    });
+
+    test('new form cancel button returns to list view', async ({ page }) =>{
+        await page.goto(PATHS.TEAM_LIST);
+
+        await page.getByRole('button', { name: 'Add Team' }).click();
+
+        await page.getByRole('button', { name: 'Cancel' }).click();
+
+        await expect(page).not.toHaveURL(PATHS.TEAM_NEW);
+        await expect(page).toHaveURL(PATHS.TEAM_LIST);
+        await expect(page.getByText('SGC Team List')).toBeVisible();
+        await expect(page.getByText(link)).toBeVisible();});
 });
 
 test.describe('write then delete', async () =>{
-    test('saving a new record navigates to list view', async ({ page }) =>{});
+    test.beforeEach(async ()=>{
+        // clean up missed artifacts
+        await supabase
+            .from('teams')
+            .delete()
+            .in('designation', [SGC_MOCK_TEST, SGC_EDIT_TEST]);
+    });
 
-    test('saving an edited record navigates to list view', async ({ page }) =>{});
+    test.afterEach(async ()=>{
+        // remove test entry
+        await supabase
+            .from('teams')
+            .delete()
+            .in('designation', [SGC_MOCK_TEST, SGC_EDIT_TEST]);
+    });
 
-    test('confirming delete returns to list view', async ({ page }) =>{});
+    test('saving a new record navigates to list view', async ({ page }) =>{
+        await page.goto(PATHS.HOME);
+        await page.getByRole('link', { name: 'TEAM LIST' }).click();
+        await page.getByRole('button', { name: 'Add Team' }).click();
 
-    test('cancelling delete stays on detail page', async ({ page }) =>{});
+        await page.getByLabel('Designation').fill(SGC_MOCK_TEST);
+        await page.getByLabel('Commanding Officer').selectOption(e2eTestTeam1.commanding_officer); // use real personnel UUID from mock data hydration
+        await expect(page.getByLabel('Status')).toHaveValue(e2eTestTeam1.status);
 
+        await page.getByRole('button', { name: 'Save' }).click();
+
+        await expect(page).toHaveURL(PATHS.TEAM_LIST);
+        await expect(page.getByRole('link', { name: SGC_MOCK_TEST })).toBeVisible();
+    });
+
+    test('saving an edited record navigates to list view', async ({ page }) =>{
+        // Add test team to edit
+        await page.goto(PATHS.TEAM_NEW);
+
+        await page.getByLabel('Designation').fill(SGC_MOCK_TEST);
+        await page.getByLabel('Commanding Officer').selectOption(e2eTestTeam1.commanding_officer); // use real personnel UUID from mock data hydration
+        await page.getByLabel('Status').selectOption(e2eTestTeam1.status);
+
+        await page.getByRole('button', { name: 'Save' }).click();
+
+        await expect(page).toHaveURL(PATHS.TEAM_LIST);
+        await expect(page.getByText('SGC Team List')).toBeVisible();
+        await expect(page.getByRole('link', { name: SGC_MOCK_TEST })).toBeVisible();
+        await expect(page.getByRole('link', { name: SGC_EDIT_TEST })).not.toBeVisible();
+
+        // Edit test team
+        await page.getByRole('link', { name: SGC_MOCK_TEST }).click();
+        await page.getByRole('button', { name: 'Edit' }).click();
+        await page.getByLabel('Designation').fill(SGC_EDIT_TEST);
+        await page.getByRole('button', { name: 'Save' }).click();
+
+        // Assertions
+        await expect(page).toHaveURL(PATHS.TEAM_LIST);
+        await expect(page.getByText('SGC Team List')).toBeVisible();
+        await expect(page.getByRole('link', { name: SGC_EDIT_TEST })).toBeVisible();
+        await expect(page.getByRole('link', { name: SGC_MOCK_TEST })).not.toBeVisible();
+    });
+
+    test('confirming delete returns to list view', async ({ page }) =>{
+        // Add test team to delete
+        await page.goto(PATHS.TEAM_NEW);
+
+        await page.getByLabel('Designation').fill(SGC_MOCK_TEST);
+        await page.getByLabel('Commanding Officer').selectOption(e2eTestTeam1.commanding_officer); // use real personnel UUID from mock data hydration
+        await expect(page.getByLabel('Status')).toHaveValue(e2eTestTeam1.status);
+
+        await page.getByRole('button', { name: 'Save' }).click();
+
+        await page.getByRole('link', { name: SGC_MOCK_TEST }).click();
+
+        page.on('dialog', dialog => dialog.accept());
+
+        await page.getByRole('button', { name: 'Delete' }).click();
+
+        await expect(page).toHaveURL(PATHS.TEAM_LIST);
+        await expect(page.getByRole('link', { name: SGC_MOCK_TEST })).not.toBeVisible();
+    });
+
+    test('cancelling delete stays on detail page', async ({ page }) =>{
+        // Add test team
+        await page.goto(PATHS.TEAM_NEW);
+
+        await page.getByLabel('Designation').fill(SGC_MOCK_TEST);
+        await page.getByLabel('Commanding Officer').selectOption(e2eTestTeam1.commanding_officer); // use real personnel UUID from mock data hydration
+        await expect(page.getByLabel('Status')).toHaveValue(e2eTestTeam1.status);
+
+        await page.getByRole('button', { name: 'Save' }).click();
+
+        await page.getByRole('link', { name: SGC_MOCK_TEST }).click();
+
+        page.on('dialog', dialog => dialog.dismiss());
+
+        await page.getByRole('button', { name: 'Delete' }).click();
+
+        await expect(page.getByText(SGC_MOCK_TEST)).toBeVisible();
+        await expect(page).not.toHaveURL(PATHS.TEAM_LIST);
+    });
 });

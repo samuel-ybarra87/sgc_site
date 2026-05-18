@@ -113,8 +113,8 @@ src/
 - [x] Teams CRUD
   - [x] Teams unit test suite
   - [x] Teams integration test suite
-  - [ ] Teams e2e test suite (In Prgrogress)
-- [ ] Mission Records schema
+  - [x] Teams e2e test suite
+- [ ] Mission Records schema (In Prgrogress)
   - [ ] Create many to many relationship between personnel and teams tables
 - [ ] Mission records CRUD
   - [ ] Missions unit test suite

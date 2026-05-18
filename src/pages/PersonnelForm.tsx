@@ -77,6 +77,7 @@ export default function PersonnelForm() {
 
     if (!isEditing) return;
 
+    let shouldUpdate = true;
     async function fetchPerson() {
       const { data, error } = await supabase
         .from('personnel')
@@ -84,11 +85,15 @@ export default function PersonnelForm() {
         .eq('id', id)
         .single();
       if (error) console.error(error);
-      else setForm(data);
-      setFetching(false);
+      else if (shouldUpdate) {
+        setForm(data);
+        setFetching(false);
+      }
     }
 
     fetchPerson();
+
+    return () => { shouldUpdate = false; }
   }, [id, isEditing]);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
