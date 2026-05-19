@@ -12,6 +12,9 @@ export default function PersonnelList() {
                 <li key={PATHS.TEAM_LIST}>
                     <Link to={PATHS.TEAM_LIST}>TEAM LIST</Link>
                 </li>
+                <li key={PATHS.MISSION_LIST}>
+                    <Link to={PATHS.MISSION_LIST}>TEAM LIST</Link>
+                </li>
             </ul>
         </div>
     );

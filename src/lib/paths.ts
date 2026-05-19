@@ -8,6 +8,10 @@ export const PATHS = {
     TEAM_NEW: '/teams/new',
     TEAM_DETAIL: (id: string) => `/teams/${id}`,
     TEAM_EDIT: (id: string) => `/teams/${id}/edit`,
+    MISSION_LIST: '/missions',
+    MISSION_NEW: '/missions/new',
+    MISSION_DETAIL: (id: string) => `/missions/${id}`,
+    MISSION_EDIT: (id: string) => `/missions/${id}/edit`
 };
 
 export const ROUTES = {
@@ -15,4 +19,6 @@ export const ROUTES = {
     PERSONNEL_EDIT: "/personnel/:id/edit",
     TEAM_DETAIL: "/teams/:id",
     TEAM_EDIT: "/teams/:id/edit",
+    MISSION_DETAIL: "/missions/:id",
+    MISSION_EDIT: "/missions/:id/edit",
 }

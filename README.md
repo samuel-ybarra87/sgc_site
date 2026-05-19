@@ -114,15 +114,18 @@ src/
   - [x] Teams unit test suite
   - [x] Teams integration test suite
   - [x] Teams e2e test suite
-- [ ] Mission Records schema (In Prgrogress)
-  - [ ] Create many to many relationship between personnel and teams tables
-- [ ] Mission records CRUD
+- [x] Mission Records schema
+  - [x] Create many to many relationship between personnel, teams, and missions tables
+- [ ] Mission records CRUD (In Prgrogress)
   - [ ] Missions unit test suite
   - [ ] Missions integration test suite
   - [ ] Missions e2e test suite
 - [ ] GitHub Pages deployment
 - [ ] Styling
 - [ ] Role-based access control
+- Quality of Life Updates
+  - Join Table for team member population and history
+  - Edit team members from Team Detail page
 
 ## Why I Built This
 
