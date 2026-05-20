@@ -265,10 +265,12 @@ export default function PersonnelForm() {
         </div>
 
         <div className="form-actions">
-          <button type="submit" disabled={loading}>
-            {loading ? 'Saving...' : 'Save'}
-          </button>
-          <button type="button" onClick={() => navigate(PATHS.PERSONNEL_LIST)}>Cancel</button>
+          <div className='submit-group'>
+            <button type="submit" disabled={loading}>
+              {loading ? 'Saving...' : 'Save'}
+            </button>
+            <button type="button" onClick={() => navigate(PATHS.PERSONNEL_LIST)}>Cancel</button>
+          </div>
         </div>
       </form>
     </div>

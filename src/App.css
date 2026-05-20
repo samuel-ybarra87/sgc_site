@@ -33,11 +33,30 @@ form {
 
 .display-group{
   display: flex;
-  flex-direction: row;
   gap: 16px;
   text-align: justify;
   margin-left: 30%;
   margin-bottom: 16px;
+}
+
+.objective-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+}
+
+.objective-input-row input {
+  flex-grow: 1;
+}
+
+.objective-input-row button {
+  border-color: var(--accent-border);
+}
+
+button[type="button"].btn-active {
+  background-color: var(--accent);
+  color: var(--text-h)
 }
 
 label {
@@ -59,9 +78,27 @@ input, select {
 
 .form-actions {
   display: flex;
-  gap: 8px;
+  flex-direction: column;
+  align-items: center;
+}
+
+.submit-group {
   margin-top: 8px;
-  justify-content: center;
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+}
+
+.button-group {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+}
+
+.button-group button {
+  border-color: var(--text);
+  background-color: var(--accent);
 }
 
 button {

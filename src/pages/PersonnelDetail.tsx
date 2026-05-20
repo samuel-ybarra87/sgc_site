@@ -74,9 +74,11 @@ export default function PersonnelDetail() {
       </div>
 
       <div className="form-actions">
-        <button onClick={() => navigate(PATHS.PERSONNEL_LIST)}>Back</button>
-        <button onClick={() => navigate(PATHS.PERSONNEL_EDIT(person.id))}>Edit</button>
-        <button onClick={handleDelete}>Delete</button>
+        <div className='submit-buttons'>
+          <button onClick={() => navigate(PATHS.PERSONNEL_LIST)}>Back</button>
+          <button onClick={() => navigate(PATHS.PERSONNEL_EDIT(person.id))}>Edit</button>
+          <button onClick={handleDelete}>Delete</button>
+        </div>
       </div>
     </div>
   );

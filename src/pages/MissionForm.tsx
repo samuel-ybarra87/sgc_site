@@ -1,23 +1,30 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { PATHS } from '../lib/paths';
 import { rankAbbreviations } from '../lib/rankAbbreviations';
-import type { Personnel, MissionObjectives, Team } from '../lib/types';
+import type { Personnel, Team } from '../lib/types';
 
-type TeamIds = {
-    team_id: string,
+type ObjectiveForm = {
+    mission_id: string;
+    objective: string;
+    isCompleted: boolean;
+    commandingOfficerObjective: boolean;
 }
 
 type MissionForm = {
-  name: string;
-  destination: string;
-  description: string;
-  status: string;
-  startDate: string;
-  endDate: string | null;
-  objectives: MissionObjectives[];
+    name: string;
+    destination: string;
+    description: string;
+    status: string;
+    startDate: string;
+    endDate: string;
+    objectives: ObjectiveForm[]
+    teams: Team[];
 }
+
+const emptyTeam = { id: '', commanding_officer: '', designation: '', status: '' };
+const emptyObjective = { mission_id: '', objective: '', isCompleted: false, commandingOfficerObjective: false };
 
 const defaultForm: MissionForm = {
     name: '',
@@ -25,8 +32,9 @@ const defaultForm: MissionForm = {
     description: '',
     status: '',
     startDate: '',
-    endDate: null,
-    objectives: [],
+    endDate: '',
+    objectives: [emptyObjective],
+    teams: [emptyTeam],
 }
 
 export default function MissionForm() {
@@ -40,6 +48,47 @@ export default function MissionForm() {
     const [teams, setTeams] = useState<Team[]>([]);
     const [fetching, setFetching] = useState(isEditing);
     const [submitError, setSubmitError] = useState<string | null>(null);
+
+    const eligibleTeams = useMemo(()=>{
+        return teams.filter(t => t.designation !== "Unassigned");
+    }, [teams]);
+
+    const availableTeams = (currentIndex: number) => {
+        const selectedIds = form.teams
+            .filter((_, i) => i !== currentIndex)
+            .map(slot => slot);
+        return eligibleTeams.filter(t => !selectedIds.includes(t));
+    }
+
+    const addTeamSlot = () =>{
+        setForm(prev => ({
+            ...prev,
+            teams: [...prev.teams, emptyTeam]
+        }));
+    };
+
+    const removeTeamSlot = () => {
+        if(form.teams.length > 1) {
+            const index = form.teams.length - 1;
+            const updatedTeams = form.teams.filter((_, i) => i !== index);
+            setForm({ ...form, teams: updatedTeams });
+        }
+    };
+
+    const addObjectiveSlot = () => {
+        setForm(prev => ({
+            ...prev,
+            objectives:[...prev.objectives, emptyObjective]
+        }));
+    };
+
+    const removeObjectiveSlot = () => {
+        if(form.objectives.length > 1){
+            const index = form.objectives.length -1;
+            const updatedObjectives = form.objectives.filter((_, i) => i !== index);
+            setForm({ ...form, objectives: updatedObjectives });
+        }
+    };
 
     useEffect(() => {
         async function getMissionMembers() {
@@ -60,20 +109,12 @@ export default function MissionForm() {
 
             const ids = teamData.map(row => row.team_id);
             setTeamIds(ids);
-
-            const { data: teamsList, error: teamError } = await supabase
-                .from('teams')
-                .select('*')
-                .in('id', teamsIds);
-            
-            if (teamError) console.error(teamError);
-            else setTeams(teamsList);
             
             const { data: memberData, error: memberError } = await supabase
                 .from('personnel')
                 .select(`*,
                     roles:roles(name),
-                    teams:teams(designation)
+                    teams:teams(*)
                     `)
                 .in('team_id', teamsIds);
             
@@ -81,6 +122,15 @@ export default function MissionForm() {
             else setPersonnel(memberData);
         }
         if (id) getMissionMembers();
+
+        async function fetchTeams() {
+            const { data, error } = await supabase
+                .from('teams')
+                .select('*')
+            if (error) console.error(error);
+            else setTeams(data);
+        }
+        fetchTeams();
 
         if (!isEditing) return;
 
@@ -90,7 +140,7 @@ export default function MissionForm() {
                 .from('missions')
                 .select(`*,
                     objectives:mission_objectives(*),
-                    teams:teams(*),
+                    teams:teams(*)
                     `)
                 .eq('id', id)
                 .single();
@@ -106,15 +156,59 @@ export default function MissionForm() {
         return () => { shouldUpdate = false; }
     }, [id, isEditing]);
 
-    function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
+    function handleChange(e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement | HTMLSelectElement>) {
         setForm({ ...form, [e.target.name]: e.target.value });
+    }
+
+    function handleTeamChange(index: number, e:React.ChangeEvent<HTMLSelectElement>){
+        const team = teams.find(t => t.id === e.target.value);
+        const updatedTeams = [...form.teams];
+        updatedTeams[index] = team ?? emptyTeam;
+        setForm({ ...form, teams: updatedTeams });
+    }
+
+    function handleObjectiveChange(index: number, e:React.ChangeEvent<HTMLInputElement>){
+        const updatedObjectives = [...form.objectives];
+        updatedObjectives[index] = {
+            ...updatedObjectives[index],
+            objective: e.target.value
+        };
+        setForm({ ...form, objectives: updatedObjectives });
+    }
+
+    const toggleSecretStatus = (index: number) => {
+        const updatedObjectives = [...form.objectives];
+        updatedObjectives[index] = {
+            ...updatedObjectives[index],
+            commandingOfficerObjective: !updatedObjectives[index].commandingOfficerObjective
+        };
+        setForm({ ...form, objectives: updatedObjectives });
+    }
+
+    const toggleComplete = (index: number) => {
+        const updatedObjectives = [...form.objectives];
+        updatedObjectives[index] = {
+            ...updatedObjectives[index],
+            isCompleted: !updatedObjectives[index].isCompleted
+        };
+        setForm({ ...form, objectives: updatedObjectives });
     }
 
     async function handleSubmit(e: React.SubmitEvent) {
         e.preventDefault();
         setLoading(true);
+
+        if(form.teams.includes(emptyTeam)){
+            setSubmitError('Please select a Team.');
+            setLoading(false);
+            return;
+        }
+
+
         const formData = {
             ...form,
+            description: form.description === '' ? null : form.description,
+            endDate: form.endDate === '' ? null : form.endDate
         }
 
         if (isEditing) {
@@ -156,47 +250,72 @@ export default function MissionForm() {
                         <input id="destination" name="destination" value={form.destination} onChange={handleChange} required />
                     </div>
                     <div className="form-group">
-                        <label htmlFor="description">Description: </label>
-                        <input id="description" name="description" value={form.description} onChange={handleChange} required />
-                    </div>
-                </div>
-                <div className="form-row-3">
-                    <div className="form-group">
-                        <label htmlFor="commanding_officer">Commanding Officer: </label>
-                        <select id="commanding_officer" name="commanding_officer" value={form.commanding_officer} onChange={handleChange}>
-                            <option value="">None</option>
-                            {personnel.map((person) => (
-                                <option key={person.id} value={person.id}>
-                                    {`${rankAbbreviations[person.rank] ?? person.rank} ` }
-                                    {`${person.first_name} `}
-                                    {person.middle_name ? ` ${person.middle_name} ` : ''} 
-                                    {person.last_name}
-                                    {person.suffix ? ` ${ person.suffix}` : ''}
-                                </option>
-                            ))}
+                        <label htmlFor="status">Status: </label>
+                        <select id="status" name="status" value={form.status} onChange={handleChange}>
+                            <option value="active">Active</option>
+                            <option value="complete">Complete</option>
+                            <option value="failed">Failed</option>
+                            <option value="aborted">Aborted</option>
                         </select>
                     </div>
-                    <div className="form-group">
-                        <label htmlFor="startDate">Objective: </label>
-                        <input id="startDate" name="startDate" value={form.startDate} onChange={handleChange} required />
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="description">Secret Objective: </label>
-                        <input id="description" name="description" value={form.description} onChange={handleChange} required />
-                    </div>
                 </div>
                 <div className="form-row-3">
                     <div className="form-group">
-                        <label htmlFor="status">Status: </label>
-                        <input id="status" name="status" value={form.status} onChange={handleChange} required />
-                    </div>
-                    <div className="form-group">
                         <label htmlFor="startDate">Start Date: </label>
-                        <input id="startDate" name="startDate" value={form.startDate} onChange={handleChange} required />
+                        <input type="datetime-local" id="startDate" name="startDate" value={form.startDate} onChange={handleChange} required />
                     </div>
                     <div className="form-group">
-                        <label htmlFor="description">endDate: </label>
-                        <input id="description" name="description" value={form.description} onChange={handleChange} required />
+                        <label htmlFor="endDate">End Date: </label>
+                        <input type="datetime-local" id="endDate" name="endDate" value={form.description} onChange={handleChange} />
+                    </div>
+                </div>
+
+                {form.teams.map((teamSlot, index) => (
+                    <div key={index} className="form-group">
+                        <label>Team {index + 1}: </label>
+                        <select value={teamSlot.id} onChange={(e) => handleTeamChange(index, e)}>
+                            <option value="">Select a Team</option>
+                            {availableTeams(index).map((team) =>
+                                <option value={team.id}>
+                                    {team.designation}
+                                </option>
+                            )}
+                        </select>
+                    </div>
+                ))}
+
+                {form.objectives.map((objectiveSlot, index) => (
+                    <div key={index} className="form-group">
+                        <label>Objective {index + 1}</label>
+                        <div className="objective-input-row">
+                            <input id="objective" name="objective" value={objectiveSlot.objective} onChange={(e) => handleObjectiveChange(index, e)}/>
+                            <button type='button' className={objectiveSlot.isCompleted ? 'btn-active' : 'btn-inactive'} onClick={() => toggleComplete(index)}>Completed</button>
+                            <button type='button' className={objectiveSlot.commandingOfficerObjective ? 'btn-active' : 'btn-inactive'} onClick={() => toggleSecretStatus(index)}>Classified</button>
+                        </div>
+                    </div>
+                ))}
+
+                <div className="form-group">
+                    <label htmlFor="description">Report: </label>
+                    <textarea id="description" name="description" value={form.description} onChange={handleChange} rows={10} placeholder='Enter the full mission debriefing here...'/>
+                </div>
+
+                <div className='form-actions'>
+                    <div className='button-group'>
+                        <button type="button" onClick={addTeamSlot}>Add Team</button>
+                        <button type="button" onClick={removeTeamSlot}>Remove Team</button>
+                    </div>
+                    <div className='button-group'>
+                        <button type="button" onClick={addObjectiveSlot}>Add Objective</button>
+                        <button type="button" onClick={removeObjectiveSlot}>Remove Objective</button>
+                    </div>
+                </div>
+                <div className="form-actions">
+                    <div className='submit-group'>
+                        <button type="submit" disabled={loading}>
+                            {loading ? 'Saving...' : 'Save'}
+                        </button>
+                        <button type="button" onClick={() => navigate(PATHS.MISSION_LIST)}>Cancel</button>
                     </div>
                 </div>
             </form>

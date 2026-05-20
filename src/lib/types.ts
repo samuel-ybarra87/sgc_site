@@ -23,6 +23,8 @@ export type Personnel = {
 };
 
 export type MissionObjectives = {
+  id: string;
+  mission_id: string;
   objective: string;
   isCompleted: boolean;
   commandingOfficerObjective: boolean;
