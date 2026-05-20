@@ -14,8 +14,10 @@ describe('Homepage', () => {
     const header = await screen.findByText('Stargate Command Records');
     const personnel = await screen.findByRole('link', { name: 'PERSONNEL LIST' });
     const team = await screen.findByRole('link', { name: 'TEAM LIST' });
+    const mission = await screen.findByRole('link', { name: 'MISSION LIST' });
     expect(header).toBeInTheDocument();
     expect(personnel).toBeInTheDocument();
     expect(team).toBeInTheDocument();
+    expect(mission).toBeInTheDocument();
   });
 });

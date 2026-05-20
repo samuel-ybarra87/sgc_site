@@ -47,4 +47,19 @@ describe('Homepage (integration)', () => {
         expect(sg1).toBeInTheDocument();
         expect(await screen.findByRole('button', { name: 'Home' }));
     });
+
+    it('navigates to Mission List from Homepage', async () =>{
+        render(
+            <MemoryRouter initialEntries={[PATHS.HOME]}>
+                <Routes>
+                    <Route path={PATHS.HOME} element={<Homepage />} />
+                    <Route path={PATHS.MISSION_LIST} element={<TeamList />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+    
+        const mission = await screen.findByRole('link', { name: 'MISSION LIST' });
+        await user.click(mission);
+    });
 });

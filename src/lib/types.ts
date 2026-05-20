@@ -21,3 +21,20 @@ export type Personnel = {
   personnel_type: string;
   status: string;
 };
+
+export type MissionObjectives = {
+  objective: string;
+  isCompleted: boolean;
+  commandingOfficerObjective: boolean;
+}
+
+export type Mission = {
+  id: string;
+  name: string;
+  destination: string;
+  description: string;
+  status: string;
+  startDate: string;
+  objectives: MissionObjectives[];
+  teams: Team[];
+};

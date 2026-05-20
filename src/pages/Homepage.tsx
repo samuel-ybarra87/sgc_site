@@ -13,7 +13,7 @@ export default function PersonnelList() {
                     <Link to={PATHS.TEAM_LIST}>TEAM LIST</Link>
                 </li>
                 <li key={PATHS.MISSION_LIST}>
-                    <Link to={PATHS.MISSION_LIST}>TEAM LIST</Link>
+                    <Link to={PATHS.MISSION_LIST}>MISSION LIST</Link>
                 </li>
             </ul>
         </div>
