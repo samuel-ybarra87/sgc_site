@@ -2,37 +2,34 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { PATHS } from '../lib/paths';
-import { rankAbbreviations } from '../lib/rankAbbreviations';
-import type { Personnel, Team } from '../lib/types';
-
-type ObjectiveForm = {
-    mission_id: string;
-    objective: string;
-    isCompleted: boolean;
-    commandingOfficerObjective: boolean;
-}
+import type { MissionObjectives, Team } from '../lib/types';
 
 type MissionForm = {
     name: string;
     destination: string;
     description: string;
     status: string;
-    startDate: string;
-    endDate: string;
-    objectives: ObjectiveForm[]
+    start_date: string;
+    end_date: string;
+    objectives: MissionObjectives[]
     teams: Team[];
 }
 
+type MissionTeamLink = {
+    mission_id: string;
+    team_id: string;
+}
+
 const emptyTeam = { id: '', commanding_officer: '', designation: '', status: '' };
-const emptyObjective = { mission_id: '', objective: '', isCompleted: false, commandingOfficerObjective: false };
+const emptyObjective: MissionObjectives = { id: '', mission_id: '', objective: '', is_completed: false, secret_objective: false };
 
 const defaultForm: MissionForm = {
     name: '',
     destination: '',
     description: '',
-    status: '',
-    startDate: '',
-    endDate: '',
+    status: 'active',
+    start_date: '',
+    end_date: '',
     objectives: [emptyObjective],
     teams: [emptyTeam],
 }
@@ -43,8 +40,6 @@ export default function MissionForm() {
     const isEditing = Boolean(id);
     const [form, setForm] = useState<MissionForm>(defaultForm);
     const [loading, setLoading] = useState(false);
-    const [teamsIds, setTeamIds] = useState<string[]>([]);
-    const [personnel, setPersonnel] = useState<Personnel[]>([]);
     const [teams, setTeams] = useState<Team[]>([]);
     const [fetching, setFetching] = useState(isEditing);
     const [submitError, setSubmitError] = useState<string | null>(null);
@@ -91,70 +86,49 @@ export default function MissionForm() {
     };
 
     useEffect(() => {
-        async function getMissionMembers() {
-            const { data: teamData, error: idsError } = await supabase
-                .from('missions_teams')
-                .select('team_id')
-                .eq('mission_id', id);
+    async function loadAllData() {
+        setFetching(true);
 
-            if (idsError) {
-                console.error(idsError);
-                return;
-            }
+        // 1. Fetch the master list of all teams first
+        const { data: allTeams } = await supabase.from('teams').select('*');
+        if (allTeams) setTeams(allTeams);
 
-            if(teamData.length === 0){
-                console.error('No data returned on fetch');
-                return;
-            }
-
-            const ids = teamData.map(row => row.team_id);
-            setTeamIds(ids);
-            
-            const { data: memberData, error: memberError } = await supabase
-                .from('personnel')
-                .select(`*,
-                    roles:roles(name),
-                    teams:teams(*)
-                    `)
-                .in('team_id', teamsIds);
-            
-            if(memberError) console.error(memberError);
-            else setPersonnel(memberData);
-        }
-        if (id) getMissionMembers();
-
-        async function fetchTeams() {
-            const { data, error } = await supabase
-                .from('teams')
-                .select('*')
-            if (error) console.error(error);
-            else setTeams(data);
-        }
-        fetchTeams();
-
-        if (!isEditing) return;
-
-        let shouldUpdate = true;
-        async function fetchMissions() {
-            const { data, error } = await supabase
-                .from('missions')
-                .select(`*,
-                    objectives:mission_objectives(*),
-                    teams:teams(*)
-                    `)
-                .eq('id', id)
-                .single();
-            if (error) console.error(error);
-            else if (shouldUpdate) {
-                setForm(data);
-                setFetching(false);
-            }
+        if (!isEditing || !id) {
+            setFetching(false);
+            return;
         }
 
-        fetchMissions();
+        // 2. Fetch the specific mission and its members in parallel
+        const [missionRes, membersRes] = await Promise.all([
+            supabase.from('missions')
+                .select(`
+                    *,
+                    objectives:mission_objectives(*)
+                    `).eq('id', id).single(),
+            supabase.from('missions_teams').select('team_id').eq('mission_id', id)
+        ]);
 
-        return () => { shouldUpdate = false; }
-    }, [id, isEditing]);
+        if (missionRes.data && membersRes.data && allTeams) {
+            const ids = membersRes.data.map(row => row.team_id);
+
+            // 3. Match the IDs to the actual team objects from our master list
+            const assignedTeams = allTeams.filter(team => ids.includes(team.id));
+
+            // 4. Update the form all at once
+            setForm({
+                ...missionRes.data,
+                // Ensure we at least have one empty slot if none were assigned
+                teams: assignedTeams.length > 0 ? assignedTeams : [emptyTeam],
+                objectives: missionRes.data.objectives.length > 0 
+                    ? missionRes.data.objectives 
+                    : [emptyObjective]
+            });
+        }
+        setFetching(false);
+    }
+
+    loadAllData();
+}, [id, isEditing]);
 
     function handleChange(e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement | HTMLSelectElement>) {
         setForm({ ...form, [e.target.name]: e.target.value });
@@ -180,7 +154,7 @@ export default function MissionForm() {
         const updatedObjectives = [...form.objectives];
         updatedObjectives[index] = {
             ...updatedObjectives[index],
-            commandingOfficerObjective: !updatedObjectives[index].commandingOfficerObjective
+            secret_objective: !updatedObjectives[index].secret_objective
         };
         setForm({ ...form, objectives: updatedObjectives });
     }
@@ -189,10 +163,11 @@ export default function MissionForm() {
         const updatedObjectives = [...form.objectives];
         updatedObjectives[index] = {
             ...updatedObjectives[index],
-            isCompleted: !updatedObjectives[index].isCompleted
+            is_completed: !updatedObjectives[index].is_completed
         };
         setForm({ ...form, objectives: updatedObjectives });
     }
+
 
     async function handleSubmit(e: React.SubmitEvent) {
         e.preventDefault();
@@ -204,30 +179,115 @@ export default function MissionForm() {
             return;
         }
 
+        if(form.objectives.includes(emptyObjective)){
+            setSubmitError('Please fill out empty objective.');
+            setLoading(false);
+            return;
+        }
 
         const formData = {
             ...form,
             description: form.description === '' ? null : form.description,
-            endDate: form.endDate === '' ? null : form.endDate
+            end_date: form.end_date === '' ? null : form.end_date
         }
 
-        if (isEditing) {
+        const { objectives, teams, ...missionData } = formData;
+        const cleanObjectives = objectives.map(({ id: _, ...obj }) => obj)
+        const missionTeams: MissionTeamLink[] = teams.map(team => ({ mission_id: '', team_id: team.id }));
+
+        if (isEditing && id) {
+            // remove join table links
+            await supabase
+                .from('missions_teams')
+                .delete()
+                .eq('mission_id', id);
+            await supabase
+                .from('mission_objectives')
+                .delete()
+                .eq('mission_id', id);
+
+            // reset mission_id
+            cleanObjectives.forEach(obj => obj.mission_id = id);
+            missionTeams.forEach(obj => obj.mission_id = id);
+
+            // Insert missions_teams link
+            const { error: teamLinkError } = await supabase
+                .from('missions_teams')
+                .insert(missionTeams)
+            
+            if (teamLinkError) {
+                console.error(teamLinkError);
+                setSubmitError(teamLinkError.message);
+                setLoading(false);
+                return;
+            }
+
+            // Insert objective data
+            const { error: insertError } = await supabase
+                .from('mission_objectives')
+                .insert(cleanObjectives);
+
+            if (insertError) {
+                console.error(insertError);
+                setSubmitError(insertError.message);
+                setLoading(false);
+                return;
+            }
+
             const { error } = await supabase
                 .from('missions')
-                .update(formData)
+                .update(missionData)
                 .eq('id', id);
             if (error) {
                 console.error(error);
                 setSubmitError(error.message);
+                setLoading(false);
+                return;
             } else navigate(PATHS.MISSION_LIST);
+
         } else {
-            const { error } = await supabase
+
+            // Insert mission data
+            const { data, error: missionError } = await supabase
                 .from('missions')
-                .insert(formData);
-            if (error) {
-                console.error(error);
-                setSubmitError(error.message);
-            } else navigate(PATHS.TEAM_LIST);
+                .insert(missionData)
+                .select()
+                .single();
+
+            if (missionError) {
+                console.error(missionError);
+                setSubmitError(missionError.message);
+                setLoading(false);
+                return;
+            } else {
+                const missionID = data.id;
+                cleanObjectives.forEach(obj => obj.mission_id = missionID);
+                missionTeams.forEach(obj => obj.mission_id = missionID);
+            }
+
+            // Insert missions_teams link
+            const { error: teamLinkError } = await supabase
+                .from('missions_teams')
+                .insert(missionTeams)
+            
+            if (teamLinkError) {
+                console.error(teamLinkError);
+                setSubmitError(teamLinkError.message);
+                setLoading(false);
+                return;
+            }
+
+            // Insert objective data
+            const { error: insertError } = await supabase
+                .from('mission_objectives')
+                .insert(cleanObjectives);
+
+            if (insertError) {
+                console.error(insertError);
+                setSubmitError(insertError.message);
+                setLoading(false);
+                return;
+            } else navigate(PATHS.MISSION_LIST);
         }
 
         setLoading(false);
@@ -261,12 +321,12 @@ export default function MissionForm() {
                 </div>
                 <div className="form-row-3">
                     <div className="form-group">
-                        <label htmlFor="startDate">Start Date: </label>
-                        <input type="datetime-local" id="startDate" name="startDate" value={form.startDate} onChange={handleChange} required />
+                        <label htmlFor="start_date">Start Date: </label>
+                        <input type="datetime-local" id="start_date" name="start_date" value={form.start_date ? form.start_date.slice(0,16) : ''} onChange={handleChange} required />
                     </div>
                     <div className="form-group">
-                        <label htmlFor="endDate">End Date: </label>
-                        <input type="datetime-local" id="endDate" name="endDate" value={form.description} onChange={handleChange} />
+                        <label htmlFor="end_date">End Date: </label>
+                        <input type="datetime-local" id="end_date" name="end_date" value={form.end_date ? form.end_date.slice(0,16) : ''} onChange={handleChange} />
                     </div>
                 </div>
 
@@ -289,8 +349,8 @@ export default function MissionForm() {
                         <label>Objective {index + 1}</label>
                         <div className="objective-input-row">
                             <input id="objective" name="objective" value={objectiveSlot.objective} onChange={(e) => handleObjectiveChange(index, e)}/>
-                            <button type='button' className={objectiveSlot.isCompleted ? 'btn-active' : 'btn-inactive'} onClick={() => toggleComplete(index)}>Completed</button>
-                            <button type='button' className={objectiveSlot.commandingOfficerObjective ? 'btn-active' : 'btn-inactive'} onClick={() => toggleSecretStatus(index)}>Classified</button>
+                            <button type='button' className={objectiveSlot.is_completed ? 'btn-active' : 'btn-inactive'} onClick={() => toggleComplete(index)}>Completed</button>
+                            <button type='button' className={objectiveSlot.secret_objective ? 'btn-active' : 'btn-inactive'} onClick={() => toggleSecretStatus(index)}>Classified</button>
                         </div>
                     </div>
                 ))}

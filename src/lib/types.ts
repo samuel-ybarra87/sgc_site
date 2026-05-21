@@ -26,17 +26,18 @@ export type MissionObjectives = {
   id: string;
   mission_id: string;
   objective: string;
-  isCompleted: boolean;
-  commandingOfficerObjective: boolean;
+  is_completed: boolean;
+  secret_objective: boolean;
 }
 
 export type Mission = {
   id: string;
   name: string;
   destination: string;
-  description: string;
+  description: string | null;
   status: string;
-  startDate: string;
+  start_date: string;
+  end_date: string | null;
   objectives: MissionObjectives[];
   teams: Team[];
 };

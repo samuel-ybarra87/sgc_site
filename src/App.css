@@ -137,12 +137,15 @@ li{
 }
 
 a{
-  padding: 8px 16px;
-  border-radius: 4px;
-  border: 1px solid var(--border);
+  display: grid;
+  margin-left: 22%;
+  width: 50%;
+  gap: 8px;
+  padding: 8px 8px;
+  border-radius: 12px;
+  border: 1px solid var(--accent);
   cursor: pointer;
-  font-size: 16px;
-  background: var(--accent);
-  color: white;
-  border-color: var(--accent);
+  font-size: 20px;
+  background: var(--accent-border);
+  color: var(--text-h);
 }
