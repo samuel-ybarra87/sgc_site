@@ -79,56 +79,63 @@ export default function MissionForm() {
 
     const removeObjectiveSlot = () => {
         if(form.objectives.length > 1){
-            const index = form.objectives.length -1;
+            const index = form.objectives.length - 1;
             const updatedObjectives = form.objectives.filter((_, i) => i !== index);
             setForm({ ...form, objectives: updatedObjectives });
         }
     };
 
     useEffect(() => {
-    async function loadAllData() {
-        setFetching(true);
+        async function loadAllData() {
+            setFetching(true);
 
-        // 1. Fetch the master list of all teams first
-        const { data: allTeams } = await supabase.from('teams').select('*');
-        if (allTeams) setTeams(allTeams);
+            // 1. Fetch the master list of all teams first
+            const { data: allTeams, error: fetchError } = await supabase
+                .from('teams')
+                .select('*')
+                .order('designation', { ascending: true });
+            if (fetchError){
+                console.error(fetchError.message);
+                setFetching(false);
+                return;
+            } else setTeams(allTeams);
 
-        if (!isEditing || !id) {
+            if (!isEditing || !id) {
+                setFetching(false);
+                return;
+            }
+
+            // 2. Fetch the specific mission and its members in parallel
+            const [missionRes, membersRes] = await Promise.all([
+                supabase.from('missions')
+                    .select(`
+                        *,
+                        objectives:mission_objectives(*)
+                        `).eq('id', id).single(),
+                supabase.from('missions_teams').select('team_id').eq('mission_id', id)
+            ]);
+
+            if (missionRes.data && membersRes.data && allTeams) {
+                const ids = membersRes.data.map(row => row.team_id);
+
+                // 3. Match the IDs to the actual team objects from our master list
+                const assignedTeams = allTeams.filter(team => ids.includes(team.id));
+
+                // 4. Update the form all at once
+                setForm({
+                    ...missionRes.data,
+                    // Ensure we at least have one empty slot if none were assigned
+                    teams: assignedTeams.length > 0 ? assignedTeams : [emptyTeam],
+                    objectives: missionRes.data.objectives.length > 0 
+                        ? missionRes.data.objectives 
+                        : [emptyObjective]
+                });
+            }
             setFetching(false);
-            return;
         }
 
-        // 2. Fetch the specific mission and its members in parallel
-        const [missionRes, membersRes] = await Promise.all([
-            supabase.from('missions')
-                .select(`
-                    *,
-                    objectives:mission_objectives(*)
-                    `).eq('id', id).single(),
-            supabase.from('missions_teams').select('team_id').eq('mission_id', id)
-        ]);
-
-        if (missionRes.data && membersRes.data && allTeams) {
-            const ids = membersRes.data.map(row => row.team_id);
-
-            // 3. Match the IDs to the actual team objects from our master list
-            const assignedTeams = allTeams.filter(team => ids.includes(team.id));
-
-            // 4. Update the form all at once
-            setForm({
-                ...missionRes.data,
-                // Ensure we at least have one empty slot if none were assigned
-                teams: assignedTeams.length > 0 ? assignedTeams : [emptyTeam],
-                objectives: missionRes.data.objectives.length > 0 
-                    ? missionRes.data.objectives 
-                    : [emptyObjective]
-            });
-        }
-        setFetching(false);
-    }
-
-    loadAllData();
-}, [id, isEditing]);
+        loadAllData();
+    }, [id, isEditing]);
 
     function handleChange(e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement | HTMLSelectElement>) {
         setForm({ ...form, [e.target.name]: e.target.value });

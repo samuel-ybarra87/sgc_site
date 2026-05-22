@@ -24,7 +24,7 @@ describe('PersonnelForm', () => {
     vi.resetAllMocks();
   });
 
-  it('should show empty fields for new entries', () =>{
+  it('should show empty fields for new entries', async () =>{
     // roles
     vi.mocked(supabase.from).mockReturnValueOnce({
       select: vi.fn().mockReturnValueOnce({
@@ -50,17 +50,17 @@ describe('PersonnelForm', () => {
         </MemoryRouter>
     );
 
-    expect(screen.getByLabelText('Prefix:')).toHaveValue('');
-    expect(screen.getByLabelText('First Name:')).toHaveValue('');
-    expect(screen.getByLabelText('Middle Name:')).toHaveValue('');
-    expect(screen.getByLabelText('Last Name:')).toHaveValue('');
-    expect(screen.getByLabelText('Suffix:')).toHaveValue('');
-    expect(screen.getByLabelText('Rank:')).toHaveValue('');
-    expect(screen.getByLabelText('Team:')).toHaveValue('');
-    expect(screen.getByLabelText('Role:')).toHaveDisplayValue('Custom');
-    expect(screen.getByTitle('role')).toHaveValue('');
-    expect(screen.getByLabelText('Personnel Type:')).toHaveValue('military');
-    expect(screen.getByLabelText('Status:')).toHaveValue('active');
+    expect(await screen.findByLabelText('Prefix:')).toHaveValue('');
+    expect(await screen.findByLabelText('First Name:')).toHaveValue('');
+    expect(await screen.findByLabelText('Middle Name:')).toHaveValue('');
+    expect(await screen.findByLabelText('Last Name:')).toHaveValue('');
+    expect(await screen.findByLabelText('Suffix:')).toHaveValue('');
+    expect(await screen.findByLabelText('Rank:')).toHaveValue('');
+    expect(await screen.findByLabelText('Team:')).toHaveValue('');
+    expect(await screen.findByLabelText('Role:')).toHaveDisplayValue('Custom');
+    expect(await screen.findByTitle('role')).toHaveValue('');
+    expect(await screen.findByLabelText('Personnel Type:')).toHaveValue('military');
+    expect(await screen.findByLabelText('Status:')).toHaveValue('active');
   });
 
   it('should insert values into database after clicking save', async () => {

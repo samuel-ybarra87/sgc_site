@@ -314,8 +314,8 @@ export const mockMissionData = {
     start_date: "2026-05-01T08:00:00.000Z",
     end_date: null,
     status: "active",
-    objectives: mockMissionObjectives,
-    teams: mockTeams
+    objectives: [mockMissionObjectives[0]],
+    teams: [mockTeams[0]]
 }
 
 export const mockMissions = [
@@ -328,7 +328,7 @@ export const mockMissions = [
         end_date: "1996-10-29T18:30:00.000Z",
         status: "complete",
         objectives: mockMissionObjectives,
-        teams: mockTeams
+        teams: [mockTeams[2]]
     },
     {
         id: "uuid-2",

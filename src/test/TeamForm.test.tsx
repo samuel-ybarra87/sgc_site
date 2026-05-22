@@ -24,7 +24,7 @@ describe('TeamForm', () => {
     vi.resetAllMocks();
   });
 
-  it('should show empty fields for new entries', () =>{
+  it('should show empty fields for new entries', async () =>{
 
     // personnel
     vi.mocked(supabase.from).mockReturnValueOnce({
@@ -48,9 +48,9 @@ describe('TeamForm', () => {
         </MemoryRouter>
     );
 
-    expect(screen.getByLabelText('Designation:')).toHaveValue('');
-    expect(screen.getByLabelText('Commanding Officer:')).toHaveValue('');
-    expect(screen.getByLabelText('Status:')).toHaveValue('active');
+    expect(await screen.findByLabelText('Designation:')).toHaveValue('');
+    expect(await screen.findByLabelText('Commanding Officer:')).toHaveValue('');
+    expect(await screen.findByLabelText('Status:')).toHaveValue('active');
   });
 
   it('should insert values into database after clicking save', async () => {
