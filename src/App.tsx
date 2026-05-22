@@ -8,6 +8,7 @@ import TeamDetail from './pages/TeamDetail'
 import TeamForm from './pages/TeamForm';
 import MissionList from './pages/MissionList';
 import MissionForm from './pages/MissionForm';
+import MissionDetail from './pages/MissionDetail';
 import { PATHS, ROUTES } from './lib/paths';
 import './App.css';
 
@@ -27,6 +28,7 @@ function App() {
         <Route path={PATHS.MISSION_LIST} element={<MissionList />} />
         <Route path={PATHS.MISSION_NEW} element={<MissionForm />} />
         <Route path={ROUTES.MISSION_EDIT} element={<MissionForm />} />
+        <Route path={ROUTES.MISSION_DETAIL} element={<MissionDetail />} />
       </Routes>
     </BrowserRouter>
   );

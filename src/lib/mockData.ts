@@ -278,3 +278,67 @@ export const mockTeamData = [
         ]
     }
 ]
+
+export const mockMissionObjectives = [
+    {
+        id: "objective-uuid-1",
+        objective: "test-not-complete",
+        is_complete: false,
+        secret_objective: false
+    },
+    {
+        id: "objective-uuid-2",
+        objective: "test-complete",
+        is_complete: true,
+        secret_objective: false
+    },
+    {
+        id: "objective-uuid-3",
+        objective: "test-secret",
+        is_complete: false,
+        secret_objective: true
+    },
+    {
+        id: "objective-uuid-4",
+        objective: "test-both",
+        is_complete: true,
+        secret_objective: true
+    }
+]
+
+export const mockMissionData = {
+    id: "uuid-3",
+    name: "MockMissionEntry",
+    destination: "PT3-5t01",
+    description: null,
+    start_date: "2026-05-01T08:00:00.000Z",
+    end_date: null,
+    status: "active",
+    objectives: mockMissionObjectives,
+    teams: mockTeams
+}
+
+export const mockMissions = [
+    {
+        id: "uuid-1",
+        name: "Abydos Recon",
+        destination: "P3x-984",
+        description: "Mock Abydos Mission",
+        start_date: "1996-10-28T04:00:00.000Z",
+        end_date: "1996-10-29T18:30:00.000Z",
+        status: "complete",
+        objectives: mockMissionObjectives,
+        teams: mockTeams
+    },
+    {
+        id: "uuid-2",
+        name: "MockMission",
+        destination: "PT3-5t01",
+        description: "Mock Mission 1",
+        start_date: "2026-05-01T08:00:00.000Z",
+        end_date: "2026-05-30T05:00:00.000Z",
+        status: "complete",
+        objectives: mockMissionObjectives,
+        teams: mockTeams
+    }
+]

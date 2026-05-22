@@ -188,7 +188,8 @@ export default function MissionForm() {
         const formData = {
             ...form,
             description: form.description === '' ? null : form.description,
-            end_date: form.end_date === '' ? null : form.end_date
+            start_date: new Date(`${form.start_date}Z`).toISOString(),
+            end_date: form.end_date === '' ? null : new Date(`${form.end_date}Z`).toISOString()
         }
 
         const { objectives, teams, ...missionData } = formData;
@@ -332,11 +333,11 @@ export default function MissionForm() {
 
                 {form.teams.map((teamSlot, index) => (
                     <div key={index} className="form-group">
-                        <label>Team {index + 1}: </label>
-                        <select value={teamSlot.id} onChange={(e) => handleTeamChange(index, e)}>
+                        <label htmlFor={`team-${index}`}>Team {index + 1}: </label>
+                        <select id={`team-${index}`} value={teamSlot.id} onChange={(e) => handleTeamChange(index, e)}>
                             <option value="">Select a Team</option>
                             {availableTeams(index).map((team) =>
-                                <option value={team.id}>
+                                <option key={team.id} value={team.id}>
                                     {team.designation}
                                 </option>
                             )}
@@ -346,9 +347,9 @@ export default function MissionForm() {
 
                 {form.objectives.map((objectiveSlot, index) => (
                     <div key={index} className="form-group">
-                        <label>Objective {index + 1}</label>
+                        <label htmlFor={`objective-${index}`}>Objective {index + 1}: </label>
                         <div className="objective-input-row">
-                            <input id="objective" name="objective" value={objectiveSlot.objective} onChange={(e) => handleObjectiveChange(index, e)}/>
+                            <input id={`objective-${index}`} value={objectiveSlot.objective} onChange={(e) => handleObjectiveChange(index, e)}/>
                             <button type='button' className={objectiveSlot.is_completed ? 'btn-active' : 'btn-inactive'} onClick={() => toggleComplete(index)}>Completed</button>
                             <button type='button' className={objectiveSlot.secret_objective ? 'btn-active' : 'btn-inactive'} onClick={() => toggleSecretStatus(index)}>Classified</button>
                         </div>
