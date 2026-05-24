@@ -4,14 +4,9 @@ import { describe, it, expect, vi } from 'vitest';
 import MissionForm from '../pages/MissionForm';
 import { supabase } from '../lib/supabase';
 import userEvent from '@testing-library/user-event';
-import TeamList from '../pages/TeamList';
-import { mockTeamEntry, mockPersonnel, mockTeams, mockMissions, mockMissionData } from '../lib/mockData';
+import MissionList from '../pages/MissionList';
+import { mockTeams, mockMissions, mockMissionData } from '../lib/mockData';
 import { PATHS, ROUTES } from '../lib/paths';
-
-const user = userEvent.setup();
-const abydos = mockMissions[0];
-const { objectives, teams, id: mockMissionID, ...mockMission } = mockMissionData;
-
 
 // Mock the supabase client
 vi.mock('../lib/supabase', () => ({
@@ -20,6 +15,9 @@ vi.mock('../lib/supabase', () => ({
     },
 }));
 
+const user = userEvent.setup();
+const abydos = mockMissions[0];
+const { objectives, teams, id: mockMissionID, ...mockMission } = mockMissionData;
 
 describe('MissionForm', () => {
 
@@ -304,43 +302,11 @@ describe('MissionForm', () => {
     });
 
     it('should show error message if team 1 is empty', async () => {
-        
-        const mockSubmitData = vi.fn().mockReturnValueOnce({
-            select: vi.fn().mockReturnValueOnce({
-                single: vi.fn().mockResolvedValueOnce({
-                    data: { id: mockMissionID, ...mockMission },
-                    error: null
-                })
-            }),
-        });
-
-        const missionTeamLink = vi.fn().mockReturnValueOnce({
-            data: { mission_id: mockMissionID, team_id: teams[0].id },
-            error: null
-        });
-
-        const mockObjective = vi.fn().mockReturnValueOnce({
-            data: objectives[0],
-            error: null
-        });
-
         // teams
         vi.mocked(supabase.from).mockReturnValueOnce({
             select: vi.fn().mockReturnValueOnce({
                 order: vi.fn().mockReturnValueOnce({ data: mockTeams, error: null }),
             }),
-        } as any);
-
-        vi.mocked(supabase.from).mockReturnValueOnce({
-            insert: mockSubmitData,
-        } as any);
-
-        vi.mocked(supabase.from).mockReturnValueOnce({
-            insert: missionTeamLink,
-        } as any);
-
-        vi.mocked(supabase.from).mockReturnValueOnce({
-            insert: mockObjective,
         } as any);
 
         render(
@@ -358,49 +324,17 @@ describe('MissionForm', () => {
         // click save
         await user.click(await screen.findByText('Save'));
 
-        const err = await screen.getByText('Please select a Team.');
+        const err = await screen.getByText('Please select Team 1.');
         
         expect(err).toBeInTheDocument();
     });
 
-    it('should show error message if team 2 or team 3 is empty', async () => {
-        
-        const mockSubmitData = vi.fn().mockReturnValueOnce({
-            select: vi.fn().mockReturnValueOnce({
-                single: vi.fn().mockResolvedValueOnce({
-                    data: { id: mockMissionID, ...mockMission },
-                    error: null
-                })
-            }),
-        });
-
-        const missionTeamLink = vi.fn().mockReturnValueOnce({
-            data: { mission_id: mockMissionID, team_id: teams[0].id },
-            error: null
-        });
-
-        const mockObjective = vi.fn().mockReturnValueOnce({
-            data: objectives[0],
-            error: null
-        });
-
+    it('should show error message if extra team is empty', async () => {
         // teams
         vi.mocked(supabase.from).mockReturnValueOnce({
             select: vi.fn().mockReturnValueOnce({
                 order: vi.fn().mockReturnValueOnce({ data: mockTeams, error: null }),
             }),
-        } as any);
-
-        vi.mocked(supabase.from).mockReturnValueOnce({
-            insert: mockSubmitData,
-        } as any);
-
-        vi.mocked(supabase.from).mockReturnValueOnce({
-            insert: missionTeamLink,
-        } as any);
-
-        vi.mocked(supabase.from).mockReturnValueOnce({
-            insert: mockObjective,
         } as any);
 
         render(
@@ -417,12 +351,100 @@ describe('MissionForm', () => {
         // click save
         await user.click(await screen.findByText('Save'));
         
-        expect(await screen.getByText('Please select a Team.')).toBeInTheDocument();
+        expect(await screen.findByText('Please select Team 1.')).toBeInTheDocument();
 
         await user.selectOptions(await screen.findByLabelText('Team 1:'), teams[0].id);
         await user.click(screen.getByRole('button', { name: 'Add Team' }))
         // click save
         await user.click(await screen.findByText('Save'));
+        
+        expect(await screen.findByText('Please select Team 2.')).toBeInTheDocument();
+    });
+
+    it('should remove the exta team based on index', async () => {
+        // teams
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                order: vi.fn().mockReturnValueOnce({ data: mockTeams, error: null }),
+            }),
+        } as any);
+
+        render(
+            <MemoryRouter>
+                <MissionForm />
+            </MemoryRouter>
+        );
+
+        expect(await screen.queryByRole('button', { name: 'Add Team' })).not.toBeInTheDocument();
+
+        await user.selectOptions(await screen.findByLabelText('Team 1:'), teams[0].id);
+        await user.click(screen.getByRole('button', { name: 'Add Team' }))
+
+        expect(await screen.findByLabelText('Team 2:')).toBeInTheDocument();
+        expect(await screen.queryByRole('button', { name: 'Add Team' })).not.toBeInTheDocument();
+
+        await user.selectOptions(await screen.findByLabelText('Team 2:'), mockTeams[1].id);
+        await user.click(screen.getByRole('button', { name: 'Add Team' }))
+
+        expect(await screen.findByLabelText('Team 3:')).toBeInTheDocument();
+        expect(await screen.queryByRole('button', { name: 'Add Team' })).not.toBeInTheDocument();
+
+        await user.click(await screen.findByTestId('remove-button-2'));
+    });
+
+    it('should show error message if objective 1 is empty', async () => {        // teams
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                order: vi.fn().mockReturnValueOnce({ data: mockTeams, error: null }),
+            }),
+        } as any);
+
+        render(
+            <MemoryRouter>
+                <MissionForm />
+            </MemoryRouter>
+        );
+
+        await user.type(await screen.findByLabelText('Name:'), mockMission.name);
+        await user.type(await screen.findByLabelText('Destination:'), mockMission.destination);
+        await user.selectOptions(await screen.findByLabelText('Status:'), mockMission.status);
+        await user.type(await screen.findByLabelText('Start Date:'), mockMission.start_date.slice(0,16));
+        await user.selectOptions(await screen.findByLabelText('Team 1:'), teams[0].id);
+        // click save
+        await user.click(await screen.findByText('Save'));
+        
+        expect(await screen.findByText('Please fill out Objective 1.')).toBeInTheDocument();
+    });
+
+    it('should show error message if extra objective is empty', async () => {        // teams
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                order: vi.fn().mockReturnValueOnce({ data: mockTeams, error: null }),
+            }),
+        } as any);
+
+        render(
+            <MemoryRouter>
+                <MissionForm />
+            </MemoryRouter>
+        );
+
+        await user.type(await screen.findByLabelText('Name:'), mockMission.name);
+        await user.type(await screen.findByLabelText('Destination:'), mockMission.destination);
+        await user.selectOptions(await screen.findByLabelText('Status:'), mockMission.status);
+        await user.type(await screen.findByLabelText('Start Date:'), mockMission.start_date.slice(0,16));
+        await user.selectOptions(await screen.findByLabelText('Team 1:'), teams[0].id);
+        // click save
+        await user.click(await screen.findByText('Save'));
+        
+        expect(await screen.findByText('Please fill out Objective 1.')).toBeInTheDocument();
+
+        await user.type(await screen.findByLabelText('Objective 1:'), objectives[0].objective);
+        await user.click(screen.getByRole('button', { name: 'Add Objective' }))
+        // click save
+        await user.click(await screen.findByText('Save'));
+        
+        expect(await screen.findByText('Please fill out Objective 2.')).toBeInTheDocument();
     });
 
     // it('should show values of record to edit', async () =>{
@@ -507,46 +529,35 @@ describe('MissionForm', () => {
     //     expect(updateMock).toHaveBeenCalled();
     // });
 
-    // it('should navigate back to team list when cancelling', async () =>{
-    //     // Populate mock database with data
-    //     // personnel
-    //     vi.mocked(supabase.from).mockReturnValueOnce({
-    //     select: vi.fn().mockReturnValueOnce({
-    //     eq: vi.fn().mockReturnValueOnce({
-    //     eq: vi.fn().mockReturnValueOnce({
-    //     order: vi.fn().mockReturnValueOnce({ data: mockPersonnel, error: null }),
-    //     })
-    //     })
-    //     }),
-    //     } as any);
+    it('should navigate back to mission list when cancelling (add)', async () =>{
+        // Populate mock database with data
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                order: vi.fn().mockReturnValueOnce({ data: mockTeams, error: null }),
+            }),
+        } as any);
 
-    //     vi.mocked(supabase.from).mockReturnValueOnce({
-    //     select: vi.fn().mockReturnValueOnce({
-    //     eq: vi.fn().mockReturnValueOnce({
-    //     single: vi.fn().mockResolvedValueOnce({ data: mockTeams[1], error: null }),
-    //     }),
-    //     }),
-    //     } as any);
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                order: vi.fn().mockReturnValueOnce({ data: mockMissions, error: null }),
+            }),
+        } as any);
 
-    //     vi.mocked(supabase.from).mockReturnValueOnce({
-    //     select: vi.fn().mockReturnValueOnce({
-    //     order: vi.fn().mockResolvedValueOnce({ data: mockTeams, error: null } ),
-    //     }),
-    //     } as any);
+        render(
+            <MemoryRouter initialEntries={[PATHS.MISSION_NEW]}>
+                <Routes>
+                    <Route path={PATHS.MISSION_NEW} element={<MissionForm />} />
+                    <Route path={PATHS.MISSION_LIST} element={<MissionList />} />
+                </Routes>
+            </MemoryRouter>
+        );
 
-    //     render(
-    //     <MemoryRouter initialEntries={[PATHS.TEAM_EDIT(mockTeams[1].id)]}>
-    //     <Routes>
-    //     <Route path={ROUTES.TEAM_EDIT} element={<MissionForm />} />
-    //     <Route path={PATHS.TEAM_LIST} element={<TeamList />} />
-    //     </Routes>
-    //     </MemoryRouter>
-    //     );
+        await user.click(await screen.findByRole('button', { name: 'Cancel' }));
 
-    //     await user.click(await screen.findByText('Cancel'));
+        const title = await screen.findByText(/SGC Mission Records/);
+        const abydosLink = await screen.findByRole('link', { name: `${abydos.destination} | ${abydos.name} | ${abydos.status}`})
 
-    //     const title = await screen.findByText(/SGC Team List/);
-
-    //     expect(title).toBeInTheDocument();
-    // });
+        expect(title).toBeInTheDocument();
+        expect(abydosLink).toBeInTheDocument();
+    });
 });

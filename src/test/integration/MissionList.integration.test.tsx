@@ -125,7 +125,7 @@ describe('MissionForm (integration)', () => {
 
         await user.click(await screen.findByRole('button', { name: 'Save' }));
 
-        const error = await screen.findByText('Please select a Team.');
+        const error = await screen.findByText('Please select Team 1.');
         expect(error).toBeInTheDocument();
     });
 
@@ -149,7 +149,7 @@ describe('MissionForm (integration)', () => {
 
         await user.click(await screen.findByRole('button', { name: 'Save' }));
 
-        const error = await screen.findByText('Please fill out empty objective.');
+        const error = await screen.findByText('Please fill out Objective 1.');
         expect(error).toBeInTheDocument();
     });
 

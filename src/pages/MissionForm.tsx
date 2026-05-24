@@ -48,11 +48,29 @@ export default function MissionForm() {
         return teams.filter(t => t.designation !== "Unassigned");
     }, [teams]);
 
+    const canAddMoreTeams = useMemo(()=>{
+        const activeTeams = eligibleTeams.filter(t => t.status === 'active');
+
+        const hasUnusedActiveTeams = activeTeams.some(activeTeam => !form.teams.includes(activeTeam))
+
+        const isSlotEmpty = form.teams.includes(emptyTeam);
+
+        // Check if any active team is not yet present in the form's teams array
+        return hasUnusedActiveTeams && !isSlotEmpty;
+    }, [eligibleTeams, form.teams]);
+
     const availableTeams = (currentIndex: number) => {
-        const selectedIds = form.teams
-            .filter((_, i) => i !== currentIndex)
-            .map(slot => slot);
-        return eligibleTeams.filter(t => !selectedIds.includes(t));
+        const currentSlot = form.teams[currentIndex];
+
+        const selectableTeams = form.teams
+            .filter((_, i) => i !== currentIndex);
+
+        return eligibleTeams.filter(team => {
+            if(!selectableTeams.includes(team)
+                && team.status === 'active'
+                || team === currentSlot)
+                return team;
+        });
     }
 
     const addTeamSlot = () =>{
@@ -62,9 +80,8 @@ export default function MissionForm() {
         }));
     };
 
-    const removeTeamSlot = () => {
+    const removeTeamSlot = (index: number) => {
         if(form.teams.length > 1) {
-            const index = form.teams.length - 1;
             const updatedTeams = form.teams.filter((_, i) => i !== index);
             setForm({ ...form, teams: updatedTeams });
         }
@@ -77,9 +94,8 @@ export default function MissionForm() {
         }));
     };
 
-    const removeObjectiveSlot = () => {
+    const removeObjectiveSlot = (index: number) => {
         if(form.objectives.length > 1){
-            const index = form.objectives.length - 1;
             const updatedObjectives = form.objectives.filter((_, i) => i !== index);
             setForm({ ...form, objectives: updatedObjectives });
         }
@@ -175,19 +191,20 @@ export default function MissionForm() {
         setForm({ ...form, objectives: updatedObjectives });
     }
 
-
     async function handleSubmit(e: React.SubmitEvent) {
         e.preventDefault();
         setLoading(true);
 
-        if(form.teams.includes(emptyTeam)){
-            setSubmitError('Please select a Team.');
+        const teamIndex = form.teams.findIndex(item => item.id === '')
+        if(teamIndex !== -1 ){
+            setSubmitError(`Please select Team ${teamIndex + 1}.`);
             setLoading(false);
             return;
         }
 
-        if(form.objectives.includes(emptyObjective)){
-            setSubmitError('Please fill out empty objective.');
+        const objectiveIndex = form.objectives.findIndex(item => item.objective === '');
+        if(objectiveIndex !== -1 ){
+            setSubmitError(`Please fill out Objective ${objectiveIndex + 1}.`);
             setLoading(false);
             return;
         }
@@ -341,14 +358,17 @@ export default function MissionForm() {
                 {form.teams.map((teamSlot, index) => (
                     <div key={index} className="form-group">
                         <label htmlFor={`team-${index}`}>Team {index + 1}: </label>
-                        <select id={`team-${index}`} value={teamSlot.id} onChange={(e) => handleTeamChange(index, e)}>
-                            <option value="">Select a Team</option>
-                            {availableTeams(index).map((team) =>
-                                <option key={team.id} value={team.id}>
-                                    {team.designation}
-                                </option>
-                            )}
-                        </select>
+                        <div className='button-group'>
+                            <select id={`team-${index}`} value={teamSlot.id} onChange={(e) => handleTeamChange(index, e)}>
+                                <option value="">Select a Team</option>
+                                {availableTeams(index).map((team) =>
+                                    <option key={team.id} value={team.id}>
+                                        {team.designation}
+                                    </option>
+                                )}
+                            </select>
+                            {form.teams.length > 1 && <button id={`remove-team-${index}`} type="button" className="remove-btn" onClick={()=>removeTeamSlot(index)}>Remove</button>}
+                        </div>
                     </div>
                 ))}
 
@@ -359,6 +379,7 @@ export default function MissionForm() {
                             <input id={`objective-${index}`} value={objectiveSlot.objective} onChange={(e) => handleObjectiveChange(index, e)}/>
                             <button type='button' className={objectiveSlot.is_completed ? 'btn-active' : 'btn-inactive'} onClick={() => toggleComplete(index)}>Completed</button>
                             <button type='button' className={objectiveSlot.secret_objective ? 'btn-active' : 'btn-inactive'} onClick={() => toggleSecretStatus(index)}>Classified</button>
+                            {form.objectives.length > 1 && <button id={`remove-objective-${index}`} type="button" className="remove-btn" onClick={()=>removeObjectiveSlot(index)}>Remove</button>}
                         </div>
                     </div>
                 ))}
@@ -370,12 +391,8 @@ export default function MissionForm() {
 
                 <div className='form-actions'>
                     <div className='button-group'>
-                        <button type="button" onClick={addTeamSlot}>Add Team</button>
-                        <button type="button" onClick={removeTeamSlot}>Remove Team</button>
-                    </div>
-                    <div className='button-group'>
+                        {canAddMoreTeams &&<button type="button" onClick={addTeamSlot}>Add Team</button>}
                         <button type="button" onClick={addObjectiveSlot}>Add Objective</button>
-                        <button type="button" onClick={removeObjectiveSlot}>Remove Objective</button>
                     </div>
                 </div>
                 <div className="form-actions">
