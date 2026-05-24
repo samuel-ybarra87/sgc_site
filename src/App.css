@@ -59,6 +59,10 @@ button[type="button"].btn-active {
   color: var(--text-h)
 }
 
+button[type="button"].remove-btn {
+  border-color: var(--border);
+}
+
 label {
   font-size: 14px;
   font-weight: 500;
