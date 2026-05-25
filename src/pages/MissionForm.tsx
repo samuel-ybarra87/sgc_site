@@ -123,12 +123,15 @@ export default function MissionForm() {
 
             // 2. Fetch the specific mission and its members in parallel
             const [missionRes, membersRes] = await Promise.all([
-                supabase.from('missions')
-                    .select(`
-                        *,
-                        objectives:mission_objectives(*)
-                        `).eq('id', id).single(),
-                supabase.from('missions_teams').select('team_id').eq('mission_id', id)
+                supabase
+                    .from('missions')
+                    .select(`*, objectives:mission_objectives(*)`)
+                    .eq('id', id)
+                    .single(),
+                supabase
+                    .from('missions_teams')
+                    .select('team_id')
+                    .eq('mission_id', id)
             ]);
 
             if (missionRes.data && membersRes.data && allTeams) {
@@ -377,8 +380,22 @@ export default function MissionForm() {
                         <label htmlFor={`objective-${index}`}>Objective {index + 1}: </label>
                         <div className="objective-input-row">
                             <input id={`objective-${index}`} value={objectiveSlot.objective} onChange={(e) => handleObjectiveChange(index, e)}/>
-                            <button type='button' className={objectiveSlot.is_completed ? 'btn-active' : 'btn-inactive'} onClick={() => toggleComplete(index)}>Completed</button>
-                            <button type='button' className={objectiveSlot.secret_objective ? 'btn-active' : 'btn-inactive'} onClick={() => toggleSecretStatus(index)}>Classified</button>
+                            <button
+                                type='button'
+                                className={objectiveSlot.is_completed ? 'btn-active' : 'btn-inactive'}
+                                onClick={() => toggleComplete(index)}
+                                aria-pressed={objectiveSlot.is_completed}
+                            >
+                                Completed
+                            </button>
+                            <button
+                                type='button'
+                                className={objectiveSlot.secret_objective ? 'btn-active' : 'btn-inactive'}
+                                onClick={() => toggleSecretStatus(index)}
+                                aria-pressed={objectiveSlot.secret_objective}
+                            >
+                                Classified
+                            </button>
                             {form.objectives.length > 1 && <button id={`remove-objective-${index}`} type="button" className="remove-btn" onClick={()=>removeObjectiveSlot(index)}>Remove</button>}
                         </div>
                     </div>

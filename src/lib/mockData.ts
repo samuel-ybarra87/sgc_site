@@ -283,25 +283,25 @@ export const mockMissionObjectives = [
     {
         id: "objective-uuid-1",
         objective: "test-not-complete",
-        is_complete: false,
+        is_completed: false,
         secret_objective: false
     },
     {
         id: "objective-uuid-2",
         objective: "test-complete",
-        is_complete: true,
+        is_completed: true,
         secret_objective: false
     },
     {
         id: "objective-uuid-3",
         objective: "test-secret",
-        is_complete: false,
+        is_completed: false,
         secret_objective: true
     },
     {
         id: "objective-uuid-4",
         objective: "test-both",
-        is_complete: true,
+        is_completed: true,
         secret_objective: true
     }
 ]

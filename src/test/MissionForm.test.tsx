@@ -16,8 +16,9 @@ vi.mock('../lib/supabase', () => ({
 }));
 
 const user = userEvent.setup();
-const abydos = mockMissions[0];
+const abydosData = mockMissions[0];
 const { objectives, teams, id: mockMissionID, ...mockMission } = mockMissionData;
+const { objectives: abydosObjectives, teams: abydosTeams, id: abydosID, ...abydos } = abydosData;
 
 describe('MissionForm', () => {
 
@@ -26,7 +27,6 @@ describe('MissionForm', () => {
     });
 
     it('should show empty fields for new entries', async () =>{
-
         // teams
         vi.mocked(supabase.from).mockReturnValueOnce({
             select: vi.fn().mockReturnValueOnce({
@@ -110,6 +110,39 @@ describe('MissionForm', () => {
         expect(mockSubmitData).toHaveBeenCalled();
         expect(missionTeamLink).toHaveBeenCalled();
         expect(mockObjective).toHaveBeenCalled();
+    });
+
+    it('should toggle button states for completed and classified', async () => {
+        // teams
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                order: vi.fn().mockReturnValueOnce({ data: mockTeams, error: null }),
+            }),
+        } as any);
+
+        render(
+            <MemoryRouter>
+                <MissionForm />
+            </MemoryRouter>
+        );
+
+        const completedBtn = await screen.findByRole('button', { name: 'Completed' });
+        const classifiedBtn = await screen.findByRole('button', { name: 'Classified' });
+
+        expect(completedBtn).toHaveAttribute('aria-pressed', 'false');
+        expect(classifiedBtn).toHaveAttribute('aria-pressed', 'false');
+
+        await user.click(completedBtn);
+        await user.click(classifiedBtn);
+
+        expect(completedBtn).toHaveAttribute('aria-pressed', 'true');
+        expect(classifiedBtn).toHaveAttribute('aria-pressed', 'true');
+
+        await user.click(completedBtn);
+        await user.click(classifiedBtn);
+
+        expect(completedBtn).toHaveAttribute('aria-pressed', 'false');
+        expect(classifiedBtn).toHaveAttribute('aria-pressed', 'false');
     });
 
     it('should display error message when mission insert fails', async () => {
@@ -375,21 +408,27 @@ describe('MissionForm', () => {
             </MemoryRouter>
         );
 
-        expect(await screen.queryByRole('button', { name: 'Add Team' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Add Team' })).not.toBeInTheDocument();
 
         await user.selectOptions(await screen.findByLabelText('Team 1:'), teams[0].id);
         await user.click(screen.getByRole('button', { name: 'Add Team' }))
 
         expect(await screen.findByLabelText('Team 2:')).toBeInTheDocument();
-        expect(await screen.queryByRole('button', { name: 'Add Team' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Add Team' })).not.toBeInTheDocument();
 
         await user.selectOptions(await screen.findByLabelText('Team 2:'), mockTeams[1].id);
         await user.click(screen.getByRole('button', { name: 'Add Team' }))
 
         expect(await screen.findByLabelText('Team 3:')).toBeInTheDocument();
-        expect(await screen.queryByRole('button', { name: 'Add Team' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Add Team' })).not.toBeInTheDocument();
+        expect(screen.getByLabelText('Team 2:')).toHaveDisplayValue(mockTeams[1].designation);
 
-        await user.click(await screen.findByTestId('remove-button-2'));
+        const removeButtons = await screen.findAllByRole('button', { name: /Remove/i });
+        await user.click(removeButtons[1]);
+
+        expect(screen.queryByText('Team 3:')).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Add Team' })).not.toBeInTheDocument();
+        expect(screen.getByLabelText('Team 2:')).toHaveDisplayValue("Select a Team");
     });
 
     it('should show error message if objective 1 is empty', async () => {        // teams
@@ -447,39 +486,106 @@ describe('MissionForm', () => {
         expect(await screen.findByText('Please fill out Objective 2.')).toBeInTheDocument();
     });
 
-    // it('should show values of record to edit', async () =>{
+    it('should remove the exta objective based on index', async () =>{
+        // teams
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                order: vi.fn().mockReturnValueOnce({ data: mockTeams, error: null }),
+            }),
+        } as any);
 
-    //     // personnel
-    //     vi.mocked(supabase.from).mockReturnValueOnce({
-    //     select: vi.fn().mockReturnValueOnce({
-    //     eq: vi.fn().mockReturnValueOnce({
-    //     eq: vi.fn().mockReturnValueOnce({
-    //     order: vi.fn().mockReturnValueOnce({ data: mockPersonnel, error: null }),
-    //     })
-    //     })
-    //     }),
-    //     } as any);
+        render(
+            <MemoryRouter>
+                <MissionForm />
+            </MemoryRouter>
+        );
 
-    //     vi.mocked(supabase.from).mockReturnValueOnce({
-    //     select: vi.fn().mockReturnValueOnce({
-    //     eq: vi.fn().mockReturnValueOnce({
-    //     single: vi.fn().mockResolvedValueOnce({ data: mockTeams[0], error: null }),
-    //     }),
-    //     }),
-    //     } as any);
+        expect(screen.queryByRole('button', { name: 'Remove' })).not.toBeInTheDocument();
 
-    //     render(
-    //     <MemoryRouter initialEntries={[PATHS.TEAM_EDIT(mockTeams[0].id)]}>
-    //     <Routes>
-    //     <Route path={ROUTES.TEAM_EDIT} element={<MissionForm />} />
-    //     </Routes>
-    //     </MemoryRouter>
-    //     );
+        await user.click(await screen.findByRole('button', { name: 'Add Objective' }));
+        await user.click(await screen.findByRole('button', { name: 'Add Objective' }));
+        await user.type(await screen.findByText(/Objective 2:/), "Test");
 
-    //     expect(await screen.findByLabelText('Designation:')).toHaveValue("SG-1");
-    //     expect(await screen.findByLabelText('Commanding Officer:')).toHaveDisplayValue("Col Jack O'Neill");
-    //     expect(await screen.findByLabelText('Status:')).toHaveValue('active');
-    // });
+        expect(await screen.findByText(/Objective 1:/)).toBeInTheDocument();
+        expect(await screen.findByText(/Objective 2:/)).toBeInTheDocument();
+        expect(await screen.findByText(/Objective 3:/)).toBeInTheDocument();
+        expect(await screen.findByLabelText(/Objective 2:/)).toHaveValue("Test");
+
+        const removeButtons = await screen.findAllByRole('button', { name: /Remove/i });
+        await user.click(removeButtons[1]);
+
+        expect(await screen.queryByText(/Objective 3:/)).not.toBeInTheDocument();
+        expect(await screen.findByLabelText(/Objective 2:/)).toHaveValue("");
+    });
+
+    it('should show values of record to edit', async () =>{
+        // teams
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                order: vi.fn().mockReturnValueOnce({ data: mockTeams, error: null }),
+            }),
+        } as any);
+
+        // specific mission
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                eq: vi.fn().mockReturnValueOnce({
+                    single: vi.fn().mockResolvedValueOnce({
+                        data: {
+                            ...abydos,
+                            id: abydosID,
+                            objectives: abydosObjectives
+                        },
+                        error: null
+                    }),
+                }),
+            }),
+        } as any);
+
+        // teams assigned
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                eq: vi.fn().mockReturnValueOnce({
+                    data: [{ team_id: abydosTeams[0].id }],
+                    error: null
+                }),
+            }),
+        } as any);
+
+        render(
+            <MemoryRouter initialEntries={[PATHS.MISSION_EDIT(abydosID)]}>
+                <Routes>
+                    <Route path={ROUTES.MISSION_EDIT} element={<MissionForm />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        const teamList = await screen.findAllByLabelText(/Team/i);
+        const missionObjectives = await screen.findAllByLabelText(/Objective/i);
+        const completedBtn = await screen.findAllByRole('button', { name: /Completed/i });
+        const classifiedBtn = await screen.findAllByRole('button', { name: /Classified/i });
+
+        expect(teamList).toHaveLength(abydosTeams.length);
+        expect(missionObjectives).toHaveLength(abydosObjectives.length);
+        expect(completedBtn).toHaveLength(abydosObjectives.length);
+        expect(classifiedBtn).toHaveLength(abydosObjectives.length);
+
+        expect(await screen.findByLabelText("Name:")).toHaveValue(abydos.name);
+        expect(await screen.findByLabelText("Destination:")).toHaveValue(abydos.destination);
+        expect(await screen.findByLabelText("Status:")).toHaveValue(abydos.status);
+        expect(await screen.findByLabelText("Start Date:")).toHaveValue(abydos.start_date.slice(0,16));
+        expect(await screen.findByLabelText("End Date:")).toHaveValue(abydos.end_date.slice(0,16));
+
+        teamList.forEach((node, i) => {
+            expect(node).toHaveValue(abydosTeams[i].id);
+            expect(node).toHaveDisplayValue(abydosTeams[i].designation);
+        });
+        missionObjectives.forEach((node, i) => expect(node).toHaveValue(abydosObjectives[i].objective));
+        completedBtn.forEach((node, i) => expect(node).toHaveAttribute('aria-pressed', `${abydosObjectives[i].is_completed}`));
+        classifiedBtn.forEach((node, i) => expect(node).toHaveAttribute('aria-pressed', `${abydosObjectives[i].secret_objective}`));
+
+        expect(await screen.findByLabelText("Report:")).toHaveValue(abydos.description);
+    });
 
     // it('should update values into database after clicking save', async () => {
     //     // Populate mock database with data
