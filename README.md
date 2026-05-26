@@ -15,10 +15,12 @@ The in-universe premise: NORAD has contracted a developer to digitize the SGC's 
 
 - Full CRUD for SGC personnel records
 - Full CRUD for SGC Teams
+- Full CRUD for Mission Records
 - Role-aware display (military rank abbreviations vs civilian titles)
 - Enum-enforced data integrity
-  - Personnel fields (rank, status, prefix, personnel type, role, and team assignment)
+  - Personnel (rank, status, prefix, personnel type, role, and team assignment)
   - Teams (commanding_officer)
+  - Missions (status)
 - Comprehensive unit test suite with mocked Supabase client
 - Automated CI pipeline on push to main, staging, and dev branches
 
@@ -76,6 +78,9 @@ src/
     server.ts
   pages/
     Homepage.tsx
+    MissionDetail.tsx
+    MissionForm.tsx
+    MissionList.tsx
     PersonnelList.tsx
     PersonnelDetail.tsx
     PersonnelForm.tsx
@@ -85,12 +90,19 @@ src/
   test/
     integration/
       Homepage.integration.test.tesx
+      MissionDetail.integration.test.tsx
+      MissionForm.integration.test.tsx
+      MissionList.integration.test.tsx
       PersonnelDetail.integration.test.tsx
       PersonnelForm.integration.test.tsx
       PersonnelList.integration.test.tsx
       TeamDetail.integration.test.tsx
       TeamForm.integration.test.tsx
       TeamList.integration.test.tsx
+    Homepage.test.tsx
+    MissionDetail.test.tsx
+    MissionForm.test.tsx
+    MissionList.test.tsx
     PersonnelDetail.test.tsx
     PersonnelForm.test.tsx
     PersonnelList.test.tsx
