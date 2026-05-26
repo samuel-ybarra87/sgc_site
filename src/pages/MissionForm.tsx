@@ -215,8 +215,8 @@ export default function MissionForm() {
         const formData = {
             ...form,
             description: form.description === '' ? null : form.description,
-            start_date: new Date(`${form.start_date}Z`).toISOString(),
-            end_date: form.end_date === '' ? null : new Date(`${form.end_date}Z`).toISOString()
+            start_date: new Date(`${form.start_date.slice(0,16)}Z`).toISOString(),
+            end_date: form.end_date === '' ? null : new Date(`${form.end_date.slice(0,16)}Z`).toISOString()
         }
 
         const { objectives, teams, ...missionData } = formData;

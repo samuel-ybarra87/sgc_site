@@ -574,7 +574,7 @@ describe('MissionForm', () => {
         expect(await screen.findByLabelText("Destination:")).toHaveValue(abydos.destination);
         expect(await screen.findByLabelText("Status:")).toHaveValue(abydos.status);
         expect(await screen.findByLabelText("Start Date:")).toHaveValue(abydos.start_date.slice(0,16));
-        expect(await screen.findByLabelText("End Date:")).toHaveValue(abydos.end_date.slice(0,16));
+        expect(await screen.findByLabelText("End Date:")).toHaveValue(abydos.end_date!.slice(0,16));
 
         teamList.forEach((node, i) => {
             expect(node).toHaveValue(abydosTeams[i].id);

@@ -1,5 +1,6 @@
-// Mock data
+import type { Mission, Personnel, Team } from "./types";
 
+// Mock data
 // Roles
 export const mockRoles = [
     {
@@ -28,7 +29,7 @@ export const mockEntry = {
 };
 
 // Personnel
-export const mockPersonnel = [
+export const mockPersonnel: Personnel[] = [
     {
         id: '1',
         rank: 'Colonel',
@@ -199,7 +200,7 @@ export const mockTeamEntry = {
 };
 
 // Teams
-export const mockTeams = [
+export const mockTeams: Team[] = [
     {
         id: 'team-sg-1',
         designation: 'SG-1',
@@ -318,7 +319,7 @@ export const mockMissionData = {
     teams: [mockTeams[0]]
 }
 
-export const mockMissions = [
+export const mockMissions: Mission[] = [
     {
         id: "uuid-1",
         name: "Abydos Recon",
@@ -327,7 +328,7 @@ export const mockMissions = [
         start_date: "1996-10-28T04:00:00.000Z",
         end_date: "1996-10-29T18:30:00.000Z",
         status: "complete",
-        objectives: mockMissionObjectives,
+        objectives: mockMissionObjectives.map(obj=>({ mission_id: "uuid-1", ...obj})),
         teams: [mockTeams[2]]
     },
     {
@@ -338,7 +339,7 @@ export const mockMissions = [
         start_date: "2026-05-01T08:00:00.000Z",
         end_date: "2026-05-30T05:00:00.000Z",
         status: "complete",
-        objectives: mockMissionObjectives,
+        objectives: mockMissionObjectives.map(obj=>({mission_id: "uuid-2", ...obj})),
         teams: mockTeams
     }
 ]

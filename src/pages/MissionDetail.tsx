@@ -1,7 +1,146 @@
+import { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
+import type { Mission, Personnel, Team } from '../lib/types';
+import { PATHS } from '../lib/paths';
+
 export default function MissionDetail(){
+    const { id } = useParams();
+    const navigate = useNavigate();
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<{ message: string; code: string } | null>(null);
+    const [persons, setPersons] = useState<Personnel[] | null>(null);
+    const [mission, setMission] = useState<Mission | null>(null);
+
+    useEffect(()=>{
+        async function fetchData() {
+            // Find assigned teams
+            setLoading(true);
+            const { data: assignedTeamIDs, error: fetchTeamIDError } = await supabase
+                .from('missions_teams')
+                .select('team_id')
+                .eq('mission_id', id);
+            if(fetchTeamIDError){
+                console.error(fetchTeamIDError.message);
+                setError({
+                    message: fetchTeamIDError.message,
+                    code: fetchTeamIDError.code
+                });
+                setLoading(false);
+                return;
+            }
+
+            const teamIds = assignedTeamIDs.map(row => row.team_id);
+
+            const { data: assignedTeams, error: fetchTeamErrors } =  await supabase
+                .from('teams')
+                .select('*')
+                .in('id', teamIds);
+            if(fetchTeamErrors){
+                console.error(fetchTeamErrors.message);
+                setError({
+                    message: fetchTeamErrors.message,
+                    code: fetchTeamErrors.code
+                });
+                setLoading(false);
+                return;
+            }
+
+            // Find assigned personnel
+            const { data: personnelLink, error: fetchPersonIDError } = await supabase
+                .from('team_personnel')
+                .select('*')
+                .in('team_id', teamIds);
+            if(fetchPersonIDError){
+                console.error(fetchPersonIDError.message);
+                setError({
+                    message: fetchPersonIDError.message,
+                    code: fetchPersonIDError.code
+                });
+                setLoading(false);
+                return;
+            }
+
+            const personIDs = personnelLink.map(row => row.personnel_id);
+
+            const { data: personnel, error: fetchPersonError } = await supabase
+                .from('personnel')
+                .select(`
+                    *,
+                    teams!personnel_team_id_fkey(designation),
+                    roles!personnel_role_id_fkey(name)`)
+                .in('id', personIDs);
+            if(fetchPersonError){
+                console.error(fetchPersonError.message);
+                setError({ message: fetchPersonError.message, code: fetchPersonError.code });
+                setLoading(false);
+                return;
+            } else {
+                const assginedPersonnel: Personnel[] = personnel.map(p =>({
+                    ...p,
+                    team_id: personnelLink.find(l => l.personnel_id === p.id)?.team_id || p.team_id
+                }));
+                setPersons(assginedPersonnel)
+            };
+
+            // Find mission record and objectives
+            const { data: missionData, error: fetchMissionError } = await supabase
+                .from('missions')
+                .select(`*, objectives:mission_objectives(*)`)
+                .eq('id', id)
+                .single();
+            if(fetchMissionError){
+                console.error(fetchMissionError.message);
+                setError({ message: fetchMissionError.message, code: fetchMissionError.code });
+                setLoading(false);
+                return;
+            } else setMission({...missionData, teams: assignedTeams });
+
+            setLoading(false);
+        }
+
+        fetchData();
+    }, [id]);
+
+    async function handleDelete() {
+        if(!confirm('Are you sure you want to delete this record?')) return;
+
+    }
+
+    if (loading) return <p>Loading...</p>;
+    if (error) return <p>Error {error.code}: {error.message}</p>;
+    if (!mission) return <p>Mission record not found.</p>;
+
     return(
         <div>
-            
+            <h1>Mission Record</h1>
+            <h2>{mission.destination}</h2>
+            <p>Status: {mission.status}</p>
+            <p>{mission.start_date}</p>
+            <p>{mission.end_date}</p>
+            {mission.teams.map((team) => (
+                <div key={team.id}>
+                    <p>{team.designation}</p>
+                    {persons!.filter(p => p.team_id === team.id).map((person) => (
+                         <p key={person.id}>{person.first_name}</p>
+                    ))}
+                </div>
+            ))}
+            {mission.objectives.map((obj) => (
+                <div key={obj.id}>
+                    <p>{obj.objective}</p>
+                    <input type='checkbox' checked={obj.is_completed} readOnly></input>
+                </div>
+            ))}
+            <p>{mission.description}</p>
+
+            <div className="form-actions">
+                <div className='submit-buttons'>
+                    <button onClick={() => navigate(PATHS.MISSION_LIST)}>Back</button>
+                    <button onClick={() => navigate(PATHS.MISSION_EDIT(mission.id))}>Edit</button>
+                    <button onClick={handleDelete}>Delete</button>
+                </div>
+            </div>
         </div>
     );
 }

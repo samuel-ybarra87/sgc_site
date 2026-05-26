@@ -116,8 +116,8 @@ src/
   - [x] Teams e2e test suite
 - [x] Mission Records schema
   - [x] Create many to many relationship between personnel, teams, and missions tables
-- [ ] Mission records CRUD (In Prgrogress)
-  - [ ] Missions unit test suite
+- [x] Mission records CRUD (In Prgrogress)
+  - [x] Missions unit test suite
   - [ ] Missions integration test suite
   - [ ] Missions e2e test suite
 - [ ] GitHub Pages deployment
