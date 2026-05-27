@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import type { Mission, Personnel, Team } from '../lib/types';
+import type { Mission, Personnel } from '../lib/types';
 import { PATHS } from '../lib/paths';
 
 export default function MissionDetail(){
@@ -105,6 +105,34 @@ export default function MissionDetail(){
     async function handleDelete() {
         if(!confirm('Are you sure you want to delete this record?')) return;
 
+        const { error: teamError } = await supabase
+            .from('missions_teams')
+            .delete()
+            .eq('mission_id', id);
+        if(teamError){
+            setError({ message: teamError.message, code: teamError.code });
+            return;
+        }
+
+        const { error: objError } = await supabase
+            .from('mission_objectives')
+            .delete()
+            .eq('mission_id', id);
+        if(objError){
+            setError({ message: objError.message, code: objError.code });
+            return;
+        }
+
+        const { error: missionError } = await supabase
+            .from('missions')
+            .delete()
+            .eq('id', id);
+        if(missionError){
+            setError({ message: missionError.message, code: missionError.code });
+            return;
+        } else {
+            navigate(PATHS.MISSION_LIST);
+        }
     }
 
     if (loading) return <p>Loading...</p>;
