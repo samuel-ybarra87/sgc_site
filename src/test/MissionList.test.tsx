@@ -26,7 +26,7 @@ describe('MissionList', () => {
       </MemoryRouter>
     );
 
-    const message = await screen.findByText('No team records found.');
+    const message = await screen.findByText('No mission records found.');
     expect(message).toBeInTheDocument();
   });
 
@@ -47,7 +47,7 @@ describe('MissionList', () => {
     expect(message).toBeInTheDocument();
   });
 
-  it('displays team records when data is returned', async () =>{
+  it('displays mission records when data is returned', async () =>{
     vi.mocked(supabase.from).mockReturnValueOnce({
         select: vi.fn().mockReturnValueOnce({
           order: vi.fn().mockResolvedValueOnce({ data: mockMissions, error: null } ),

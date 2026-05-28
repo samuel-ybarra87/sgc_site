@@ -1,9 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, it, expect, vi } from 'vitest';
-import MissionForm from '../pages/MissionForm';
 import { supabase } from '../lib/supabase';
 import userEvent from '@testing-library/user-event';
+import MissionForm from '../pages/MissionForm';
+import MissionDetail from '../pages/MissionDetail';
 import MissionList from '../pages/MissionList';
 import { mockTeams, mockMissions, mockMissionData } from '../lib/mockData';
 import { PATHS, ROUTES } from '../lib/paths';
@@ -431,7 +432,8 @@ describe('MissionForm', () => {
         expect(screen.getByLabelText('Team 2:')).toHaveDisplayValue("Select a Team");
     });
 
-    it('should show error message if objective 1 is empty', async () => {        // teams
+    it('should show error message if objective 1 is empty', async () => {
+        // teams
         vi.mocked(supabase.from).mockReturnValueOnce({
             select: vi.fn().mockReturnValueOnce({
                 order: vi.fn().mockReturnValueOnce({ data: mockTeams, error: null }),
@@ -455,7 +457,8 @@ describe('MissionForm', () => {
         expect(await screen.findByText('Please fill out Objective 1.')).toBeInTheDocument();
     });
 
-    it('should show error message if extra objective is empty', async () => {        // teams
+    it('should show error message if extra objective is empty', async () => {
+        // teams
         vi.mocked(supabase.from).mockReturnValueOnce({
             select: vi.fn().mockReturnValueOnce({
                 order: vi.fn().mockReturnValueOnce({ data: mockTeams, error: null }),
@@ -666,4 +669,6 @@ describe('MissionForm', () => {
         expect(title).toBeInTheDocument();
         expect(abydosLink).toBeInTheDocument();
     });
+
+    it('should navigate back to mission list when cancelling (edit)', async () =>{});
 });

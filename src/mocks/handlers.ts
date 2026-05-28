@@ -1,5 +1,14 @@
 import { http, HttpResponse } from 'msw';
-import { mockPersonnel, mockRoles, mockTeamData, mockTeams, mockMissionObjectives, mockMissions } from '../lib/mockData';
+import {
+  mockPersonnel,
+  mockRoles,
+  mockTeamData,
+  mockTeams,
+  mockMissionObjectives,
+  mockMissions,
+  mockMissionTeams,
+  mockTeamPersonnelLink
+} from '../lib/mockData';
 
 export const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 
@@ -18,6 +27,13 @@ function createCrudHandlers(
       if(idParam && select && select.includes('commanding_officer_details')){
         const idValue = idParam.split('.')[1]; // eg. extract 'team-sg-1 from 'eq.team-sg-1'
         const detail = mockDetailData?.find(t => t.id === idValue);
+        return HttpResponse.json(detail || {});
+      }
+      
+      // Detail request
+      if(idParam && select && select.includes('objectives')){
+        const idValue = idParam.split('.')[1]; // eg. extract 'team-sg-1 from 'eq.team-sg-1'
+        const detail = mockData.find(t => t.id === idValue);
         return HttpResponse.json(detail || {});
       }
       
@@ -40,6 +56,8 @@ export const handlers = [
   ...createCrudHandlers('personnel', mockPersonnel),
   ...createCrudHandlers('teams', mockTeams, mockTeamData),
   ...createCrudHandlers('roles', mockRoles),
+  ...createCrudHandlers('missions_teams', mockMissionTeams),
+  ...createCrudHandlers('team_personnel', mockTeamPersonnelLink),
+  ...createCrudHandlers('mission_objectives', mockMissionObjectives),
   ...createCrudHandlers('missions', mockMissions),
-  ...createCrudHandlers('mission_objectives', mockMissionObjectives)
 ];

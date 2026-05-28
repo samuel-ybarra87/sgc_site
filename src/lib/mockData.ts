@@ -1,4 +1,4 @@
-import type { Mission, Personnel, Team } from "./types";
+import type { Mission, MissionTeamLink, Personnel, Team, TeamPersonnelLink } from "./types";
 
 // Mock data
 // Roles
@@ -123,7 +123,7 @@ export const mockPersonnel: Personnel[] = [
         first_name: "Teal'c",
         middle_name: '',
         last_name: null,
-        suffix: '',
+        suffix: null,
         personnel_type: 'civilian'
     },
     {
@@ -280,6 +280,13 @@ export const mockTeamData = [
     }
 ]
 
+export const mockTeamPersonnelLink: TeamPersonnelLink[] = mockTeamData.flatMap(team =>
+    team.members.map(person=>({
+        team_id: team.id,
+        personnel_id: person.id
+    }))
+);
+
 export const mockMissionObjectives = [
     {
         id: "objective-uuid-1",
@@ -308,7 +315,7 @@ export const mockMissionObjectives = [
 ]
 
 export const mockMissionData = {
-    id: "uuid-3",
+    id: "mission-uuid-3",
     name: "MockMissionEntry",
     destination: "PT3-5t01",
     description: null,
@@ -316,23 +323,23 @@ export const mockMissionData = {
     end_date: null,
     status: "active",
     objectives: [mockMissionObjectives[0]],
-    teams: [mockTeams[0]]
+    teams: [mockTeamData[0]]
 }
 
 export const mockMissions: Mission[] = [
     {
-        id: "uuid-1",
+        id: "mission-uuid-1",
         name: "Abydos Recon",
-        destination: "P3x-984",
+        destination: "P3X-984",
         description: "Mock Abydos Mission",
         start_date: "1996-10-28T04:00:00.000Z",
         end_date: "1996-10-29T18:30:00.000Z",
         status: "complete",
         objectives: mockMissionObjectives.map(obj=>({ mission_id: "uuid-1", ...obj})),
-        teams: [mockTeams[2]]
+        teams: [mockTeamData[1]]
     },
     {
-        id: "uuid-2",
+        id: "mission-uuid-2",
         name: "MockMission",
         destination: "PT3-5t01",
         description: "Mock Mission 1",
@@ -340,6 +347,15 @@ export const mockMissions: Mission[] = [
         end_date: "2026-05-30T05:00:00.000Z",
         status: "complete",
         objectives: mockMissionObjectives.map(obj=>({mission_id: "uuid-2", ...obj})),
-        teams: mockTeams
+        teams: mockTeamData
     }
 ]
+
+const allMissions = [...mockMissions, mockMissionData];
+
+export const mockMissionTeams: MissionTeamLink[] = allMissions.flatMap(mission =>
+    mission.teams.map(team => ({
+        mission_id: mission.id,
+        team_id: team.id
+    }))
+);

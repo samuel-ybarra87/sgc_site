@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import type { Mission, Personnel } from '../lib/types';
 import { PATHS } from '../lib/paths';
+import { rankAbbreviations } from '../lib/rankAbbreviations';
 
 export default function MissionDetail(){
     const { id } = useParams();
@@ -11,6 +12,20 @@ export default function MissionDetail(){
     const [error, setError] = useState<{ message: string; code: string } | null>(null);
     const [persons, setPersons] = useState<Personnel[] | null>(null);
     const [mission, setMission] = useState<Mission | null>(null);
+
+    function extractName(person: Personnel){
+        const rank = rankAbbreviations[person.rank ?? ''];
+        const prefix = person.personnel_type === 'military' ? `${rank} ` : (person.prefix ? `${person.prefix} ` : '');
+        const name = `${person.first_name}${person.middle_name ? ` ${person.middle_name} `: ' '}${person.last_name ?? ''}${person.suffix ? ` ${person.suffix}` : ''}`
+        
+        return `${prefix}${name}`;
+    }
+
+    function extractDate(timestamp: string){
+        const [date, time] = timestamp.slice(0,16).split('T');
+
+        return `${date} ${time}`;
+    }
 
     useEffect(()=>{
         async function fetchData() {
@@ -144,22 +159,29 @@ export default function MissionDetail(){
             <h1>Mission Record</h1>
             <h2>{mission.destination}</h2>
             <p>Status: {mission.status}</p>
-            <p>{mission.start_date}</p>
-            <p>{mission.end_date}</p>
-            {mission.teams.map((team) => (
-                <div key={team.id}>
-                    <p>{team.designation}</p>
-                    {persons!.filter(p => p.team_id === team.id).map((person) => (
-                         <p key={person.id}>{person.first_name}</p>
-                    ))}
-                </div>
-            ))}
-            {mission.objectives.map((obj) => (
-                <div key={obj.id}>
-                    <p>{obj.objective}</p>
-                    <input type='checkbox' checked={obj.is_completed} readOnly></input>
-                </div>
-            ))}
+            <p>Mission Start: {extractDate(mission.start_date)}</p>
+            <div>{mission.end_date && <p>Mission End: {extractDate(mission.end_date)}</p>}</div>
+            <div>TEAMS:
+                {mission.teams.map((team) => (
+                    <div key={team.id}>
+                        <u>{team.designation}</u>
+                        {persons!.filter(p => p.team_id === team.id).map((person) => (
+                            <p key={person.id}>
+                                {extractName(person)}
+                            </p>
+                        ))}
+                    </div>
+                ))}
+            </div>
+            <div>OBJECTIVES:
+                {mission.objectives.map((obj) => (
+                    <div key={obj.id}>
+                        <p>- {obj.objective}</p>
+                        <input type='checkbox' checked={obj.is_completed} readOnly></input>
+                    </div>
+                ))}
+            </div>
+            <p>Mission Debriefing</p>
             <p>{mission.description}</p>
 
             <div className="form-actions">

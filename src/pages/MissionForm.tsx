@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { PATHS } from '../lib/paths';
-import type { MissionObjectives, Team } from '../lib/types';
+import type { MissionObjectives, Team, MissionTeamLink } from '../lib/types';
 
 type MissionForm = {
     name: string;
@@ -13,11 +13,6 @@ type MissionForm = {
     end_date: string;
     objectives: MissionObjectives[]
     teams: Team[];
-}
-
-type MissionTeamLink = {
-    mission_id: string;
-    team_id: string;
 }
 
 const emptyTeam = { id: '', commanding_officer: '', designation: '', status: '' };

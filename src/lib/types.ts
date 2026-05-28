@@ -41,3 +41,13 @@ export type Mission = {
   objectives: MissionObjectives[];
   teams: Team[];
 };
+
+export type MissionTeamLink = {
+  mission_id: string;
+  team_id: string;
+}
+
+export type TeamPersonnelLink = {
+  team_id: string;
+  personnel_id: string;
+}

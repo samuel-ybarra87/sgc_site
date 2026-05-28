@@ -36,18 +36,18 @@ export default function missionsList() {
         <button onClick={() => navigate(PATHS.HOME)}>Home</button>
         <button onClick={() => navigate(PATHS.MISSION_NEW)}>Add Mission Record</button>
         {missions.length === 0 ? (
-            <p>No team records found.</p>
+            <p>No mission records found.</p>
         ) : (
             <div>
-            <ul>
-                {missions.map((m) => (
-                <li key={m.id}>
-                    <Link to={`/missions/${m.id}`}>
-                    {m.destination} | {m.name} | {m.status}
-                    </Link>
-                </li>
-                ))}
-            </ul>
+                <ul>
+                    {missions.map((m) => (
+                    <li key={m.id}>
+                        <Link to={`/missions/${m.id}`}>
+                        {m.destination} | {m.name} | {m.status}
+                        </Link>
+                    </li>
+                    ))}
+                </ul>
             </div>
         )}
         </div>

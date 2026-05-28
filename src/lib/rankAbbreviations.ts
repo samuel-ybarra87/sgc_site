@@ -1,4 +1,5 @@
 export const rankAbbreviations: Record<string, string> = {
+  '' : '',
   'Airman Basic': 'AB',
   'Airman': 'Amn',
   'Airman First Class': 'A1C',
