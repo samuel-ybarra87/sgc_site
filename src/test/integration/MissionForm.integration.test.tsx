@@ -203,21 +203,21 @@ describe('MissionForm (integration)', () => {
         expect(await screen.getByText('SGC Mission Records'));
     });
 
-    // it('navigates back to team list when cancelling (edit)', async ()=>{
-    //     render(
-    //         <MemoryRouter initialEntries={[PATHS.MISSION_LIST]}>
-    //             <Routes>
-    //                 <Route path={PATHS.MISSION_LIST} element={<MissionList />} />
-    //                 <Route path={ROUTES.MISSION_DETAIL} element={<MissionDetail/>} />
-    //                 <Route path={ROUTES.MISSION_EDIT} element={<MissionForm />} />
-    //             </Routes>
-    //         </MemoryRouter>
-    //     );
+    it('navigates back to team list when cancelling (edit)', async ()=>{
+        render(
+            <MemoryRouter initialEntries={[PATHS.MISSION_LIST]}>
+                <Routes>
+                    <Route path={PATHS.MISSION_LIST} element={<MissionList />} />
+                    <Route path={ROUTES.MISSION_DETAIL} element={<MissionDetail/>} />
+                    <Route path={ROUTES.MISSION_EDIT} element={<MissionForm />} />
+                </Routes>
+            </MemoryRouter>
+        );
 
-    //     await user.click(await screen.findByRole('link', { name: `${abydos.destination} | ${abydos.name} | ${abydos.status}` }));
-    //     await user.click(await screen.findByRole('button', { name: 'Edit' }));
-    //     await user.click(await screen.findByRole('button', { name: 'Cancel' }));
+        await user.click(await screen.findByRole('link', { name: `${abydos.destination} | ${abydos.name} | ${abydos.status}` }));
+        await user.click(await screen.findByRole('button', { name: 'Edit' }));
+        await user.click(await screen.findByRole('button', { name: 'Cancel' }));
 
-    //     expect(await screen.getByText('SGC Mission Records'));
-    // });
+        expect(await screen.getByText('SGC Mission Records'));
+    });
 });

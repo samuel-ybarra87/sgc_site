@@ -335,7 +335,7 @@ export const mockMissions: Mission[] = [
         start_date: "1996-10-28T04:00:00.000Z",
         end_date: "1996-10-29T18:30:00.000Z",
         status: "complete",
-        objectives: mockMissionObjectives.map(obj=>({ mission_id: "uuid-1", ...obj})),
+        objectives: mockMissionObjectives.map(obj=>({ mission_id: "mission-uuid-1", ...obj})),
         teams: [mockTeamData[1]]
     },
     {
@@ -346,7 +346,7 @@ export const mockMissions: Mission[] = [
         start_date: "2026-05-01T08:00:00.000Z",
         end_date: "2026-05-30T05:00:00.000Z",
         status: "complete",
-        objectives: mockMissionObjectives.map(obj=>({mission_id: "uuid-2", ...obj})),
+        objectives: mockMissionObjectives.map(obj=>({mission_id: "mission-uuid-2", ...obj})),
         teams: mockTeamData
     }
 ]

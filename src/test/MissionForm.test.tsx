@@ -4,7 +4,6 @@ import { describe, it, expect, vi } from 'vitest';
 import { supabase } from '../lib/supabase';
 import userEvent from '@testing-library/user-event';
 import MissionForm from '../pages/MissionForm';
-import MissionDetail from '../pages/MissionDetail';
 import MissionList from '../pages/MissionList';
 import { mockTeams, mockMissions, mockMissionData } from '../lib/mockData';
 import { PATHS, ROUTES } from '../lib/paths';
@@ -590,53 +589,127 @@ describe('MissionForm', () => {
         expect(await screen.findByLabelText("Report:")).toHaveValue(abydos.description);
     });
 
-    // it('should update values into database after clicking save', async () => {
-    //     // Populate mock database with data
+    it('should update values into database after clicking save', async () => {
+        // Delete mock db entries
+        const mockDelete = vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({ data: null, error: null })
+        });
 
-    //     // personnel
-    //     vi.mocked(supabase.from).mockReturnValueOnce({
-    //     select: vi.fn().mockReturnValueOnce({
-    //     eq: vi.fn().mockReturnValueOnce({
-    //     eq: vi.fn().mockReturnValueOnce({
-    //     order: vi.fn().mockReturnValueOnce({ data: mockPersonnel, error: null }),
-    //     })
-    //     })
-    //     }),
-    //     } as any);
+        // Save to mock db
+        const mockSubmitData = vi.fn().mockReturnValueOnce({
+            eq: vi.fn().mockResolvedValueOnce({
+                data: {
+                    ...abydos,
+                    id: abydosID,
+                    destination: "Abydos",
+                    objectives: abydosObjectives
+                },
+                error: null
+            })
+        });
 
-    //     vi.mocked(supabase.from).mockReturnValueOnce({
-    //     select: vi.fn().mockReturnValueOnce({
-    //     eq: vi.fn().mockReturnValueOnce({
-    //     single: vi.fn().mockResolvedValueOnce({ data: mockTeams[4], error: null }),
-    //     }),
-    //     }),
-    //     } as any);
+        const missionTeamLink = vi.fn().mockReturnValueOnce({
+            data: { mission_id: abydosID, team_id: abydosTeams[0].id },
+            error: null
+        });
 
-    //     const updateMock = vi.fn().mockReturnValueOnce({
-    //     eq: vi.fn().mockResolvedValueOnce({ error: null }),
-    //     });
+        const mockObjective = vi.fn().mockReturnValueOnce({
+            data: abydosObjectives,
+            error: null
+        });
 
-    //     // Save to mock db
-    //     vi.mocked(supabase.from).mockReturnValueOnce({
-    //     update: updateMock,
-    //     } as any);
+        const expectedObjectives = abydosObjectives.map(({ id: _, ...obj }) =>
+            expect.objectContaining(obj)
+        );
 
-    //     render(
-    //     <MemoryRouter initialEntries={[PATHS.TEAM_EDIT(mockTeams[4].id)]}>
-    //     <Routes>
-    //     <Route path={ROUTES.TEAM_EDIT} element={<MissionForm />} />
-    //     </Routes>
-    //     </MemoryRouter>
-    //     );
+        // teams
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                order: vi.fn().mockReturnValueOnce({ data: mockTeams, error: null }),
+            }),
+        } as any);
 
-    //     // Type into fields
-    //     await user.selectOptions(await screen.findByLabelText('Commanding Officer:'), mockPersonnel[0].id);
-    //     // click save
-    //     await user.click(screen.getByText('Save'));
+        // specific mission
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                eq: vi.fn().mockReturnValueOnce({
+                    single: vi.fn().mockResolvedValueOnce({
+                        data: {
+                            ...abydos,
+                            id: abydosID,
+                            objectives: abydosObjectives
+                        },
+                        error: null
+                    }),
+                }),
+            }),
+        } as any);
 
-    //     // Expected behavior
-    //     expect(updateMock).toHaveBeenCalled();
-    // });
+        // teams assigned
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                eq: vi.fn().mockReturnValueOnce({
+                    data: [{ team_id: abydosTeams[0].id }],
+                    error: null
+                }),
+            }),
+        } as any);
+
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            delete: mockDelete,
+        } as any)
+
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            delete: mockDelete,
+        } as any)
+
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            insert: missionTeamLink,
+        } as any);
+
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            insert: mockObjective,
+        } as any);
+
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            update: mockSubmitData,
+        } as any);
+
+        render(
+            <MemoryRouter initialEntries={[PATHS.MISSION_EDIT(abydosID)]}>
+                <Routes>
+                    <Route path={ROUTES.MISSION_EDIT} element={<MissionForm />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        // Enter mock data into fields
+        await user.clear(await screen.findByLabelText('Destination:'));
+        await user.type(await screen.findByLabelText('Destination:'), "Abydos");
+
+        // click save
+        await user.click(await screen.findByText('Save'));
+
+        expect(mockDelete).toHaveBeenCalled();
+        expect(missionTeamLink).toHaveBeenCalledWith(
+            expect.objectContaining(
+                [
+                    {
+                        mission_id: abydosID,
+                        team_id: abydosTeams[0].id
+                    }
+                ],
+            )
+        );
+        expect(mockObjective).toHaveBeenCalledWith(
+            expect.arrayContaining(expectedObjectives)
+        );
+        expect(mockSubmitData).toHaveBeenCalledWith(
+            expect.objectContaining({
+                destination: "Abydos"
+            })
+        );
+    });
 
     it('should navigate back to mission list when cancelling (add)', async () =>{
         // Populate mock database with data
@@ -670,5 +743,34 @@ describe('MissionForm', () => {
         expect(abydosLink).toBeInTheDocument();
     });
 
-    it('should navigate back to mission list when cancelling (edit)', async () =>{});
+    it('should navigate back to mission list when cancelling (edit)', async () =>{
+        // Populate mock database with data
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                order: vi.fn().mockReturnValueOnce({ data: mockTeams, error: null }),
+            }),
+        } as any);
+
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                order: vi.fn().mockReturnValueOnce({ data: mockMissions, error: null }),
+            }),
+        } as any);
+
+        render(
+            <MemoryRouter initialEntries={[PATHS.MISSION_NEW]}>
+                <Routes>
+                    <Route path={PATHS.MISSION_NEW} element={<MissionForm />} />
+                    <Route path={PATHS.MISSION_LIST} element={<MissionList />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        await user.click(await screen.findByRole('button', { name: 'Cancel' }));
+
+        const title = await screen.findByText(/SGC Mission Records/);
+        const abydosLink = await screen.findByRole('link', { name: `${abydos.destination} | ${abydos.name} | ${abydos.status}`})
+
+        expect(title).toBeInTheDocument();
+        expect(abydosLink).toBeInTheDocument();});
 });
