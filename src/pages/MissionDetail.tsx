@@ -91,7 +91,7 @@ export default function MissionDetail(){
                 setLoading(false);
                 return;
             } else {
-                const assginedPersonnel: Personnel[] = personnel.map(p =>({
+                const assginedPersonnel: Personnel[] = (personnel || []).map(p =>({
                     ...p,
                     team_id: personnelLink.find(l => l.personnel_id === p.id)?.team_id || p.team_id
                 }));
@@ -109,7 +109,7 @@ export default function MissionDetail(){
                 setError({ message: fetchMissionError.message, code: fetchMissionError.code });
                 setLoading(false);
                 return;
-            } else setMission({...missionData, teams: assignedTeams });
+            } else setMission({...missionData, teams: assignedTeams ?? [] });
 
             setLoading(false);
         }

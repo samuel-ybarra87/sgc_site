@@ -22,26 +22,24 @@ function createCrudHandlers(
       const url = new URL(request.url);
       const select = url.searchParams.get('select');
       const idParam = url.searchParams.get('id'); // 'id' => `eq.${id}`
+      const idValue = idParam?.split('.')[1]; // eg. extract 'uuid-1 from 'eq.uuid-1'
       
-      // Detail request
+      // Team Detail request
       if(idParam && select && select.includes('commanding_officer_details')){
-        const idValue = idParam.split('.')[1]; // eg. extract 'team-sg-1 from 'eq.team-sg-1'
-        const detail = mockDetailData?.find(t => t.id === idValue);
+        const detail = mockDetailData?.find(data => data.id === idValue);
         return HttpResponse.json(detail || {});
       }
       
-      // Detail request
+      // Mission Detail request
       if(idParam && select && select.includes('objectives')){
-        const idValue = idParam.split('.')[1]; // eg. extract 'team-sg-1 from 'eq.team-sg-1'
-        const detail = mockData.find(t => t.id === idValue);
+        const detail = mockData.find(data => data.id === idValue);
         return HttpResponse.json(detail || {});
       }
       
-      // List views
+      // Other requests
       if (idParam) {
-        const index = idParam.split('.')[1]; // extract id
-        const list = mockData.find(i => i.id === index);
-        return HttpResponse.json(list);
+        const item = mockData.find(data => data.id === idValue);
+        return HttpResponse.json(item);
       }
 
       return HttpResponse.json(mockData);
@@ -53,11 +51,11 @@ function createCrudHandlers(
 }
 
 export const handlers = [
+  ...createCrudHandlers('roles', mockRoles),
   ...createCrudHandlers('personnel', mockPersonnel),
   ...createCrudHandlers('teams', mockTeams, mockTeamData),
-  ...createCrudHandlers('roles', mockRoles),
-  ...createCrudHandlers('missions_teams', mockMissionTeams),
   ...createCrudHandlers('team_personnel', mockTeamPersonnelLink),
-  ...createCrudHandlers('mission_objectives', mockMissionObjectives),
   ...createCrudHandlers('missions', mockMissions),
+  ...createCrudHandlers('missions_teams', mockMissionTeams),
+  ...createCrudHandlers('mission_objectives', mockMissionObjectives),
 ];
