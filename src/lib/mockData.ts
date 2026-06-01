@@ -344,8 +344,8 @@ export const mockMissions: Mission[] = [
         destination: "PT3-5t01",
         description: "Mock Mission 1",
         start_date: "2026-05-01T08:00:00.000Z",
-        end_date: "2026-05-30T05:00:00.000Z",
-        status: "complete",
+        end_date: null,
+        status: "active",
         objectives: mockMissionObjectives.map(obj=>({mission_id: "mission-uuid-2", ...obj})),
         teams: mockTeams.filter(team => team.designation !== 'Unassigned')
     }

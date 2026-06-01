@@ -12,7 +12,7 @@ import MissionForm from '../../pages/MissionForm';
 import MissionDetail from '../../pages/MissionDetail';
 
 const user = userEvent.setup();
-const abydos = mockMissions[1];
+const abydos = mockMissions[0];
 const { objectives, teams, id: mockMissionID, ...mockMission } = mockMissionData;
 
 // Clear overrides from server.use()
@@ -198,7 +198,9 @@ describe('MissionForm (integration)', () => {
     });
 
     it('updates values into database after clicking save then navigates to list view', async ()=>{
-        setupPatchCapture(OBJECTIVE);
+        const {objectives, teams, ...mission} = mockMissions[1];
+        setupPostCapture(MISSIONS_TEAMS);
+        setupPostCapture(OBJECTIVE);
         const body = setupPatchCapture(MISSION);
 
         render(
@@ -210,8 +212,28 @@ describe('MissionForm (integration)', () => {
                 </Routes>
             </MemoryRouter>
         );
+        await user.click(await screen.findByRole('link', { name: `${mission.destination} | ${mission.name} | ${mission.status}` }));
+        await user.click(await screen.findByRole('button', { name: 'Edit' }));
+
+        const status = await screen.findByLabelText("Status:");
+        const end_date = await screen.findByLabelText("End Date:");
+
+        expect(status).toHaveValue(mission.status);
+        expect(end_date).toHaveValue('');
+
+        const endDate = new Date().toISOString().slice(0,16);
+        const expectedDateFormat = new Date(`${endDate}Z`).toISOString();
 
         // manipulate mission data
+        await user.selectOptions(status, "complete");
+        await user.type(end_date, endDate)
+        await user.click(await screen.findByText("Save"));
+
+        expect(body()).toMatchObject({
+            ...mission,
+            status: "complete",
+            end_date: expectedDateFormat
+        });
     });
 
     it('navigates back to team list when cancelling (add)', async ()=>{
