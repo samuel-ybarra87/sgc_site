@@ -133,7 +133,7 @@ export default function MissionForm() {
                 const ids = membersRes.data.map(row => row.team_id);
 
                 // 3. Match the IDs to the actual team objects from our master list
-                const assignedTeams = allTeams.filter(team => ids.includes(team.id));
+                const assignedTeams: Team[] = allTeams.filter(team => ids.includes(team.id));
 
                 // 4. Update the form all at once
                 setForm({

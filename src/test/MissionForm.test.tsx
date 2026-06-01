@@ -548,7 +548,7 @@ describe('MissionForm', () => {
         vi.mocked(supabase.from).mockReturnValueOnce({
             select: vi.fn().mockReturnValueOnce({
                 eq: vi.fn().mockReturnValueOnce({
-                    data: [{ team_id: abydosTeams[0].id }],
+                    data: abydosTeams.map(team => ({ team_id: team.id })),
                     error: null
                 }),
             }),
@@ -563,6 +563,9 @@ describe('MissionForm', () => {
         );
 
         const teamList = await screen.findAllByLabelText(/Team/i);
+        const sortedTeams = [...abydosTeams].sort((a, b) =>
+            a.designation.localeCompare(b.designation)
+        );
         const missionObjectives = await screen.findAllByLabelText(/Objective/i);
         const completedBtn = await screen.findAllByRole('button', { name: /Completed/i });
         const classifiedBtn = await screen.findAllByRole('button', { name: /Classified/i });
@@ -579,8 +582,8 @@ describe('MissionForm', () => {
         expect(await screen.findByLabelText("End Date:")).toHaveValue(abydos.end_date!.slice(0,16));
 
         teamList.forEach((node, i) => {
-            expect(node).toHaveValue(abydosTeams[i].id);
-            expect(node).toHaveDisplayValue(abydosTeams[i].designation);
+            expect(node).toHaveValue(sortedTeams[i].id);
+            expect(node).toHaveDisplayValue(sortedTeams[i].designation);
         });
         missionObjectives.forEach((node, i) => expect(node).toHaveValue(abydosObjectives[i].objective));
         completedBtn.forEach((node, i) => expect(node).toHaveAttribute('aria-pressed', `${abydosObjectives[i].is_completed}`));

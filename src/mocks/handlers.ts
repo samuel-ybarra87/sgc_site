@@ -23,6 +23,7 @@ function createCrudHandlers(
       const select = url.searchParams.get('select');
       const idParam = url.searchParams.get('id'); // 'id' => `eq.${id}`
       const idValue = idParam?.split('.')[1]; // eg. extract 'uuid-1 from 'eq.uuid-1'
+      const missionIdParam =  url.searchParams.get('mission_id') // mission ids for various join tables
       
       // Team Detail request
       if(idParam && select && select.includes('commanding_officer_details')){
@@ -35,10 +36,17 @@ function createCrudHandlers(
         const detail = mockData.find(data => data.id === idValue);
         return HttpResponse.json(detail || {});
       }
+
+      // Mission Edit request
+      if(missionIdParam){
+        const mID = missionIdParam.split('.')[1];
+        const matches = mockData.filter(data => data.mission_id === mID);
+        return HttpResponse.json(matches);
+      }
       
       // Other requests
       if (idParam) {
-        const item = mockData.find(data => data.id === idValue);
+        const item = mockData.filter(data => data.id === idValue);
         return HttpResponse.json(item);
       }
 

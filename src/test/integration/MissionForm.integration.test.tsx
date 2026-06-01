@@ -12,7 +12,7 @@ import MissionForm from '../../pages/MissionForm';
 import MissionDetail from '../../pages/MissionDetail';
 
 const user = userEvent.setup();
-const abydos = mockMissions[0];
+const abydos = mockMissions[1];
 const { objectives, teams, id: mockMissionID, ...mockMission } = mockMissionData;
 
 // Clear overrides from server.use()
@@ -153,39 +153,66 @@ describe('MissionForm (integration)', () => {
         expect(error).toBeInTheDocument();
     });
 
-    // it('navigates to edit form and show values of record to edit', async ()=>{
-    //     render(
-    //         <MemoryRouter initialEntries={[PATHS.MISSION_LIST]}>
-    //             <Routes>
-    //                 <Route path={PATHS.MISSION_LIST} element={<MissionList />} />
-    //                 <Route path={ROUTES.MISSION_DETAIL} element={<MissionDetail/>} />
-    //                 <Route path={ROUTES.MISSION_EDIT} element={<MissionForm />} />
-    //             </Routes>
-    //         </MemoryRouter>
-    //     );
+    it('navigates to edit form and show values of record to edit', async ()=>{
+        render(
+            <MemoryRouter initialEntries={[PATHS.MISSION_LIST]}>
+                <Routes>
+                    <Route path={PATHS.MISSION_LIST} element={<MissionList />} />
+                    <Route path={ROUTES.MISSION_DETAIL} element={<MissionDetail/>} />
+                    <Route path={ROUTES.MISSION_EDIT} element={<MissionForm />} />
+                </Routes>
+            </MemoryRouter>
+        );
 
-    //     await user.click(await screen.findByRole('link', { name: `${abydos.destination} | ${abydos.name} | ${abydos.status}` }));
-    //     await user.click(await screen.findByRole('button', { name: 'Edit' }));
+        await user.click(await screen.findByRole('link', { name: `${abydos.destination} | ${abydos.name} | ${abydos.status}` }));
+        await user.click(await screen.findByRole('button', { name: 'Edit' }));
 
-    //     // expect abydos data
-    // });
+        const teamList = await screen.findAllByLabelText(/Team/i);
+        const sortedTeams = [...abydos.teams].sort((a, b) =>
+            a.designation.localeCompare(b.designation)
+        );
+        const missionObjectives = await screen.findAllByLabelText(/Objective/i);
+        const completedBtn = await screen.findAllByRole('button', { name: /Completed/i });
+        const classifiedBtn = await screen.findAllByRole('button', { name: /Classified/i });
 
-    // it('updates values into database after clicking save then navigates to list view', async ()=>{
-    //     setupPatchCapture(OBJECTIVE);
-    //     const body = setupPatchCapture(MISSION);
+        expect(teamList).toHaveLength(sortedTeams.length);
+        expect(missionObjectives).toHaveLength(abydos.objectives.length);
+        expect(completedBtn).toHaveLength(abydos.objectives.length);
+        expect(classifiedBtn).toHaveLength(abydos.objectives.length);
 
-    //     render(
-    //         <MemoryRouter initialEntries={[PATHS.MISSION_LIST]}>
-    //             <Routes>
-    //                 <Route path={PATHS.MISSION_LIST} element={<MissionList />} />
-    //                 <Route path={ROUTES.MISSION_DETAIL} element={<MissionDetail/>} />
-    //                 <Route path={ROUTES.MISSION_EDIT} element={<MissionForm />} />
-    //             </Routes>
-    //         </MemoryRouter>
-    //     );
+        expect(await screen.findByLabelText('Name:')).toHaveValue(abydos.name);
+        expect(await screen.findByLabelText('Destination:')).toHaveValue(abydos.destination);
+        expect(await screen.findByLabelText('Status:')).toHaveValue(abydos.status);
+        expect(await screen.findByLabelText('Start Date:')).toHaveValue(abydos.start_date.slice(0,16));
+        expect(await screen.findByLabelText('End Date:')).toHaveValue(abydos.end_date?.slice(0,16));
 
-    //     // manipulate mission data
-    // });
+        teamList.forEach((node, i) => {
+            expect(node).toHaveValue(sortedTeams[i].id);
+            expect(node).toHaveDisplayValue(sortedTeams[i].designation);
+        });
+        missionObjectives.forEach((node, i) => expect(node).toHaveValue(abydos.objectives[i].objective));
+        completedBtn.forEach((node, i) => expect(node).toHaveAttribute('aria-pressed', `${abydos.objectives[i].is_completed}`));
+        classifiedBtn.forEach((node, i) => expect(node).toHaveAttribute('aria-pressed', `${abydos.objectives[i].secret_objective}`));
+
+        expect(await screen.findByLabelText("Report:")).toHaveValue(abydos.description);
+    });
+
+    it('updates values into database after clicking save then navigates to list view', async ()=>{
+        setupPatchCapture(OBJECTIVE);
+        const body = setupPatchCapture(MISSION);
+
+        render(
+            <MemoryRouter initialEntries={[PATHS.MISSION_LIST]}>
+                <Routes>
+                    <Route path={PATHS.MISSION_LIST} element={<MissionList />} />
+                    <Route path={ROUTES.MISSION_DETAIL} element={<MissionDetail/>} />
+                    <Route path={ROUTES.MISSION_EDIT} element={<MissionForm />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        // manipulate mission data
+    });
 
     it('navigates back to team list when cancelling (add)', async ()=>{
         render(

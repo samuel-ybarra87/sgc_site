@@ -323,7 +323,7 @@ export const mockMissionData = {
     end_date: null,
     status: "active",
     objectives: [mockMissionObjectives[0]],
-    teams: [mockTeamData[0]]
+    teams: [mockTeams[0]]
 }
 
 export const mockMissions: Mission[] = [
@@ -336,7 +336,7 @@ export const mockMissions: Mission[] = [
         end_date: "1996-10-29T18:30:00.000Z",
         status: "complete",
         objectives: mockMissionObjectives.map(obj=>({ mission_id: "mission-uuid-1", ...obj})),
-        teams: [mockTeamData[1]]
+        teams: [mockTeams[1], mockTeams[0]]
     },
     {
         id: "mission-uuid-2",
@@ -347,7 +347,7 @@ export const mockMissions: Mission[] = [
         end_date: "2026-05-30T05:00:00.000Z",
         status: "complete",
         objectives: mockMissionObjectives.map(obj=>({mission_id: "mission-uuid-2", ...obj})),
-        teams: mockTeamData
+        teams: mockTeams.filter(team => team.designation !== 'Unassigned')
     }
 ]
 
