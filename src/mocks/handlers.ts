@@ -46,7 +46,7 @@ function createCrudHandlers(
       
       // Other requests
       if (idParam) {
-        const item = mockData.filter(data => data.id === idValue);
+        const item = mockData.find(data => data.id === idValue);
         return HttpResponse.json(item);
       }
 
