@@ -132,10 +132,10 @@ src/
   - [x] Missions unit test suite
   - [x] Missions integration test suite
   - [ ] Missions e2e test suite
-- [ ] GitHub Pages deployment
-- [ ] Styling
 - [ ] Role-based access control
+- [ ] GitHub Pages deployment
 - Quality of Life Updates
+  - [ ] Styling
   - Join Table for team member population and history
   - Edit team members from Team Detail page
 
