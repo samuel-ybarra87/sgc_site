@@ -317,7 +317,7 @@ export const mockMissionObjectives = [
 export const mockMissionData = {
     id: "mission-uuid-3",
     name: "MockMissionEntry",
-    destination: "PT3-5t01",
+    destination: "PT3-5T1",
     description: null,
     start_date: "2026-05-01T08:00:00.000Z",
     end_date: null,
@@ -341,7 +341,7 @@ export const mockMissions: Mission[] = [
     {
         id: "mission-uuid-2",
         name: "MockMission",
-        destination: "PT3-5t01",
+        destination: "PT3-5T2",
         description: "Mock Mission 1",
         start_date: "2026-05-01T08:00:00.000Z",
         end_date: null,

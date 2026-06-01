@@ -146,3 +146,49 @@ export const e2eTestRoles = [
 ]
 
 export const TEST_ROLE_NAMES = e2eTestRoles.map(r => r.name);
+
+export const mockMissionObjectives = [
+    {
+        mission_id: null,
+        objective: "test-not-complete",
+        is_completed: false,
+        secret_objective: false
+    },
+    {
+        mission_id: null,
+        objective: "test-complete",
+        is_completed: true,
+        secret_objective: false
+    },
+    {
+        mission_id: null,
+        objective: "test-secret",
+        is_completed: false,
+        secret_objective: true
+    },
+    {
+        mission_id: null,
+        objective: "test-both",
+        is_completed: true,
+        secret_objective: true
+    }
+]
+
+export const mockMissions = [
+    {
+        name: "Mock Mission 1",
+        destination: "P3X-984",
+        description: "Mock Abydos Mission",
+        start_date: "1996-10-28T04:00:00.000Z",
+        end_date: "1996-10-29T18:30:00.000Z",
+        status: "complete"
+    },
+    {
+        name: "Mock Mission 2",
+        destination: "PT3-5T1",
+        description: null,
+        start_date: "2026-05-01T08:00:00.000Z",
+        end_date: null,
+        status: "active"
+    }
+]

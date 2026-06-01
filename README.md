@@ -130,8 +130,8 @@ src/
   - [x] Create many to many relationship between personnel, teams, and missions tables
 - [x] Mission records CRUD
   - [x] Missions unit test suite
-  - [x] Missions integration test suite
-  - [ ] Missions e2e test suite (In Prgrogress)
+  - [ ] Missions integration test suite (In Prgrogress)
+  - [ ] Missions e2e test suite
 - [ ] Role-based access control
 - [ ] GitHub Pages deployment
 - Quality of Life Updates

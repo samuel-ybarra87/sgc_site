@@ -21,3 +21,24 @@ export interface Personnel {
   personnel_type: string;
   status: string;
 };
+
+export interface Mission {
+    name: string;
+    destination: string;
+    description: string | null;
+    start_date: string;
+    end_date: string | null;
+    status: string;
+}
+
+export interface MissionTeamLink {
+  mission_id: string;
+  team_id: string;
+}
+
+export interface MissionObjective {
+  mission_id: string | null;
+  objective: string;
+  is_completed: boolean;
+  secret_objective: boolean;
+}
