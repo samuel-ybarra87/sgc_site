@@ -128,14 +128,14 @@ src/
   - [x] Teams e2e test suite
 - [x] Mission Records schema
   - [x] Create many to many relationship between personnel, teams, and missions tables
-- [x] Mission records CRUD (In Prgrogress)
+- [x] Mission records CRUD
   - [x] Missions unit test suite
   - [x] Missions integration test suite
-  - [ ] Missions e2e test suite
+  - [ ] Missions e2e test suite (In Prgrogress)
 - [ ] Role-based access control
 - [ ] GitHub Pages deployment
 - Quality of Life Updates
-  - [ ] Styling
+  - Styling
   - Join Table for team member population and history
   - Edit team members from Team Detail page
 
