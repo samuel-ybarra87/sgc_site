@@ -153,7 +153,7 @@ export default function PersonnelForm() {
         <div className="form-row-3">
           <div className="form-group">
             <label htmlFor="prefix">Prefix: </label>
-            <select id="prefix" name="prefix" value={form.prefix} onChange={handleChange}>
+            <select id="prefix" name="prefix" value={form.prefix ?? ''} onChange={handleChange}>
               <option value="">None</option>
               <option value="Mr.">Mr.</option>
               <option value="Ms.">Ms.</option>
@@ -181,14 +181,14 @@ export default function PersonnelForm() {
 
           <div className="form-group">
             <label htmlFor="suffix">Suffix: </label>
-            <input id="suffix" name="suffix" value={form.suffix} onChange={handleChange} />
+            <input id="suffix" name="suffix" value={form.suffix ?? ''} onChange={handleChange} />
           </div>
         </div>
 
         <div className="form-row-3">
           <div className="form-group">
             <label htmlFor="rank">Rank: </label>
-            <select id="rank" name="rank" value={form.rank} onChange={handleChange}>
+            <select id="rank" name="rank" value={form.rank ?? ''} onChange={handleChange}>
               <option value="">None</option>
               <option value="Airman Basic">Airman Basic</option>
               <option value="Airman">Airman</option>

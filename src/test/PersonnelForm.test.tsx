@@ -298,6 +298,7 @@ describe('PersonnelForm', () => {
         <MemoryRouter initialEntries={[PATHS.PERSONNEL_EDIT(mockPersonnel[1].id)]}>
             <Routes>
                 <Route path={ROUTES.PERSONNEL_EDIT} element={<PersonnelForm />} />
+                <Route path={PATHS.PERSONNEL_LIST} element={<h1>Personnel List</h1>} />
             </Routes>
         </MemoryRouter>
     );

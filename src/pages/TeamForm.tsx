@@ -128,7 +128,7 @@ export default function TeamForm() {
 
                 <div className="form-group">
                     <label htmlFor="commanding_officer">Commanding Officer: </label>
-                        <select id="commanding_officer" name="commanding_officer" value={form.commanding_officer} onChange={handleChange}>
+                        <select id="commanding_officer" name="commanding_officer" value={form.commanding_officer ?? ''} onChange={handleChange}>
                             <option value="">None</option>
                             {personnel.map((person) => (
                                 <option key={person.id} value={person.id}>

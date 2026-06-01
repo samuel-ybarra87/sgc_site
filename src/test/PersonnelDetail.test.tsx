@@ -17,7 +17,7 @@ vi.mock('../lib/supabase', () => ({
 }));
 
 describe('PersonnelDetail', () => {
-    it('displays a message when no records are found', async () => {
+    it('displays a message when no record is found', async () => {
         vi.mocked(supabase.from).mockReturnValueOnce({
             select: vi.fn().mockReturnValueOnce({
               eq: vi.fn().mockReturnValueOnce({
@@ -117,6 +117,7 @@ describe('PersonnelDetail', () => {
         <MemoryRouter initialEntries={[PATHS.PERSONNEL_DETAIL(mockPersonnel[2].id)]}>
           <Routes>
             <Route path={PATHS.PERSONNEL_DETAIL(mockPersonnel[2].id)} element={<PersonnelDetail />} />
+                <Route path={PATHS.PERSONNEL_LIST} element={<h1>Personnel List</h1>} />
           </Routes>
         </MemoryRouter>
       );

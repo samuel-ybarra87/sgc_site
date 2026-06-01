@@ -231,6 +231,7 @@ describe('TeamForm', () => {
         <MemoryRouter initialEntries={[PATHS.TEAM_EDIT(mockTeams[4].id)]}>
             <Routes>
                 <Route path={ROUTES.TEAM_EDIT} element={<TeamForm />} />
+                <Route path={PATHS.TEAM_LIST} element={<h1>Team List</h1>} />
             </Routes>
         </MemoryRouter>
     );
