@@ -12,13 +12,14 @@ export const MISSIONS_TEAMS = `${supabaseUrl}/rest/v1/missions_teams`
 
 export function extractName(person: Personnel){
     const rank = rankAbbreviations[person.rank ?? ''];
-    const prefix = person.personnel_type === 'military' ? rank : (person.prefix ? `${person.prefix} ` : '');
-    const name = `${person.first_name}${person.middle_name ? ` ${person.middle_name} `: ' '}${person.last_name}${person.suffix ? ` ${person.suffix}` : ''}`
+    const prefix = person.personnel_type === 'military' ? `${rank} ` : (person.prefix ? `${person.prefix} ` : '');
+    const name = `${person.first_name}${person.middle_name ? ` ${person.middle_name} `: ' '}${person.last_name ?? ''}${person.suffix ? ` ${person.suffix}` : ''}`
     
-    return `${prefix}${name}`;
+    return `${prefix}${name}`.trim();
 }
 
-export function extractDate(timestamp: string){
+export function extractDate(timestamp: string | null){
+    if(!timestamp) throw new Error("End date not found");
     const [date, time] = timestamp.slice(0,16).split('T');
 
     return `${date} ${time}`;

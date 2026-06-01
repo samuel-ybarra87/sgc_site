@@ -6,6 +6,7 @@ import { PATHS } from '../lib/paths';
 import { rankAbbreviations } from '../lib/rankAbbreviations';
 
 export default function MissionDetail(){
+    const user = { authorized: true };
     const { id } = useParams();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
@@ -45,7 +46,7 @@ export default function MissionDetail(){
                 return;
             }
 
-            const teamIds = assignedTeamIDs.map(row => row.team_id);
+            const teamIds = (assignedTeamIDs || []).map(row => row.team_id);
 
             const { data: assignedTeams, error: fetchTeamErrors } =  await supabase
                 .from('teams')
@@ -105,10 +106,14 @@ export default function MissionDetail(){
                 .eq('id', id)
                 .single();
             if(fetchMissionError){
-                console.error(fetchMissionError.message);
-                setError({ message: fetchMissionError.message, code: fetchMissionError.code });
-                setLoading(false);
-                return;
+                if(fetchMissionError.code === 'PGRST116'){
+                    setMission(null);
+                } else {
+                    console.error(fetchMissionError.message);
+                    setError({ message: 'An unexpected error occurred.', code: '500' });
+                    setLoading(false);
+                    return;
+                }
             } else setMission({...missionData, teams: assignedTeams ?? [] });
 
             setLoading(false);
@@ -161,12 +166,12 @@ export default function MissionDetail(){
             <p>Status: {mission.status}</p>
             <p>Mission Start: {extractDate(mission.start_date)}</p>
             <div>{mission.end_date && <p>Mission End: {extractDate(mission.end_date)}</p>}</div>
-            <div>TEAMS:
-                {mission.teams.map((team) => (
+            <div><b>TEAMS:</b>
+                {mission.teams.map((team, i) => (
                     <div key={team.id}>
-                        <u>{team.designation}</u>
-                        {persons!.filter(p => p.team_id === team.id).map((person) => (
-                            <p key={person.id}>
+                        <strong title={`team-name ${i}`}><i>{team.designation}</i></strong>
+                        {persons!.filter(p => p.team_id === team.id).map((person, j) => (
+                            <p title={`team ${i} member ${j}`} key={person.id}>
                                 {extractName(person)}
                             </p>
                         ))}
@@ -174,12 +179,18 @@ export default function MissionDetail(){
                 ))}
             </div>
             <div>OBJECTIVES:
-                {mission.objectives.map((obj) => (
-                    <div key={obj.id}>
-                        <p>- {obj.objective}</p>
-                        <input type='checkbox' checked={obj.is_completed} readOnly></input>
-                    </div>
-                ))}
+                {mission.objectives.map((obj, i) => {
+                    const display = !obj.secret_objective || (user.authorized && obj.secret_objective);
+
+                    if(!display) return null;
+
+                    return (
+                        <div key={obj.id}>
+                            <p title={`objective ${i}`}>- {obj.objective}</p>
+                            <input title={`objective-status ${i}`} type='checkbox' checked={obj.is_completed} readOnly></input>
+                        </div>
+                    );
+                })}
             </div>
             <p>Mission Debriefing</p>
             <p>{mission.description}</p>
