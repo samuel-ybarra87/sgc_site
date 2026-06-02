@@ -660,11 +660,11 @@ describe('MissionForm', () => {
 
         vi.mocked(supabase.from).mockReturnValueOnce({
             delete: mockDelete,
-        } as any)
+        } as any);
 
         vi.mocked(supabase.from).mockReturnValueOnce({
             delete: mockDelete,
-        } as any)
+        } as any);
 
         vi.mocked(supabase.from).mockReturnValueOnce({
             insert: missionTeamLink,
@@ -682,6 +682,7 @@ describe('MissionForm', () => {
             <MemoryRouter initialEntries={[PATHS.MISSION_EDIT(abydosID)]}>
                 <Routes>
                     <Route path={ROUTES.MISSION_EDIT} element={<MissionForm />} />
+                    <Route path={PATHS.MISSION_LIST} element={<h1>Mission List</h1>} />
                 </Routes>
             </MemoryRouter>
         );

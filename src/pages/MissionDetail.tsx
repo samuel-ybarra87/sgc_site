@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import type { Mission, Personnel } from '../lib/types';
+import { type TeamPersonnelLink, type Mission, type Personnel } from '../lib/types';
 import { PATHS } from '../lib/paths';
-import { rankAbbreviations } from '../lib/rankAbbreviations';
+import { extractDate, extractName } from '../test/testUtils';
 
 export default function MissionDetail(){
     const user = { authorized: true };
@@ -11,22 +11,9 @@ export default function MissionDetail(){
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<{ message: string; code: string } | null>(null);
+    const [links, setLinks] = useState<TeamPersonnelLink[] | null>(null);
     const [persons, setPersons] = useState<Personnel[] | null>(null);
     const [mission, setMission] = useState<Mission | null>(null);
-
-    function extractName(person: Personnel){
-        const rank = rankAbbreviations[person.rank ?? ''];
-        const prefix = person.personnel_type === 'military' ? `${rank} ` : (person.prefix ? `${person.prefix} ` : '');
-        const name = `${person.first_name}${person.middle_name ? ` ${person.middle_name} `: ' '}${person.last_name ?? ''}${person.suffix ? ` ${person.suffix}` : ''}`
-        
-        return `${prefix}${name}`;
-    }
-
-    function extractDate(timestamp: string){
-        const [date, time] = timestamp.slice(0,16).split('T');
-
-        return `${date} ${time}`;
-    }
 
     useEffect(()=>{
         async function fetchData() {
@@ -51,7 +38,8 @@ export default function MissionDetail(){
             const { data: assignedTeams, error: fetchTeamErrors } =  await supabase
                 .from('teams')
                 .select('*')
-                .in('id', teamIds);
+                .in('id', teamIds)
+                .order('designation', { ascending: true });
             if(fetchTeamErrors){
                 console.error(fetchTeamErrors.message);
                 setError({
@@ -75,7 +63,7 @@ export default function MissionDetail(){
                 });
                 setLoading(false);
                 return;
-            }
+            } else setLinks(personnelLink!);
 
             const personIDs = personnelLink.map(row => row.personnel_id);
 
@@ -92,11 +80,12 @@ export default function MissionDetail(){
                 setLoading(false);
                 return;
             } else {
-                const assginedPersonnel: Personnel[] = (personnel || []).map(p =>({
-                    ...p,
-                    team_id: personnelLink.find(l => l.personnel_id === p.id)?.team_id || p.team_id
-                }));
-                setPersons(assginedPersonnel)
+                const assginedPersonnel: Personnel[] = (personnel || []).sort((a,b)=>{
+                    if(a.roles && a.roles.name === 'Commanding Officer') return -1;
+                    if(b.roles && b.roles.name === 'Commanding Officer') return 1;
+                    return (a.last_name || '').trim().localeCompare((b.last_name || '').trim());
+                });
+                setPersons(assginedPersonnel);
             };
 
             // Find mission record and objectives
@@ -170,11 +159,16 @@ export default function MissionDetail(){
                 {mission.teams.map((team, i) => (
                     <div key={team.id}>
                         <strong title={`team-name ${i}`}><i>{team.designation}</i></strong>
-                        {persons!.filter(p => p.team_id === team.id).map((person, j) => (
-                            <p title={`team ${i} member ${j}`} key={person.id}>
-                                {extractName(person)}
-                            </p>
-                        ))}
+                        {links!.filter(link => link.team_id === team.id)
+                            .map((link, j) =>{
+                                const person = persons!.find(p => p.id === link.personnel_id) ?? {} as Personnel;
+                                return(
+                                    <p title={`team ${i} member ${j}`} key={link.personnel_id}>
+                                        {extractName(person!)}
+                                    </p>
+                                );
+                            })
+                        }
                     </div>
                 ))}
             </div>
@@ -192,8 +186,13 @@ export default function MissionDetail(){
                     );
                 })}
             </div>
-            <p>Mission Debriefing</p>
-            <p>{mission.description}</p>
+
+            {mission.description && (
+                <div title='mission-description'>
+                    <p>Mission Debriefing</p>
+                    <p>{mission.description}</p>
+                </div>
+            )}
 
             <div className="form-actions">
                 <div className='submit-buttons'>

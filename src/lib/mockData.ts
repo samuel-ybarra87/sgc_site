@@ -342,7 +342,7 @@ export const mockMissions: Mission[] = [
         id: "mission-uuid-2",
         name: "MockMission",
         destination: "PT3-5T2",
-        description: "Mock Mission 1",
+        description: null,
         start_date: "2026-05-01T08:00:00.000Z",
         end_date: null,
         status: "active",

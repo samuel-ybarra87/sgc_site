@@ -398,7 +398,7 @@ export default function MissionForm() {
 
                 <div className="form-group">
                     <label htmlFor="description">Report: </label>
-                    <textarea id="description" name="description" value={form.description} onChange={handleChange} rows={10} placeholder='Enter the full mission debriefing here...'/>
+                    <textarea id="description" name="description" value={form.description ?? ""} onChange={handleChange} rows={10} placeholder='Enter the full mission debriefing here...'/>
                 </div>
 
                 <div className='form-actions'>

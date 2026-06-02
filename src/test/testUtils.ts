@@ -10,7 +10,8 @@ export const MISSION = `${supabaseUrl}/rest/v1/missions`
 export const OBJECTIVE = `${supabaseUrl}/rest/v1/mission_objectives`
 export const MISSIONS_TEAMS = `${supabaseUrl}/rest/v1/missions_teams`
 
-export function extractName(person: Personnel){
+export function extractName(person: Personnel | undefined){
+    if(!person) throw new Error("Personnel not found");
     const rank = rankAbbreviations[person.rank ?? ''];
     const prefix = person.personnel_type === 'military' ? `${rank} ` : (person.prefix ? `${person.prefix} ` : '');
     const name = `${person.first_name}${person.middle_name ? ` ${person.middle_name} `: ' '}${person.last_name ?? ''}${person.suffix ? ` ${person.suffix}` : ''}`

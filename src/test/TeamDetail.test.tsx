@@ -194,6 +194,7 @@ describe('TeamDetail', () => {
       await user.click(await screen.findByText('Delete'));
 
       expect(deleteRecord).toHaveBeenCalled();
+      expect(await screen.findByRole('heading', { name: "Team List" })).toBeInTheDocument();
     });
 
     it('should stay on detail page after cancelling delete', async () =>{
