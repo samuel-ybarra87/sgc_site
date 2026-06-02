@@ -6,7 +6,7 @@ import userEvent from '@testing-library/user-event';
 import MissionDetail from '../pages/MissionDetail';
 import { mockMissions, mockPersonnel, mockTeamPersonnelLink } from '../lib/mockData';
 import { PATHS, ROUTES } from '../lib/paths';
-import { extractDate, extractName } from './testUtils';
+import { extractDate, extractName } from '../lib/utils';
 import type { Personnel } from '../lib/types';
 
 // Mock the supabase client

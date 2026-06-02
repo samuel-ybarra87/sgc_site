@@ -9,7 +9,8 @@ import userEvent from '@testing-library/user-event';
 import PersonnelForm from '../../pages/PersonnelForm';
 import { mockEntry, mockPersonnel } from '../../lib/mockData';
 import { PATHS, ROUTES } from '../../lib/paths';
-import { setupPostCapture, setupPatchCapture, PERSONNEL } from '../testUtils';
+import { setupPostCapture, setupPatchCapture } from '../testUtils';
+import { PERSONNEL } from '../../lib/utils';
 
 const user = userEvent.setup();
 

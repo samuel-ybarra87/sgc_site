@@ -353,7 +353,7 @@ export const mockMissions: Mission[] = [
 
 const allMissions = [...mockMissions, mockMissionData];
 
-export const mockMissionTeams: MissionTeamLink[] = allMissions.flatMap(mission =>
+export const mockMissionTeamLink: MissionTeamLink[] = allMissions.flatMap(mission =>
     mission.teams.map(team => ({
         mission_id: mission.id,
         team_id: team.id

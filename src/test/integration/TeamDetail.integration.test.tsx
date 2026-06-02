@@ -5,7 +5,8 @@ import { server } from '../../mocks/server';
 import userEvent from '@testing-library/user-event';
 import { mockTeamData } from '../../lib/mockData';
 import { PATHS, ROUTES } from '../../lib/paths';
-import { setupPatchCapture, TEAM } from '../testUtils';
+import { setupPatchCapture } from '../testUtils';
+import { TEAM } from '../../lib/utils';
 import TeamsList from '../../pages/TeamList';
 import TeamDetail from '../../pages/TeamDetail';
 

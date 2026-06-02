@@ -2,7 +2,6 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, it, expect, vi } from 'vitest';
 import TeamDetail from '../pages/TeamDetail';
-import TeamList from '../pages/TeamList';
 import { supabase } from '../lib/supabase';
 import userEvent from '@testing-library/user-event';
 import { mockTeamData } from '../lib/mockData';

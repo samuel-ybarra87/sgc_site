@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { type TeamPersonnelLink, type Mission, type Personnel } from '../lib/types';
 import { PATHS } from '../lib/paths';
-import { extractDate, extractName } from '../test/testUtils';
+import { extractDate, extractName } from '../lib/utils';
 
 export default function MissionDetail(){
     const user = { authorized: true };
