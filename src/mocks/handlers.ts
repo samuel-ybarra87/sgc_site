@@ -13,7 +13,7 @@ import type { Team } from '../lib/types';
 
 export const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 
-function createCrudHandlers(
+function createHandlers(
   resource: string,
   mockData: Record<string, unknown>[],
   mockDetailData?: Record<string, unknown>[]
@@ -77,18 +77,15 @@ function createCrudHandlers(
 
       return HttpResponse.json(mockData);
     }),
-    http.delete(`${supabaseUrl}/rest/v1/${resource}`, () =>{
-      return HttpResponse.json({});
-    }),
   ];
 }
 
 export const handlers = [
-  ...createCrudHandlers('roles', mockRoles),
-  ...createCrudHandlers('personnel', mockPersonnel),
-  ...createCrudHandlers('teams', mockTeams, mockTeamData),
-  ...createCrudHandlers('team_personnel', mockTeamPersonnelLink),
-  ...createCrudHandlers('missions', mockMissions),
-  ...createCrudHandlers('missions_teams', mockMissionTeamLink),
-  ...createCrudHandlers('mission_objectives', mockMissionObjectives),
+  ...createHandlers('roles', mockRoles),
+  ...createHandlers('personnel', mockPersonnel),
+  ...createHandlers('teams', mockTeams, mockTeamData),
+  ...createHandlers('team_personnel', mockTeamPersonnelLink),
+  ...createHandlers('missions', mockMissions),
+  ...createHandlers('missions_teams', mockMissionTeamLink),
+  ...createHandlers('mission_objectives', mockMissionObjectives),
 ];

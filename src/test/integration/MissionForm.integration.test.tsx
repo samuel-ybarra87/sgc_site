@@ -6,7 +6,7 @@ import { server } from '../../mocks/server';
 import userEvent from '@testing-library/user-event';
 import { mockMissions, mockMissionData } from '../../lib/mockData';
 import { PATHS, ROUTES } from '../../lib/paths';
-import { setupPostCapture, setupPatchCapture } from '../testUtils';
+import { setupPostCapture, setupPatchCapture, setupDeleteCapture } from '../testUtils';
 import { MISSION, OBJECTIVE, MISSIONS_TEAMS } from '../../lib/utils';
 import MissionList from '../../pages/MissionList';
 import MissionForm from '../../pages/MissionForm';
@@ -200,9 +200,11 @@ describe('MissionForm (integration)', () => {
 
     it('updates values into database after clicking save then navigates to list view', async ()=>{
         const {objectives, teams, ...mission} = mockMissions[1];
-        setupPostCapture(MISSIONS_TEAMS);
-        setupPostCapture(OBJECTIVE);
-        const body = setupPatchCapture(MISSION);
+        await setupDeleteCapture(MISSIONS_TEAMS);
+        await setupDeleteCapture(OBJECTIVE);
+        await setupPostCapture(MISSIONS_TEAMS);
+        await setupPostCapture(OBJECTIVE);
+        const body = await setupPatchCapture(MISSION);
 
         render(
             <MemoryRouter initialEntries={[PATHS.MISSION_LIST]}>

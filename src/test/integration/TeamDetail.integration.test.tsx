@@ -5,7 +5,7 @@ import { server } from '../../mocks/server';
 import userEvent from '@testing-library/user-event';
 import { mockTeamData } from '../../lib/mockData';
 import { PATHS, ROUTES } from '../../lib/paths';
-import { setupPatchCapture } from '../testUtils';
+import { setupDeleteCapture, setupPatchCapture } from '../testUtils';
 import { TEAM } from '../../lib/utils';
 import TeamsList from '../../pages/TeamList';
 import TeamDetail from '../../pages/TeamDetail';
@@ -97,6 +97,7 @@ describe('TeamDetail (integration)', () => {
     });
     
     it('should retun to List view after confirming delete record', async () => {
+        const teamID = await setupDeleteCapture(TEAM);
         vi.spyOn(window, 'confirm').mockReturnValueOnce(true);
 
         await setupPatchCapture(TEAM);
@@ -111,6 +112,8 @@ describe('TeamDetail (integration)', () => {
         );
 
         await user.click(await screen.findByRole('button', { name: 'Delete' }));
+
+        expect(teamID()).toBe(mockTeamData[1].id);
 
         const header = await screen.findByText('SGC Team List');
         expect(header).toBeInTheDocument();

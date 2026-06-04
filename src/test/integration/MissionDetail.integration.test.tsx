@@ -1,15 +1,16 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, it, expect, vi } from 'vitest';
-import MissionList from '../../pages/MissionList';
 import { http, HttpResponse } from 'msw';
 import { server } from '../../mocks/server';
-import MissionDetail from '../../pages/MissionDetail';
 import userEvent from '@testing-library/user-event';
+import MissionDetail from '../../pages/MissionDetail';
 import MissionForm from '../../pages/MissionForm';
+import MissionList from '../../pages/MissionList';
 import { PATHS, ROUTES } from '../../lib/paths';
-import { mockMissions, mockPersonnel, mockTeamPersonnelLink, mockTeams } from '../../lib/mockData';
-import { extractDate, extractName } from '../../lib/utils';
+import { mockMissions, mockPersonnel, mockTeamPersonnelLink } from '../../lib/mockData';
+import { extractDate, extractName, MISSION, MISSIONS_TEAMS, OBJECTIVE } from '../../lib/utils';
+import { setupDeleteCapture } from '../testUtils';
 
 const user = userEvent.setup();
 const { objectives: abydosObjectives, teams: abydosTeams, id: abydosID, ...abydos } = mockMissions[0];
@@ -167,6 +168,9 @@ describe('MissionDetail (integration)', () => {
     });
 
     it('navigates to the list view after confirming delete action', async () => {
+        await setupDeleteCapture(MISSIONS_TEAMS);
+        await setupDeleteCapture(OBJECTIVE);
+        const missionIdParam = setupDeleteCapture(MISSION);
         vi.spyOn(window, 'confirm').mockReturnValueOnce(true);
 
         render(
@@ -178,29 +182,28 @@ describe('MissionDetail (integration)', () => {
         </MemoryRouter>
         );
 
-        await user.click(await screen.findByText('Delete'));
+        await user.click(await screen.findByRole('button', { name: 'Delete' }));
 
+        expect(missionIdParam()).toBe(missionID);
         expect(await screen.findByRole('heading', { name: "SGC Mission Records", level: 1 }));
-        expect(await screen.findByText(`${abydos.destination} | ${abydos.name} | ${abydos.status}`)).toBeInTheDocument();
-        expect(await screen.queryByText(new RegExp(`${mission.destination} | ${mission.name} | ${mission.status}`))).not.toBeInTheDocument();
     });
 
-    // it('displays error message when API returns server error', async () => {
-    //     server.use(
-    //         http.get(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/personnel`, () => {
-    //         return new HttpResponse(null, { status: 500 });
-    //         })
-    //     );
+    it('displays error message when API returns server error', async () => {
+        server.use(
+            http.get(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/missions_teams`, () => {
+                return new HttpResponse(null, { status: 500 });
+            })
+        );
 
-    //     render(
-    //         <MemoryRouter initialEntries={[PATHS.PERSONNEL_DETAIL(mockMissions[0].id)]}>
-    //         <Routes>
-    //             <Route path={ROUTES.MISSION_DETAIL} element={<MissionDetail />} />
-    //         </Routes>
-    //         </MemoryRouter>
-    //     );
+        render(
+            <MemoryRouter initialEntries={[PATHS.MISSION_DETAIL(abydosID)]}>
+            <Routes>
+                <Route path={ROUTES.MISSION_DETAIL} element={<MissionDetail />} />
+            </Routes>
+            </MemoryRouter>
+        );
 
-    //     const message = await screen.findByText('Error 500: An unexpected error occurred.');
-    //     expect(message).toBeInTheDocument();
-    // });
+        const message = await screen.findByText('Error 500: An unexpected error occurred.');
+        expect(message).toBeInTheDocument();
+    });
 });

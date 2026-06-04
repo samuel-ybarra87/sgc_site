@@ -9,6 +9,8 @@ import userEvent from '@testing-library/user-event';
 import PersonnelForm from '../../pages/PersonnelForm';
 import { PATHS, ROUTES } from '../../lib/paths';
 import { mockPersonnel } from '../../lib/mockData';
+import { setupDeleteCapture } from '../testUtils';
+import { PERSONNEL } from '../../lib/utils';
 
 const user = userEvent.setup();
 
@@ -120,6 +122,8 @@ describe('PersonnelDetail (integration)', () => {
     });
 
     it('navigates to the list view after confirming delete action', async () => {
+        const personnelID = await setupDeleteCapture(PERSONNEL);
+
         vi.spyOn(window, 'confirm').mockReturnValueOnce(true);
 
         render(
@@ -133,8 +137,14 @@ describe('PersonnelDetail (integration)', () => {
 
         await user.click(await screen.findByText('Delete'));
 
-        const jack = await screen.findByText(/Col Jack O'Neill/);
-        expect(jack).toBeInTheDocument(); 
+        expect(personnelID()).toBe(mockPersonnel[4].id);
+        expect(await screen.findByRole(
+            'heading',
+            {
+                name: 'SGC Personnel',
+                level: 1
+            }
+        )).toBeInTheDocument();
     });
 
     it('displays error message when API returns server error', async () => {

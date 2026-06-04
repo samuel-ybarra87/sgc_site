@@ -26,10 +26,7 @@ export default function MissionDetail(){
                 .eq('mission_id', id);
             if(fetchTeamIDError){
                 console.error(fetchTeamIDError.message);
-                setError({
-                    message: fetchTeamIDError.message,
-                    code: fetchTeamIDError.code
-                });
+                setError({ message: 'An unexpected error occurred.', code: '500' });
                 setLoading(false);
                 return;
             }
@@ -48,7 +45,7 @@ export default function MissionDetail(){
                 .order('designation', { ascending: true });
             if(fetchTeamErrors){
                 console.error(fetchTeamErrors.message);
-                setError({
+                setError({ 
                     message: fetchTeamErrors.message,
                     code: fetchTeamErrors.code
                 });

@@ -22,3 +22,17 @@ export function setupPatchCapture(endpoint: string) {
   );
   return () => capturedBody;
 }
+
+export function setupDeleteCapture(endpoint: string){
+  let capturedID: string | null = null;
+  server.use(
+    http.delete(endpoint, async ({ request }) => {
+      const url = new URL(request.url);
+      const idParam = url.searchParams.get('id') || url.searchParams.get('mission_id');
+      capturedID = idParam?.split('.')[1] || null;
+
+      return HttpResponse.json({}, { status: 200 });
+    })
+  );
+  return () => capturedID;
+}
