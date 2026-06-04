@@ -17,8 +17,9 @@ export default function MissionDetail(){
 
     useEffect(()=>{
         async function fetchData() {
-            // Find assigned teams
             setLoading(true);
+
+            // Find assigned teams
             const { data: assignedTeamIDs, error: fetchTeamIDError } = await supabase
                 .from('missions_teams')
                 .select('team_id')
@@ -29,6 +30,11 @@ export default function MissionDetail(){
                     message: fetchTeamIDError.message,
                     code: fetchTeamIDError.code
                 });
+                setLoading(false);
+                return;
+            }
+            if(!assignedTeamIDs){
+                setMission(null);
                 setLoading(false);
                 return;
             }
@@ -97,6 +103,8 @@ export default function MissionDetail(){
             if(fetchMissionError){
                 if(fetchMissionError.code === 'PGRST116'){
                     setMission(null);
+                    setLoading(false);
+                    return;
                 } else {
                     console.error(fetchMissionError.message);
                     setError({ message: 'An unexpected error occurred.', code: '500' });

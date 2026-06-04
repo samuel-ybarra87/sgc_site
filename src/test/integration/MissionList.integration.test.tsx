@@ -57,7 +57,7 @@ describe('MissionList', () => {
         );
 
         const abydos = await screen.findByText(/Abydos Recon/);
-        const mission = await screen.findByText(/MockMission/);
+        const mission = await screen.findByText(/Mock Mission/);
         expect(abydos).toBeInTheDocument();
         expect(mission).toBeInTheDocument();
     });

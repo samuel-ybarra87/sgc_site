@@ -68,7 +68,7 @@ describe('MissionDetail', () => {
                 eq: vi.fn().mockReturnValueOnce({
                     single: vi.fn().mockResolvedValueOnce({
                         data: null,
-                        error:  { message: 'no rows returned', code: 'PGRST116' }
+                        error: { message: 'no rows returned', code: 'PGRST116' }
                     }),
                 }),
             }),

@@ -142,3 +142,11 @@ src/
 ## Why I Built This
 
 I built this project to improve my testing skills using tools that are more common in modern web development than Behat. My goal was to get practical experience with unit, integration, and end-to-end testing while building a full-stack CRUD application.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE). You are free to use, copy, and modify the code for your own purposes.
+
+## Disclaimer
+
+This is a non-commercial fan project. _Stargate_, _Stargate SG-1_, and all related marks, logos, and characters are trademarks of Metro-Goldwyn-Mayer Studios Inc. (MGM). This project is not endorsed by or affiliated with MGM or the Stargate franchise. All copyrighted materials are used under Fair Use for educational and portfolio purposes.
