@@ -4,6 +4,7 @@ import { rankAbbreviations } from '../lib/rankAbbreviations';
 
 export const PERSONNEL = `${supabaseUrl}/rest/v1/personnel`;
 export const TEAM = `${supabaseUrl}/rest/v1/teams`;
+export const TEAM_PERSONNEL = `${supabaseUrl}/rest/v1/team_personnel`
 export const MISSION = `${supabaseUrl}/rest/v1/missions`;
 export const OBJECTIVE = `${supabaseUrl}/rest/v1/mission_objectives`;
 export const MISSIONS_TEAMS = `${supabaseUrl}/rest/v1/missions_teams`;

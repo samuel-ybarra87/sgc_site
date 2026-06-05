@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { PATHS } from '../lib/paths';
@@ -49,7 +49,7 @@ export default function PersonnelForm() {
   const isEditing = Boolean(id);
   const [fetching, setFetching] = useState(isEditing);
   const [submitError, setSubmitError] = useState<string | null>(null);
-
+  const [teamID, setTeamID] = useState<string | null>(null);
   const [teams, setTeams] = useState<TeamOptions[]>([]);
   const [roles, setRoles] = useState<RoleOptions[]>([]);
 
@@ -86,6 +86,7 @@ export default function PersonnelForm() {
         .single();
       if (error) console.error(error);
       else if (shouldUpdate) {
+        setTeamID(data.team_id);
         setForm(data);
         setFetching(false);
       }
@@ -100,7 +101,7 @@ export default function PersonnelForm() {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.SubmitEvent) {
     e.preventDefault();
     setLoading(true);
 
@@ -119,7 +120,20 @@ export default function PersonnelForm() {
       role: form.role === '' ? '' : form.role,
     }
 
+    const updateAssignment = formData.team_id !== teamID;
+
     if (isEditing) {
+      if(updateAssignment){
+        const { error } = await supabase
+          .from('team_personnel')
+          .insert({ team_id: formData.team_id, personnel_id: id});
+        if (error) {
+          console.error(error);
+          setSubmitError(error.message);
+          setLoading(false);
+          return;
+        }
+      }
       const { error } = await supabase
         .from('personnel')
         .update(formData)
@@ -131,13 +145,28 @@ export default function PersonnelForm() {
         navigate(PATHS.PERSONNEL_LIST);
       }
     } else {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('personnel')
-        .insert(formData);
+        .insert(formData)
+        .select()
+        .single();
       if (error) {
         console.error(error);
         setSubmitError(error.message);
-      } else navigate(PATHS.PERSONNEL_LIST);
+        setLoading(false);
+        return;
+      } else {
+        const { error: linkError } = await supabase
+            .from('team_personnel')
+            .insert({ team_id: formData.team_id, personnel_id: data.id});
+        if (linkError) {
+          console.error(linkError);
+          setSubmitError(linkError.message);
+          setLoading(false);
+          return;
+        }
+        navigate(PATHS.PERSONNEL_LIST);
+      }
     }
 
     setLoading(false);
