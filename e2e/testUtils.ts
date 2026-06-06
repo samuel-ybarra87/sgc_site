@@ -1,7 +1,7 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { rankAbbreviations } from "../src/lib/rankAbbreviations"
-import { e2eTestTeams, TEST_PERSONNEL_NAMES, TEST_ROLE_NAMES, TEST_TEAM_DESIGNATIONS } from "./mockData";
-import { Personnel, Role, Team } from "./interface";
+import { e2eTestTeams, e2eMockMissions, TEST_PERSONNEL_NAMES, TEST_ROLE_NAMES, TEST_TEAM_DESIGNATIONS, TEST_MISSIONS, TEST_OBJECTIVES } from "./mockData";
+import { Mission, MissionObjective, MissionTeamLink, Personnel, Role, Team, TeamPersonnelLink } from "./interface";
 
 export function extractName(person: Record<string, unknown>){
     const prefix = person.prefix ? `${person.prefix} ` : '';
@@ -162,5 +162,156 @@ export async function deleteTestRoles(supabase: SupabaseClient, roles: Role[]) {
             .from('roles')
             .delete()
             .eq('name', role.name)
+    ));
+}
+
+export async function seedTeamPersonnelLinks(supabase: SupabaseClient, teamPersonnelLink: TeamPersonnelLink[]) {
+    // clean up previous runs
+    const TEAMLIST = await fetchTestTeams(supabase);
+    const ids = TEAMLIST.map(team => team.id);
+    const LINKLIST: TeamPersonnelLink[] = await fetchTeamPersonnelLinks(supabase, ids);
+    await deleteTeamPersonnelLinks(supabase, LINKLIST);
+
+    // Insert test data
+    const { error } = await supabase
+        .from('team_personnel')
+        .insert(teamPersonnelLink);
+    
+    if(error) throw new Error(`Faild to insert test team-personnel links: ${error.message}`);
+}
+
+export async function fetchTeamPersonnelLinks(supabase: SupabaseClient, teamIDs: string[]) {
+    const { data, error } = await supabase
+        .from('team_personnel')
+        .select()
+        .in('team_id', teamIDs);
+    
+    if(error) throw new Error(`Failed to fetch teamPersonnelLinks: ${error.message}`);
+
+    return data;    
+}
+
+export async function deleteTeamPersonnelLinks(supabase: SupabaseClient, teamPersonnelLinks: TeamPersonnelLink[]) {
+    await Promise.all(teamPersonnelLinks.map(link =>
+        supabase
+            .from('team_personnel')
+            .delete()
+            .eq('team_id', link.team_id)
+    ));
+}
+
+export async function seedTestMissions(supabase: SupabaseClient) {
+    // clean up previous runs
+    const MISSIONLIST = await fetchTestMissions(supabase);
+    const ids = MISSIONLIST.map(mission => mission.id);
+    const LINKLIST: MissionTeamLink[] = await fetchMissionTeamLinks(supabase, ids);
+    await deleteMissionsTeamsLinks(supabase, LINKLIST);
+    const OBJECTIVES = await fetchTestObjectives(supabase);
+    await deleteTestObjectives(supabase, OBJECTIVES);
+    await deleteTestMissions(supabase, MISSIONLIST);
+
+    // Insert test data
+    const { data, error } = await supabase
+        .from('mission')
+        .insert(e2eMockMissions)
+        .select();
+
+    if(error) throw new Error(`Failed to insert test personnel: ${error.message}`);
+    if(!data || data.length === 0) throw new Error('No personnel data returned after insert');
+
+    return data;
+}
+
+export async function seedTestObjectives(supabase: SupabaseClient, objectives: MissionObjective []) {
+    // clean up previous runs
+    const OBJECTIVES = await fetchTestObjectives(supabase);
+    await deleteTestObjectives(supabase, OBJECTIVES);
+
+    // Insert test data
+    const { data, error } = await supabase
+        .from('missions_objectives')
+        .insert(objectives)
+        .select();
+
+    if(error) throw new Error(`Failed to insert test personnel: ${error.message}`);
+    if(!data || data.length === 0) throw new Error('No personnel data returned after insert');
+
+    return data;
+}
+
+export async function seedMissionTeamLinks(supabase: SupabaseClient, missionTeamLink: MissionTeamLink[]) {
+    // clean up previous runs
+    const MISSIONLIST = await fetchTestMissions(supabase);
+    const ids = MISSIONLIST.map(mission => mission.id);
+    const LINKLIST: MissionTeamLink[] = await fetchMissionTeamLinks(supabase, ids);
+    await deleteMissionsTeamsLinks(supabase, LINKLIST);
+
+    // Insert test data
+    const { error } = await supabase
+        .from('missions_teams')
+        .insert(missionTeamLink);
+    
+    if(error) throw new Error(`Faild to insert test mission-team links: ${error.message}`);
+}
+
+export async function fetchTestMissions(supabase: SupabaseClient) {
+    const { data, error } = await supabase
+        .from('missions')
+        .select()
+        .in('name', TEST_MISSIONS)
+        .order('name', { ascending: true });
+
+    if(error) throw new Error(`Failed to fetch missions: ${error.message}`);
+
+    return data;
+}
+
+export async function fetchTestObjectives(supabase: SupabaseClient) {
+    const { data, error } = await supabase
+        .from('mission_objectives')
+        .select()
+        .in('objective', TEST_OBJECTIVES)
+        .order('objective', { ascending: true });
+
+    if(error) throw new Error(`Failed to fetch objectives: ${error.message}`);
+
+    return data;
+}
+
+export async function fetchMissionTeamLinks(supabase: SupabaseClient, missionIDs: string[]) {
+    const { data, error } = await supabase
+        .from('missions_teams')
+        .select()
+        .in('mission_id', missionIDs);
+
+    if(error) throw new Error(`Failed to fetch missionTeamLinks: ${error.message}`);
+
+    return data;
+}
+
+export async function deleteMissionsTeamsLinks(supabase: SupabaseClient, missionTeamLinks: MissionTeamLink[]) {
+    await Promise.all(missionTeamLinks.map(link =>
+        supabase
+            .from('missions_teams')
+            .delete()
+            .eq('mission_id', link.mission_id)
+    ));
+}
+
+export async function deleteTestObjectives(supabase: SupabaseClient, objectives: MissionObjective[]) {
+    await Promise.all(objectives.map(obj =>
+        supabase
+            .from('mission_objectives')
+            .delete()
+            .eq('mission_id', obj.mission_id)
+    ));
+}
+
+export async function deleteTestMissions(supabase: SupabaseClient, missions: Mission[]) {
+    await Promise.all(missions.map(mission =>
+        supabase
+            .from('missions')
+            .delete()
+            .eq('name', mission.name)
     ));
 }

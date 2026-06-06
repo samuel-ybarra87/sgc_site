@@ -147,7 +147,7 @@ export const e2eTestRoles = [
 
 export const TEST_ROLE_NAMES = e2eTestRoles.map(r => r.name);
 
-export const mockMissionObjectives = [
+export const e2eMockMissionObjectives = [
     {
         mission_id: null,
         objective: "test-not-complete",
@@ -174,7 +174,9 @@ export const mockMissionObjectives = [
     }
 ]
 
-export const mockMissions = [
+export const TEST_OBJECTIVES = e2eMockMissionObjectives.map(o => o.objective);
+
+export const e2eMockMissions = [
     {
         name: "Mock Mission 1",
         destination: "P3X-984",
@@ -192,3 +194,5 @@ export const mockMissions = [
         status: "active"
     }
 ]
+
+export const TEST_MISSIONS = e2eMockMissions.map(m => m.name);

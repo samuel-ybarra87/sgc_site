@@ -31,14 +31,19 @@ export interface Mission {
     status: string;
 }
 
-export interface MissionTeamLink {
-  mission_id: string;
-  team_id: string;
-}
-
 export interface MissionObjective {
   mission_id: string | null;
   objective: string;
   is_completed: boolean;
   secret_objective: boolean;
+}
+
+export interface MissionTeamLink {
+  mission_id: string;
+  team_id: string;
+}
+
+export interface TeamPersonnelLink {
+  team_id: string;
+  personnel_id: string;
 }
