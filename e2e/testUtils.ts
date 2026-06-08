@@ -26,9 +26,23 @@ export async function deleteTestData(supabase: SupabaseClient){
         .update({ commanding_officer: null })
         .in('designation', TEST_TEAM_DESIGNATIONS);
     
-    await deleteTestPersonnel(supabase, await fetchTestPersonnel(supabase));
     await deleteTestRoles(supabase, await fetchTestRoles(supabase));
-    await deleteTestTeams(supabase, await fetchTestTeams(supabase));
+
+    const TEAMLIST = await fetchTestTeams(supabase)
+    const TEAMIDS = TEAMLIST.map(team => team.id);
+    const TEAMLINKLIST = await fetchTeamPersonnelLinks(supabase, TEAMIDS);
+    
+    await deleteTeamPersonnelLinks(supabase, TEAMLINKLIST);
+    await deleteTestPersonnel(supabase, await fetchTestPersonnel(supabase));
+    await deleteTestTeams(supabase, TEAMLIST);
+
+    const MISSIONLIST = await fetchTestMissions(supabase);
+    const MISSIONIDS = MISSIONLIST.map(mission => mission.id);
+    const MISSIONLINKLIST = await fetchMissionTeamLinks(supabase, MISSIONIDS);
+
+    await deleteMissionsTeamsLinks(supabase, MISSIONLINKLIST);
+    await deleteTestObjectives(supabase, await fetchTestObjectives(supabase));
+    await deleteTestMissions(supabase, MISSIONLIST)
 }
 
 export async function seedTestPersonnel(supabase: SupabaseClient, persons: Personnel[]) {
@@ -212,12 +226,13 @@ export async function seedTestMissions(supabase: SupabaseClient) {
 
     // Insert test data
     const { data, error } = await supabase
-        .from('mission')
+        .from('missions')
         .insert(e2eMockMissions)
-        .select();
+        .select()
+        .order('name');
 
-    if(error) throw new Error(`Failed to insert test personnel: ${error.message}`);
-    if(!data || data.length === 0) throw new Error('No personnel data returned after insert');
+    if(error) throw new Error(`Failed to insert test missions: ${error.message}`);
+    if(!data || data.length === 0) throw new Error('No missions data returned after insert');
 
     return data;
 }
@@ -229,12 +244,25 @@ export async function seedTestObjectives(supabase: SupabaseClient, objectives: M
 
     // Insert test data
     const { data, error } = await supabase
-        .from('missions_objectives')
+        .from('mission_objectives')
         .insert(objectives)
         .select();
 
-    if(error) throw new Error(`Failed to insert test personnel: ${error.message}`);
-    if(!data || data.length === 0) throw new Error('No personnel data returned after insert');
+    if(error) throw new Error(`Failed to insert test objectives: ${error.message}`);
+    if(!data || data.length === 0) throw new Error('No objectives data returned after insert');
+
+    return data;
+}
+
+export async function updateObjectives(supabase: SupabaseClient, objective: MissionObjective) {
+    const { data, error } = await supabase
+        .from('misson_objectives')
+        .update({ mission_id: objective.mission_id })
+        .eq('objective', objective.objective)
+        .select()
+        .single();
+    
+    if(error) throw new Error(`Failed to update objective: ${error.message}`);
 
     return data;
 }
