@@ -5,12 +5,14 @@ import { Mission, MissionObjective, MissionTeamLink, Personnel, Role, Team, Team
 
 export function extractName(person: Record<string, unknown>){
     const prefix = person.prefix ? `${person.prefix} ` : '';
+    const rank = person.rank ? `${person.rank} ` : '';
     const abbrev = person.rank ? `${rankAbbreviations[`${person.rank}`] ?? person.rank} ` : '';
-    const name = `${person.first_name} ${person.middle_name ? `${person.middle_name} ` : '' }${person.last_name}${person.suffix ? ` ${person.suffix}` : '' }`;
+    const name = `${person.first_name}${person.middle_name ? ` ${person.middle_name}` : '' }${person.last_name ? ` ${person.last_name}`: ''}${person.suffix ? ` ${person.suffix}` : '' }`;
     return {
         link : person.personnel_type == 'military' ? `${abbrev}${name}` : `${prefix}${name}`,
         displayName : `${prefix}${name}`,
-        listName: `${person.personnel_type === 'military' ? person.rank : person.prefix} ${person.first_name}${person.middle_name ? ` ${person.middle_name} ` : ' '}${person.last_name}${person.suffix ? ` ${person.suffix}` : '' }`
+        listName: `${person.personnel_type === 'military' ? rank : prefix}${name}`,
+        abbrevName: `${person.personnel_type === 'military' ? abbrev : prefix}${name}`
     }
 }
 
@@ -238,10 +240,6 @@ export async function seedTestMissions(supabase: SupabaseClient) {
 }
 
 export async function seedTestObjectives(supabase: SupabaseClient, objectives: MissionObjective []) {
-    // clean up previous runs
-    const OBJECTIVES = await fetchTestObjectives(supabase);
-    await deleteTestObjectives(supabase, OBJECTIVES);
-
     // Insert test data
     const { data, error } = await supabase
         .from('mission_objectives')
@@ -250,19 +248,6 @@ export async function seedTestObjectives(supabase: SupabaseClient, objectives: M
 
     if(error) throw new Error(`Failed to insert test objectives: ${error.message}`);
     if(!data || data.length === 0) throw new Error('No objectives data returned after insert');
-
-    return data;
-}
-
-export async function updateObjectives(supabase: SupabaseClient, objective: MissionObjective) {
-    const { data, error } = await supabase
-        .from('misson_objectives')
-        .update({ mission_id: objective.mission_id })
-        .eq('objective', objective.objective)
-        .select()
-        .single();
-    
-    if(error) throw new Error(`Failed to update objective: ${error.message}`);
 
     return data;
 }

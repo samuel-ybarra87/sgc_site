@@ -128,7 +128,7 @@ const link = e2eTestTeam1.designation;
 
 test.describe('read and verify (Teams)', async () => {
     
-    test('displays team list on personnel home page', async ({ page }) => {
+    test('displays team list on team home page', async ({ page }) => {
         // Test navigation
         await page.goto(PATHS.TEAM_LIST);
 

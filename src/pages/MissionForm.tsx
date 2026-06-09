@@ -15,7 +15,7 @@ type MissionForm = {
     teams: Team[];
 }
 
-const emptyTeam = { id: '', commanding_officer: '', designation: '', status: '' };
+const emptyTeam: Team = { id: '', commanding_officer: '', designation: '', status: '' };
 const emptyObjective: MissionObjectives = { id: '', mission_id: '', objective: '', is_completed: false, secret_objective: false };
 
 const defaultForm: MissionForm = {
