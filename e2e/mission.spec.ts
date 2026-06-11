@@ -13,6 +13,7 @@ import {
 import {
     deleteTestData,
     deleteTestObjectives,
+    extractDate,
     extractName,
     fetchTestObjectives,
     fetchTestRoles,
@@ -25,10 +26,24 @@ import {
     seedTestRoles,
     seedTestTeams
 } from './testUtils';
-import { Mission, MissionObjective, MissionTeamLink, Team, TeamPersonnelLink } from './interface';
+import { Mission, MissionObjective, MissionTeamLink, Personnel, Team, TeamPersonnelLink } from './interface';
+
+interface SeededPersonnel extends Personnel {
+    id: string;
+}
 
 interface SeededTeam extends Team {
     id: string;
+}
+
+interface SeededObjectives extends MissionObjective {
+    id: string;
+}
+
+interface SeededMission extends Mission {
+    id: string;
+    teams: SeededTeam[];
+    objectives: SeededObjectives[];
 }
 
 dotenv.config();
@@ -57,17 +72,25 @@ const secretObjectives: MissionObjective[] = e2eMockMissionObjectives.filter(obj
 const missionObjectives: MissionObjective[] = e2eMockMissionObjectives.filter(obj => obj.secret_objective === false);
 const EMPTYOBJECTIVE = { id: '', mission_id: '', objective: '', is_completed: false, secret_objective: false };
 // missions
-const MOCKMISSION1: Mission = e2eMockMissions[0];
-const MOCKMISSION2: Mission = e2eMockMissions[1];
-const MOCKMISSIONENTRY: Mission = {
+const MOCKMISSION1: SeededMission = { ...e2eMockMissions[0], id: '', teams: [], objectives: [] };
+const MOCKMISSION2: SeededMission = { ...e2eMockMissions[1], id: '', teams: [], objectives: [] };
+const MOCKMISSIONENTRY = {
     name: 'Mock Mission 3',
     destination: 'PX3-445',
     description: null,
     start_date: "2026-05-01T08:00:00.000Z",
     end_date: null,
-    status: "active"
+    status: "active",
+    teams: [],
+    objectives: []
 }
 TEST_MISSIONS.push(MOCKMISSIONENTRY.name);
+const mockMissionLink1 = `${MOCKMISSION1.destination} | ${MOCKMISSION1.name} | ${MOCKMISSION1.status}`;
+const mockMissionLink2 = `${MOCKMISSION2.destination} | ${MOCKMISSION2.name} | ${MOCKMISSION2.status}`;
+const newLink = `${MOCKMISSIONENTRY.destination} | ${MOCKMISSIONENTRY.name} | ${MOCKMISSIONENTRY.status}`;
+
+let TEAMPERSONNELLINKS: TeamPersonnelLink[];
+let TESTPERSONNEL: SeededPersonnel[];
 
 test.beforeAll(async () =>{
     await deleteTestData(supabase); // force clean up of mock data
@@ -107,6 +130,7 @@ test.beforeAll(async () =>{
 
     // Insert personnel with team IDs
     const dbRecords = await seedTestPersonnel(supabase, records);
+    TESTPERSONNEL = dbRecords;
 
     const teamLead1 = dbRecords.find(p => p.role_id === co.id && p.last_name !== e2eTestRecords.teamMember1.last_name);
     const teamLead2 = dbRecords.find(p => p.role_id === co.id && p.last_name === e2eTestRecords.teamMember1.last_name);
@@ -140,7 +164,7 @@ test.beforeAll(async () =>{
     teamMember3.teams.designation = testTeam1.designation;
 
     // populate teams with personnel
-    const TEAMPERSONNELLINKS: TeamPersonnelLink[] =[
+    TEAMPERSONNELLINKS =[
         {
             team_id: testTeam1.id,
             personnel_id: teamLead1.id
@@ -211,15 +235,21 @@ test.beforeAll(async () =>{
         is_completed: false
     }));
 
-    await seedTestObjectives(supabase, missionObjectives1);
-    await seedTestObjectives(supabase, missionObjectives2);
+    const seededObjectives1 = await seedTestObjectives(supabase, missionObjectives1);
+    const seededObjectives2 = await seedTestObjectives(supabase, missionObjectives2);
+
+    // Update e2eTestMission Records
+    MOCKMISSION1.id = mockMission1.id;
+    MOCKMISSION1.teams = [testTeam1];
+    MOCKMISSION1.objectives = seededObjectives1;
+    MOCKMISSION2.id = mockMission2.id;
+    MOCKMISSION2.teams = [testTeam2];
+    MOCKMISSION2.objectives = seededObjectives2;
 });
 
 test.afterAll(async () =>{
     await deleteTestData(supabase);
 });
-
-const link = `${MOCKMISSION1.destination} | ${MOCKMISSION1.name} | ${MOCKMISSION1.status}`;
 
 test.describe('read and verify (Missions)', async () => {
     test('should show list on mission home page view', async ({ page }) => {
@@ -227,12 +257,55 @@ test.describe('read and verify (Missions)', async () => {
         await page.goto(PATHS.MISSION_LIST);
         
         // Read data
-        const heading = page.getByText('SGC Mission Records');
-        const mission = page.getByText(link);
+        const heading = page.getByRole('heading', { name: 'SGC Mission Records', level: 1 });
+        const mission1 = page.getByRole('link', { name: mockMissionLink1 });
+        const mission2 = page.getByRole('link', { name: mockMissionLink2 });
 
         // Assertions...
         await expect(page).toHaveURL(PATHS.MISSION_LIST);
         await expect(heading).toBeVisible();
-        await expect(mission).toBeVisible();
+        await expect(mission1).toBeVisible();
+        await expect(mission2).toBeVisible();
+    })
+
+    test('should navigate to detail page (completed mission)', async ({ page }) =>{
+        await page.goto(PATHS.MISSION_LIST);
+        await page.getByRole('link', { name: mockMissionLink1 }).click();
+
+        await expect(page.getByRole('heading', { name: 'Mission Record', level: 1 })).toBeVisible();
+        await expect(page.getByRole('heading', { name: MOCKMISSION1.destination, level: 2 })).toBeVisible();
+        await expect(page.getByText(new RegExp(`Status: ${MOCKMISSION1.status}`))).toBeVisible();
+        await expect(page.getByText(new RegExp(`Mission Start: ${extractDate(MOCKMISSION1.start_date)}`))).toBeVisible();
+        await expect(page.getByText(new RegExp(`Mission End: ${extractDate(MOCKMISSION1.end_date)}`))).toBeVisible();
+        await expect(page.getByText('TEAMS:')).toBeVisible();
+        
+        for(const [i, team] of MOCKMISSION1.teams.entries()){
+            const teamHeader = await page.getByTitle(new RegExp(`team-name ${i}`))
+            await expect(teamHeader).toContainText(team.designation);
+
+            const teamMembers = TESTPERSONNEL.filter(p => 
+                TEAMPERSONNELLINKS.some(l =>
+                    l.team_id === team.id && l.personnel_id === p.id
+                )
+            )
+
+            for(const [j, person] of teamMembers.entries()){
+                const member = await page.getByTitle(new RegExp(`team ${i} member ${j}`))
+                await expect(member).toContainText(extractName(person).abbrevName);
+            }
+        }
+
+        await expect(page.getByText('OBJECTIVES:')).toBeVisible();
+
+        for(const [i, obj] of MOCKMISSION1.objectives.entries()){
+            const objectiveTitle = await page.getByTitle(new RegExp(`objective ${i}`));
+            await expect(objectiveTitle).toContainText(obj.objective);
+
+            const checkbox = await page.getByTitle(new RegExp(`objective-status ${i}`));
+            await expect(checkbox).toBeChecked();
+        }
+
+        await expect(page.getByText('Mission Debriefing')).toBeVisible();
+        await expect(page.getByTitle("mission-description")).toContainText(MOCKMISSION1.description!);
     })
 });

@@ -3,7 +3,7 @@ import { rankAbbreviations } from "../src/lib/rankAbbreviations"
 import { e2eTestTeams, e2eMockMissions, TEST_PERSONNEL_NAMES, TEST_ROLE_NAMES, TEST_TEAM_DESIGNATIONS, TEST_MISSIONS, TEST_OBJECTIVES } from "./mockData";
 import { Mission, MissionObjective, MissionTeamLink, Personnel, Role, Team, TeamPersonnelLink } from "./interface";
 
-export function extractName(person: Record<string, unknown>){
+export function extractName(person: Personnel){
     const prefix = person.prefix ? `${person.prefix} ` : '';
     const rank = person.rank ? `${person.rank} ` : '';
     const abbrev = person.rank ? `${rankAbbreviations[`${person.rank}`] ?? person.rank} ` : '';
@@ -14,6 +14,13 @@ export function extractName(person: Record<string, unknown>){
         listName: `${person.personnel_type === 'military' ? rank : prefix}${name}`,
         abbrevName: `${person.personnel_type === 'military' ? abbrev : prefix}${name}`
     }
+}
+
+export function extractDate(timestamp: string | null){
+    if(!timestamp) throw new Error("End date not found");
+    const [date, time] = timestamp.slice(0,16).split('T');
+
+    return `${date} ${time}`;
 }
 
 export async function deleteTestData(supabase: SupabaseClient){
