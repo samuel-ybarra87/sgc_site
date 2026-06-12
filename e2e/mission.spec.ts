@@ -280,17 +280,17 @@ test.describe('read and verify (Missions)', async () => {
         await expect(page.getByText('TEAMS:')).toBeVisible();
         
         for(const [i, team] of MOCKMISSION1.teams.entries()){
-            const teamHeader = await page.getByTitle(new RegExp(`team-name ${i}`))
+            const teamHeader = await page.getByTitle(new RegExp(`team-name ${i}`));
             await expect(teamHeader).toContainText(team.designation);
 
             const teamMembers = TESTPERSONNEL.filter(p => 
                 TEAMPERSONNELLINKS.some(l =>
                     l.team_id === team.id && l.personnel_id === p.id
                 )
-            )
+            );
 
             for(const [j, person] of teamMembers.entries()){
-                const member = await page.getByTitle(new RegExp(`team ${i} member ${j}`))
+                const member = await page.getByTitle(new RegExp(`team ${i} member ${j}`));
                 await expect(member).toContainText(extractName(person).abbrevName);
             }
         }
@@ -307,5 +307,45 @@ test.describe('read and verify (Missions)', async () => {
 
         await expect(page.getByText('Mission Debriefing')).toBeVisible();
         await expect(page.getByTitle("mission-description")).toContainText(MOCKMISSION1.description!);
+    })
+    
+    test('should navigate to detail page (active mission)', async ({ page }) =>{
+        await page.goto(PATHS.MISSION_LIST);
+        await page.getByRole('link', { name: mockMissionLink2 }).click();
+
+        await expect(page.getByRole('heading', { name: 'Mission Record', level: 1 })).toBeVisible();
+        await expect(page.getByRole('heading', { name: MOCKMISSION2.destination, level: 2 })).toBeVisible();
+        await expect(page.getByText(new RegExp(`Status: ${MOCKMISSION2.status}`))).toBeVisible();
+        await expect(page.getByText(new RegExp(`Mission Start: ${extractDate(MOCKMISSION2.start_date)}`))).toBeVisible();
+        await expect(page.getByText('Mission End:')).not.toBeVisible();
+        await expect(page.getByText('TEAMS:')).toBeVisible();
+        
+        for(const [i, team] of MOCKMISSION2.teams.entries()){
+            const teamHeader = await page.getByTitle(new RegExp(`team-name ${i}`));
+            await expect(teamHeader).toContainText(team.designation);
+
+            const teamMembers = TESTPERSONNEL.filter(p => 
+                TEAMPERSONNELLINKS.some(l =>
+                    l.team_id === team.id && l.personnel_id === p.id
+                )
+            );
+
+            for(const [j, person] of teamMembers.entries()){
+                const member = await page.getByTitle(new RegExp(`team ${i} member ${j}`));
+                await expect(member).toContainText(extractName(person).abbrevName);
+            }
+        }
+
+        await expect(page.getByText('OBJECTIVES:')).toBeVisible();
+
+        for(const [i, obj] of MOCKMISSION2.objectives.entries()){
+            const objectiveTitle = await page.getByTitle(new RegExp(`objective ${i}`));
+            await expect(objectiveTitle).toContainText(obj.objective);
+
+            const checkbox = await page.getByTitle(new RegExp(`objective-status ${i}`));
+            await expect(checkbox).not.toBeChecked();
+        }
+
+        await expect(page.getByText('Mission Debriefing')).not.toBeVisible();
     })
 });
