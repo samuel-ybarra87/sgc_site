@@ -266,7 +266,7 @@ test.describe('read and verify (Missions)', async () => {
         await expect(heading).toBeVisible();
         await expect(mission1).toBeVisible();
         await expect(mission2).toBeVisible();
-    })
+    });
 
     test('should navigate to detail page (completed mission)', async ({ page }) =>{
         await page.goto(PATHS.MISSION_LIST);
@@ -307,7 +307,7 @@ test.describe('read and verify (Missions)', async () => {
 
         await expect(page.getByText('Mission Debriefing')).toBeVisible();
         await expect(page.getByTitle("mission-description")).toContainText(MOCKMISSION1.description!);
-    })
+    });
     
     test('should navigate to detail page (active mission)', async ({ page }) =>{
         await page.goto(PATHS.MISSION_LIST);
@@ -347,5 +347,109 @@ test.describe('read and verify (Missions)', async () => {
         }
 
         await expect(page.getByText('Mission Debriefing')).not.toBeVisible();
-    })
+    });
+
+    test('back button returns to list view', async ({ page }) =>{
+        await page.goto(PATHS.MISSION_LIST);
+        
+        await page.getByRole('link', { name: mockMissionLink2 }).click();
+
+        await page.getByRole('button', { name: 'Back' }).click();
+
+        const heading = page.getByRole('heading', { name: 'SGC Mission Records', level: 1 });
+
+        await expect(page).toHaveURL(PATHS.MISSION_LIST);
+        await expect(heading).toBeVisible();
+        await expect(page.getByText(mockMissionLink2)).toBeVisible();
+    });
+
+    test('edit button navigates to form with pre-populated data', async ({ page }) =>{
+        await page.goto(PATHS.MISSION_LIST);
+        
+        await page.getByRole('link', { name: mockMissionLink1 }).click();
+
+        await page.getByRole('button', { name: 'Edit' }).click();
+
+        const completedBtns = page.getByRole('button', { name: 'Completed' });
+        const classifiedBtns = page.getByRole('button', { name: 'Classified' });
+
+        await expect(page.getByRole('heading', { name: 'Edit Mission Record', level: 1 })).toBeVisible();
+        await expect(page.getByLabel('Name')).toHaveValue(MOCKMISSION1.name);
+        await expect(page.getByLabel('Destination')).toHaveValue(MOCKMISSION1.destination);
+        await expect(page.getByLabel('Status')).toHaveValue(MOCKMISSION1.status);
+        await expect(page.getByLabel('Start Date')).toHaveValue(MOCKMISSION1.start_date.slice(0, 16));
+        await expect(page.getByLabel('End Date')).toHaveValue(MOCKMISSION1.end_date!.slice(0, 16));
+
+        for(const [i, team] of MOCKMISSION1.teams.entries()){
+            await expect(page.getByLabel(new RegExp(`Team ${i+1}`))).toHaveValue(team.id);
+        }
+
+        for(const [i, obj] of MOCKMISSION1.objectives.entries()){
+            await expect(page.getByLabel(new RegExp(`Objective ${i+1}`))).toHaveValue(obj.objective);
+            await expect(completedBtns.nth(i)).toHaveAttribute('aria-pressed', `${obj.is_completed}`);
+            await expect(classifiedBtns.nth(i)).toHaveAttribute('aria-pressed', `${obj.secret_objective}`);
+        }
+
+        await expect(page.getByLabel('Report')).toHaveValue(MOCKMISSION1.description!);
+
+        await expect(page.getByRole('button', { name: 'Add Team' })).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Add Objective' })).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Cancel' })).toBeVisible();
+    });
+
+    test('cancel button on edit form returns to list view', async ({ page }) =>{
+        await page.goto(PATHS.MISSION_LIST);
+        
+        await page.getByRole('link', { name: mockMissionLink1 }).click();
+
+        await page.getByRole('button', { name: 'Edit' }).click();
+
+        await page.getByRole('button', { name: 'Cancel' }).click();
+
+        await expect(page).toHaveURL(PATHS.MISSION_LIST);
+
+        const heading = page.getByRole('heading', { name: 'SGC Mission Records', level: 1 });
+
+        await expect(page).toHaveURL(PATHS.MISSION_LIST);
+        await expect(heading).toBeVisible();
+        await expect(page.getByText(mockMissionLink1)).toBeVisible();
+    });
+
+    test('Add Personnel button navigates to empty form', async ({ page }) =>{
+        await page.goto(PATHS.MISSION_LIST);
+
+        await page.getByRole('button', { name: 'Add Mission Record' }).click();
+
+        await expect(page.getByLabel('Name')).toHaveValue('');
+        await expect(page.getByLabel('Destination')).toHaveValue('');
+        await expect(page.getByLabel('Status')).toHaveValue('active');
+        await expect(page.getByLabel('Start Date')).toHaveValue('');
+        await expect(page.getByLabel('End Date')).toHaveValue('');
+
+        await expect(page.getByLabel('Team 1')).toHaveValue('');
+
+        await expect(page.getByLabel('Objective 1')).toHaveValue('');
+
+        await expect(page.getByLabel('Report')).toHaveValue('');
+
+        await expect(page.getByRole('button', { name: 'Add Team' })).not.toBeVisible();
+        await expect(page.getByRole('button', { name: 'Add Objective' })).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Cancel' })).toBeVisible();
+    });
+
+    test('new form cancel button returns to list view', async ({ page }) =>{
+        await page.goto(PATHS.MISSION_LIST);
+
+        await page.getByRole('button', { name: 'Add Mission Record' }).click();
+
+        await page.getByRole('button', { name: 'Cancel' }).click();
+
+        const heading = page.getByRole('heading', { name: 'SGC Mission Records', level: 1 });
+
+        await expect(page).toHaveURL(PATHS.MISSION_LIST);
+        await expect(heading).toBeVisible();
+        await expect(page.getByText(mockMissionLink1)).toBeVisible();
+    });
 });
