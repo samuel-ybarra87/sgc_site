@@ -131,7 +131,7 @@ src/
 - [x] Mission records CRUD
   - [x] Missions unit test suite
   - [x] Missions integration test suite
-  - [ ] Missions e2e test suite (In Progress) 
+  - [ ] Missions e2e test suite (In Progress)
 - [ ] Role-based access control
 - [ ] GitHub Pages deployment
 - Quality of Life Updates
