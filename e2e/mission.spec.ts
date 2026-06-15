@@ -11,6 +11,7 @@ import {
     TEST_MISSIONS
 } from "./mockData"
 import {
+    deleteByMissionID,
     deleteTestData,
     deleteTestObjectives,
     extractDate,
@@ -451,5 +452,45 @@ test.describe('read and verify (Missions)', async () => {
         await expect(page).toHaveURL(PATHS.MISSION_LIST);
         await expect(heading).toBeVisible();
         await expect(page.getByText(mockMissionLink1)).toBeVisible();
+    });
+});
+
+test.describe('write then delete', async () =>{
+    test.beforeEach(async ()=>{
+        // clean up missed artifacts
+            // Find MOCKMISSIONENTRY id
+        const { data: mission, error: idError } = await supabase
+            .from('missions')
+            .select('id')
+            .eq('name', MOCKMISSIONENTRY.name)
+            .maybeSingle();
+
+        if(idError) throw new Error(`unable to find mission id: ${idError.message}`);
+        
+        if(mission){                    
+            // Delete mission from tables
+            await deleteByMissionID(supabase, mission.id);
+        }
+    });
+
+    test.afterEach(async ()=>{
+        // remove test entry
+            // Find MOCKMISSIONENTRY id
+        const { data: mission, error: idError } = await supabase
+            .from('missions')
+            .select('id')
+            .eq('name', MOCKMISSIONENTRY.name)
+            .maybeSingle();
+
+        if(idError) throw new Error(`unable to find mission id: ${idError.message}`);
+        
+        if(mission){                    
+            // Delete mission from tables
+            await deleteByMissionID(supabase, mission.id);
+        }
+    });
+
+    test('should do nothing', async ({ page }) => {
+
     });
 });

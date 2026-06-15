@@ -336,3 +336,18 @@ export async function deleteTestMissions(supabase: SupabaseClient, missions: Mis
             .eq('name', mission.name)
     ));
 }
+
+export async function deleteByMissionID(supabase: SupabaseClient, missionID: string) {
+    await supabase
+        .from('missions_teams')
+        .delete()
+        .eq('mission_id', missionID);
+    await supabase
+        .from('mission_objectives')
+        .delete()
+        .eq('mission_id', missionID);
+    await supabase
+        .from('missions')
+        .delete()
+        .eq('id', missionID);    
+}
