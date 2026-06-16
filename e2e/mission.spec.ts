@@ -47,6 +47,13 @@ interface SeededMission extends Mission {
     objectives: SeededObjectives[];
 }
 
+enum STATUS {
+    ACTIVE = 'active',
+    COMPLETE = 'complete',
+    FAILED = 'failed',
+    ABORTED = 'aborted'
+}
+
 dotenv.config();
 
 const supabase = createClient(
@@ -66,29 +73,30 @@ const teamMember3 = e2eTestRecords.teamMember3;
 // teams
 const SGTEST1: SeededTeam = { id: '', ...e2eTestTeams[0] };
 const SGTEST2: SeededTeam = { id: '', ...e2eTestTeams[1] };
-const EMPTYTEAM = { id: '', commanding_officer: '', designation: '', status: '' };
+const EMPTYTEAM: SeededTeam = { id: '', commanding_officer: '', designation: '', status: '' };
 // objectives
 const completedObjectives: MissionObjective[] = e2eMockMissionObjectives.map(obj => ({ ...obj, is_completed: true }));
 const secretObjectives: MissionObjective[] = e2eMockMissionObjectives.filter(obj => obj.secret_objective === true);
 const missionObjectives: MissionObjective[] = e2eMockMissionObjectives.filter(obj => obj.secret_objective === false);
-const EMPTYOBJECTIVE = { id: '', mission_id: '', objective: '', is_completed: false, secret_objective: false };
+const EMPTYOBJECTIVE: MissionObjective = { mission_id: '', objective: '', is_completed: false, secret_objective: false };
 // missions
 const MOCKMISSION1: SeededMission = { ...e2eMockMissions[0], id: '', teams: [], objectives: [] };
 const MOCKMISSION2: SeededMission = { ...e2eMockMissions[1], id: '', teams: [], objectives: [] };
 const MOCKMISSIONENTRY = {
     name: 'Mock Mission 3',
     destination: 'PX3-445',
-    description: null,
+    description: 'Test Entry Mission',
     start_date: "2026-05-01T08:00:00.000Z",
     end_date: null,
-    status: "active",
-    teams: [],
-    objectives: []
+    status: STATUS.ACTIVE,
+    teams: [EMPTYTEAM],
+    objectives: [EMPTYOBJECTIVE]
 }
 TEST_MISSIONS.push(MOCKMISSIONENTRY.name);
 const mockMissionLink1 = `${MOCKMISSION1.destination} | ${MOCKMISSION1.name} | ${MOCKMISSION1.status}`;
 const mockMissionLink2 = `${MOCKMISSION2.destination} | ${MOCKMISSION2.name} | ${MOCKMISSION2.status}`;
 const newLink = `${MOCKMISSIONENTRY.destination} | ${MOCKMISSIONENTRY.name} | ${MOCKMISSIONENTRY.status}`;
+const editedLink = `${MOCKMISSIONENTRY.destination} | ${MOCKMISSIONENTRY.name} | complete`;
 
 let TEAMPERSONNELLINKS: TeamPersonnelLink[];
 let TESTPERSONNEL: SeededPersonnel[];
@@ -456,6 +464,11 @@ test.describe('read and verify (Missions)', async () => {
 });
 
 test.describe('write then delete', async () =>{
+
+    // Update MOCKMISSIONENTRY
+    MOCKMISSIONENTRY.teams = [SGTEST1, SGTEST2];
+    MOCKMISSIONENTRY.objectives = [...missionObjectives, ...secretObjectives];
+
     test.beforeEach(async ()=>{
         // clean up missed artifacts
             // Find MOCKMISSIONENTRY id
@@ -490,7 +503,228 @@ test.describe('write then delete', async () =>{
         }
     });
 
-    test('should do nothing', async ({ page }) => {
+    test('saving a new record navigates to list view', async ({ page }) =>{
+        await page.goto(PATHS.MISSION_LIST);
+        await expect(page.getByRole('link', { name: newLink })).not.toBeVisible();
+        await page.getByRole('button', { name: 'Add Mission Record' }).click();
 
+        const addTeam = page.getByRole('button', { name: 'Add Team' });
+        const addObj = page.getByRole('button', { name: 'Add Objective' });
+        
+        // add mission info
+        await page.getByLabel('Name').fill(MOCKMISSIONENTRY.name);
+        await page.getByLabel('Destination').fill(MOCKMISSIONENTRY.destination);
+        await page.getByLabel('Start Date').fill(MOCKMISSIONENTRY.start_date.slice(0, 16));
+
+        await expect(addTeam).not.toBeVisible();
+
+        await page.getByLabel('Team 1').selectOption(SGTEST1.id);
+
+        await expect(addTeam).toBeVisible();
+
+        await addTeam.click();
+
+        await page.getByLabel('Team 2').selectOption(SGTEST2.id);
+
+        for(const [i, obj] of missionObjectives.entries()){
+            await page.getByLabel(new RegExp(`Objective ${i+1}`)).fill(obj.objective);
+            await addObj.click();
+        }
+        
+        const classifiedBtns = page.getByRole('button', { name: 'Classified' });
+
+        for(const [i, obj] of secretObjectives.entries()){
+            const index = i + missionObjectives.length;
+            await page.getByLabel(new RegExp(`Objective ${index + 1}`)).fill(obj.objective);
+            await classifiedBtns.nth(index).click();
+            if(i < secretObjectives.length - 1) await addObj.click();
+        }
+
+        // Save
+        await page.getByRole('button', { name: 'Save' }).click();
+
+        await expect(page).toHaveURL(PATHS.MISSION_LIST);
+        await expect(page.getByRole('link', { name: newLink })).toBeVisible();
+
+        await page.getByRole('link', { name: newLink }).click();
+
+        // Verify inputed fields
+        await expect(page.getByRole('heading', { name: 'Mission Record', level: 1 })).toBeVisible();
+        await expect(page.getByRole('heading', { name: MOCKMISSIONENTRY.destination, level: 2 })).toBeVisible();
+        await expect(page.getByText(new RegExp(`Status: ${MOCKMISSIONENTRY.status}`))).toBeVisible();
+        await expect(page.getByText(new RegExp(`Mission Start: ${extractDate(MOCKMISSIONENTRY.start_date)}`))).toBeVisible();
+        await expect(page.getByText('Mission End:')).not.toBeVisible();
+        await expect(page.getByText('TEAMS:')).toBeVisible();
+        
+        for(const [i, team] of MOCKMISSIONENTRY.teams.entries()){
+            const teamHeader = await page.getByTitle(new RegExp(`team-name ${i}`));
+            await expect(teamHeader).toContainText(team.designation);
+
+            const teamMembers = TESTPERSONNEL.filter(p => 
+                TEAMPERSONNELLINKS.some(l =>
+                    l.team_id === team.id && l.personnel_id === p.id
+                )
+            );
+
+            for(const [j, person] of teamMembers.entries()){
+                const member = await page.getByTitle(new RegExp(`team ${i} member ${j}`));
+                await expect(member).toContainText(extractName(person).abbrevName);
+            }
+        }
+
+        await expect(page.getByText('OBJECTIVES:')).toBeVisible();
+
+        for(const [i, obj] of MOCKMISSIONENTRY.objectives.entries()){
+            const objectiveTitle = await page.getByTitle(new RegExp(`objective ${i}`));
+            await expect(objectiveTitle).toContainText(obj.objective);
+
+            const checkbox = await page.getByTitle(new RegExp(`objective-status ${i}`));
+            await expect(checkbox).not.toBeChecked();
+        }
+
+        await expect(page.getByText('Mission Debriefing')).not.toBeVisible();
+    });
+
+    test('saving an edited record navigates to list view', async ({ page }) =>{
+        await page.goto(PATHS.MISSION_NEW);
+
+        const addTeam = page.getByRole('button', { name: 'Add Team' });
+        const addObj = page.getByRole('button', { name: 'Add Objective' });
+        
+        // add mission info
+        await page.getByLabel('Name').fill(MOCKMISSIONENTRY.name);
+        await page.getByLabel('Destination').fill(MOCKMISSIONENTRY.destination);
+        await page.getByLabel('Start Date').fill(MOCKMISSIONENTRY.start_date.slice(0, 16));
+
+        await expect(addTeam).not.toBeVisible();
+
+        await page.getByLabel('Team 1').selectOption(SGTEST1.id);
+
+        await expect(addTeam).toBeVisible();
+
+        await addTeam.click();
+
+        await page.getByLabel('Team 2').selectOption(SGTEST2.id);
+
+        for(const [i, obj] of missionObjectives.entries()){
+            await page.getByLabel(new RegExp(`Objective ${i+1}`)).fill(obj.objective);
+            await addObj.click();
+        }
+
+        const classifiedBtns = page.getByRole('button', { name: 'Classified' });
+
+        for(const [i, obj] of secretObjectives.entries()){
+            const index = i + missionObjectives.length;
+            await page.getByLabel(new RegExp(`Objective ${index + 1}`)).fill(obj.objective);
+            await classifiedBtns.nth(index).click();
+            if(i < secretObjectives.length - 1) await addObj.click();
+        }
+
+        // Save
+        await page.getByRole('button', { name: 'Save' }).click();
+
+        await expect(page).toHaveURL(PATHS.MISSION_LIST);
+        await expect(page.getByRole('link', { name: newLink })).toBeVisible();
+        await page.getByRole('link', { name: newLink }).click();
+        await page.getByRole('button', { name: 'Edit' }).click();
+
+        // Edit record
+        const endDate = new Date().toISOString().slice(0, 16);
+        const completedBtns = await page.getByRole('button', { name: 'Completed' });
+
+        await expect(page.getByRole('heading', { name: 'Edit Mission Record', level: 1 })).toBeVisible();
+        await page.getByLabel('Status').selectOption('complete');
+        await page.getByLabel('End Date').fill(endDate);
+
+        for(const [i, obj] of MOCKMISSIONENTRY.objectives.entries()){
+            if(obj.is_completed) await completedBtns.nth(i).click();
+            await expect(completedBtns.nth(i)).toHaveAttribute('aria-pressed', `${obj.is_completed}`);
+            await expect(classifiedBtns.nth(i)).toHaveAttribute('aria-pressed', `${obj.secret_objective}`);
+        }
+
+        await page.getByLabel('Report').fill(MOCKMISSIONENTRY.description);
+
+        await page.getByRole('button', { name: 'Save' }).click();
+        await expect(await page.getByRole('heading', { name: 'SGC Mission Records', level: 1 })).toBeVisible();
+        await page.getByRole('link', { name: editedLink }).click();
+
+        // assertions
+        await expect(page.getByText(new RegExp(`Status: ${STATUS.COMPLETE}`))).toBeVisible();
+        await expect(page.getByText(new RegExp(`Mission End: ${extractDate(endDate)}`))).toBeVisible();
+
+        for(const [i, obj] of MOCKMISSIONENTRY.objectives.entries()){
+            const objectiveTitle = await page.getByTitle(new RegExp(`objective ${i}`));
+            await expect(objectiveTitle).toContainText(obj.objective);
+
+            const checkbox = await page.getByTitle(new RegExp(`objective-status ${i}`));
+            if(obj.is_completed) await expect(checkbox).toBeChecked();
+            else await expect(checkbox).not.toBeChecked();
+        }
+
+        await expect(page.getByText('Mission Debriefing')).toBeVisible();
+        await expect(page.getByText(MOCKMISSIONENTRY.description)).toBeVisible();
+    });
+
+    test('confirming delete returns to list view', async ({ page }) =>{
+        await page.goto(PATHS.MISSION_NEW);
+
+        const addObj = page.getByRole('button', { name: 'Add Objective' });
+        const listHeader = page.getByRole('heading', { name: 'SGC Mission Records', level: 1 });
+        
+        // add mission info
+        await page.getByLabel('Name').fill(MOCKMISSIONENTRY.name);
+        await page.getByLabel('Destination').fill(MOCKMISSIONENTRY.destination);
+        await page.getByLabel('Start Date').fill(MOCKMISSIONENTRY.start_date.slice(0, 16));
+
+        await page.getByLabel('Team 1').selectOption(SGTEST1.id);
+
+        for(const [i, obj] of missionObjectives.entries()){
+            await page.getByLabel(new RegExp(`Objective ${i+1}`)).fill(obj.objective);
+            if(i < missionObjectives.length - 1) await addObj.click();
+        }
+
+        // Save
+        await page.getByRole('button', { name: 'Save' }).click();
+        await expect(listHeader).toBeVisible();
+        await page.getByRole('link', { name: newLink }).click();
+
+        // Delete
+        page.on('dialog', dialog => dialog.accept());
+        await page.getByRole('button', { name: 'Delete' }).click();
+
+        await expect(page).toHaveURL(PATHS.MISSION_LIST);
+        await expect(listHeader).toBeVisible();
+        await expect(page.getByRole('link', { name: newLink })).not.toBeVisible();
+    });
+
+    test('cancelling delete stays on detail page', async ({ page }) =>{
+        await page.goto(PATHS.MISSION_NEW);
+
+        const addObj = page.getByRole('button', { name: 'Add Objective' });
+        const listHeader = page.getByRole('heading', { name: 'SGC Mission Records', level: 1 });
+        
+        // add mission info
+        await page.getByLabel('Name').fill(MOCKMISSIONENTRY.name);
+        await page.getByLabel('Destination').fill(MOCKMISSIONENTRY.destination);
+        await page.getByLabel('Start Date').fill(MOCKMISSIONENTRY.start_date.slice(0, 16));
+
+        await page.getByLabel('Team 1').selectOption(SGTEST1.id);
+
+        for(const [i, obj] of missionObjectives.entries()){
+            await page.getByLabel(new RegExp(`Objective ${i+1}`)).fill(obj.objective);
+            if(i < missionObjectives.length - 1) await addObj.click();
+        }
+
+        // Save
+        await page.getByRole('button', { name: 'Save' }).click();
+        await expect(listHeader).toBeVisible();
+        await page.getByRole('link', { name: newLink }).click();
+
+        // Delete
+        page.on('dialog', dialog => dialog.dismiss());
+        await page.getByRole('button', { name: 'Delete' }).click();
+
+        await expect(page).not.toHaveURL(PATHS.MISSION_LIST);
+        await expect(listHeader).not.toBeVisible();
     });
 });
