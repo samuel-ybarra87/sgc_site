@@ -73,6 +73,7 @@ src/
     rankAbbreviations.ts  # Military rank lookup (Air Force specific)
     supabase.ts           # Supabase client
     types.ts              # Test Objects for mock database
+    utils.ts              # helper functions for pages and tests
   mocks/
     handlers.ts
     server.ts
@@ -110,7 +111,7 @@ src/
     TeamDetail.test.tsx
     TeamForm.test.tsx
     TeamList.test.tsx
-    testUtils.ts
+    testUtils.ts        # Additional handlers that return a body for tests
 ```
 
 ## Development Roadmap
@@ -132,7 +133,7 @@ src/
   - [x] Missions unit test suite
   - [x] Missions integration test suite
   - [x] Missions e2e test suite
-- [ ] Role-based access control (In Progress) 
+- [ ] Role-based access control (In Progress)
 - [ ] GitHub Pages deployment
 - Quality of Life Updates
   - Styling
