@@ -67,6 +67,9 @@ e2e/
   teams.spec.ts
   testUtils.ts            # Helper functions for E2E tests
 src/
+  components/
+    Navbar.tsx            # Global navigation bar
+    ProtectedRoutes.tsx   # Secures UI for authenticated users
   lib/
     mockData.ts           # Temp values for tests
     paths.ts              # paths and routes for easier management
@@ -101,6 +104,7 @@ src/
       TeamForm.integration.test.tsx
       TeamList.integration.test.tsx
     Homepage.test.tsx
+    LoginForm.tsx
     MissionDetail.test.tsx
     MissionForm.test.tsx
     MissionList.test.tsx
@@ -133,7 +137,7 @@ src/
   - [x] Missions unit test suite
   - [x] Missions integration test suite
   - [x] Missions e2e test suite
-- [ ] Role-based access control (In Progress) 
+- [ ] Role-based access control (In Progress)
 - [ ] GitHub Pages deployment
 - Quality of Life Updates
   - Styling
