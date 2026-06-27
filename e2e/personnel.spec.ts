@@ -8,9 +8,11 @@ import {
     extractName,
     fetchTestRoles,
     fetchTestTeams,
+    loginAs,
     seedTestPersonnel,
     seedTestRoles,
-    seedTestTeams
+    seedTestTeams,
+    SGC_USER
 } from './testUtils';
 
 dotenv.config();
@@ -94,8 +96,11 @@ test.describe('read and verify (Personnel)', async () => {
     });
 
     test('displays personnel list on personnel home page', async ({ page }) => {
+        //login
+        await loginAs(page, SGC_USER.email, SGC_USER.password);
+
         // Test navigation
-        await page.goto(PATHS.PERSONNEL_LIST);
+        await page.getByRole('link', { name: 'PERSONNEL LIST' }).click();
 
         // Read data
         const heading = page.getByText('SGC Personnel');
@@ -108,7 +113,8 @@ test.describe('read and verify (Personnel)', async () => {
     });
 
     test('navigates to personnel detail page from personnel home page', async({ page }) =>{
-        await page.goto(PATHS.PERSONNEL_LIST);
+        await loginAs(page, SGC_USER.email, SGC_USER.password);
+        await page.getByRole('link', { name: 'PERSONNEL LIST' }).click();
 
         await page.getByRole('link', { name: link }).click();
 
@@ -121,7 +127,7 @@ test.describe('read and verify (Personnel)', async () => {
         await expect(page.getByRole('button', { name: 'Edit' })).toBeVisible();
         await expect(page.getByRole('button', { name: 'Delete' })).toBeVisible();
 
-        await page.goto(PATHS.PERSONNEL_LIST);
+        await page.getByRole('button', { name: 'Back' }).click();
         await page.getByRole('link', { name: civilian_link }).click();
 
         await expect(page.getByRole('heading', { name: civilianName })).toBeVisible();

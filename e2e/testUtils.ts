@@ -2,6 +2,29 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { rankAbbreviations } from "../src/lib/rankAbbreviations"
 import { e2eTestTeams, e2eMockMissions, TEST_PERSONNEL_NAMES, TEST_ROLE_NAMES, TEST_TEAM_DESIGNATIONS, TEST_MISSIONS, TEST_OBJECTIVES } from "./mockData";
 import { Mission, MissionObjective, MissionTeamLink, Personnel, Role, Team, TeamPersonnelLink } from "./interface";
+import { Page } from "playwright/test";
+import { PATHS } from "../src/lib/paths";
+
+interface loginCredentials {
+  email: string;
+  password: string;
+}
+
+export const SGC_USER: loginCredentials = {
+  email: process.env.SGC_USER_EMAIL!,
+  password: process.env.SGC_USER_PASSWORD!
+}
+
+export const SGC_OFFICER: loginCredentials = {
+  email: process.env.SGC_OFFICER_EMAIL!,
+  password: process.env.SGC_OFFICER_PASSWORD!
+}
+
+export const SGC_ADMIN: loginCredentials = {
+  email: process.env.SGC_ADMIN_EMAIL!,
+  password: process.env.SGC_ADMIN_PASSWORD!
+}
+
 
 export function extractName(person: Personnel | undefined){
     if(!person) throw new Error('Personnel not found');
@@ -22,6 +45,29 @@ export function extractDate(timestamp: string | null){
     const [date, time] = timestamp.slice(0,16).split('T');
 
     return `${date} ${time}`;
+}
+
+export async function loginAs(page: Page, email: string, password: string){
+    await page.goto('/'); // go to login page
+
+    // fill login form
+    await page.fill('input[type="email"]', email);
+    await page.fill('input[type="password"]', password);
+    
+    // click login
+    await page.getByRole('button', { name: 'Log In' }).click();
+
+    await page.waitForURL(PATHS.HOME);
+
+    const storage = await page.context().storageState();
+
+    await page.context().addInitScript((storageState) => {
+        storageState.origins.forEach(origin => {
+            origin.localStorage.forEach(item => {
+                window.localStorage.setItem(item.name, item.value);
+            });
+        });
+    }, storage);
 }
 
 export async function deleteTestData(supabase: SupabaseClient){

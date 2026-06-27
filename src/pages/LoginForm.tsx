@@ -29,7 +29,7 @@ export default function LoginForm() {
       {errorMsg && <p style={{ color: 'red' }}>{errorMsg}</p>}
       <form onSubmit={handleLogin}>
         <div>
-          <label>Email Address</label>
+          <label htmlFor="email">Email Address</label>
           <input 
             type="email" 
             value={email} 
@@ -38,7 +38,7 @@ export default function LoginForm() {
           />
         </div>
         <div style={{ marginTop: '15px' }}>
-          <label>Password</label>
+          <label htmlFor="password">Password</label>
           <input 
             type="password" 
             value={password} 
