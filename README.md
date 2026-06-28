@@ -138,6 +138,7 @@ src/
   - [x] Missions integration test suite
   - [x] Missions e2e test suite
 - [ ] Role-based access control (In Progress) 
+  - [ ] Modify tests to check for user access control
 - [ ] GitHub Pages deployment
 - Quality of Life Updates
   - Styling
