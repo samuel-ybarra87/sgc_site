@@ -58,16 +58,6 @@ export async function loginAs(page: Page, email: string, password: string){
     await page.getByRole('button', { name: 'Log In' }).click();
 
     await page.waitForURL(PATHS.HOME);
-
-    const storage = await page.context().storageState();
-
-    await page.context().addInitScript((storageState) => {
-        storageState.origins.forEach(origin => {
-            origin.localStorage.forEach(item => {
-                window.localStorage.setItem(item.name, item.value);
-            });
-        });
-    }, storage);
 }
 
 export async function deleteTestData(supabase: SupabaseClient){

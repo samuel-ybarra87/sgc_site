@@ -8,9 +8,12 @@ import {
     extractName,
     fetchTestRoles,
     fetchTestTeams,
+    loginAs,
     seedTestPersonnel,
     seedTestRoles,
     seedTestTeams,
+    SGC_ADMIN,
+    SGC_USER,
     updateTeam
 } from './testUtils';
 import { Team } from './interface';
@@ -129,8 +132,11 @@ const link = e2eTestTeam1.designation;
 test.describe('read and verify (Teams)', async () => {
     
     test('displays team list on team home page', async ({ page }) => {
+        // login
+        await loginAs(page, SGC_USER.email, SGC_USER.password);
+
         // Test navigation
-        await page.goto(PATHS.TEAM_LIST);
+        await page.getByRole('link', { name: 'TEAM LIST'}).click();
 
         // Read data
         const heading = page.getByText('SGC Team List');
@@ -143,7 +149,8 @@ test.describe('read and verify (Teams)', async () => {
     });
 
     test('navigates to team detail page from team home page', async({ page }) =>{
-        await page.goto(PATHS.TEAM_LIST);
+        await loginAs(page, SGC_USER.email, SGC_USER.password);
+        await page.getByRole('link', { name: 'TEAM LIST'}).click();
 
         await page.getByRole('link', { name: link }).click();
 
@@ -164,7 +171,8 @@ test.describe('read and verify (Teams)', async () => {
     });
 
     test('back button returns to list view', async ({ page }) =>{
-        await page.goto(PATHS.TEAM_LIST);
+        await loginAs(page, SGC_USER.email, SGC_USER.password);
+        await page.getByRole('link', { name: 'TEAM LIST'}).click();
         
         await page.getByRole('link', { name: link }).click();
 
@@ -176,7 +184,8 @@ test.describe('read and verify (Teams)', async () => {
     });
 
     test('detail page shows correct record data', async({ page }) =>{
-        await page.goto(PATHS.TEAM_LIST);
+        await loginAs(page, SGC_USER.email, SGC_USER.password);
+        await page.getByRole('link', { name: 'TEAM LIST'}).click();
 
         await page.getByRole('link', { name: link }).click();
 
@@ -211,7 +220,8 @@ test.describe('read and verify (Teams)', async () => {
     });
 
     test('edit button navigates to form with pre-populated data', async ({ page }) =>{
-        await page.goto(PATHS.TEAM_LIST);
+        await loginAs(page, SGC_ADMIN.email, SGC_ADMIN.password);
+        await page.getByRole('link', { name: 'TEAM LIST'}).click();
 
         await page.getByRole('link', { name: link }).click();
 
@@ -223,7 +233,8 @@ test.describe('read and verify (Teams)', async () => {
     });
 
     test('cancel button on edit form returns to list view', async ({ page }) =>{
-        await page.goto(PATHS.TEAM_LIST);
+        await loginAs(page, SGC_ADMIN.email, SGC_ADMIN.password);
+        await page.getByRole('link', { name: 'TEAM LIST'}).click();
 
         await page.getByRole('link', { name: link }).click();
 
@@ -237,7 +248,8 @@ test.describe('read and verify (Teams)', async () => {
     });
 
     test('Add Team button navigates to empty form', async ({ page }) =>{
-        await page.goto(PATHS.TEAM_LIST);
+        await loginAs(page, SGC_ADMIN.email, SGC_ADMIN.password);
+        await page.getByRole('link', { name: 'TEAM LIST'}).click();
 
         await page.getByRole('button', { name: 'Add Team' }).click();
 
@@ -248,7 +260,8 @@ test.describe('read and verify (Teams)', async () => {
     });
 
     test('new form cancel button returns to list view', async ({ page }) =>{
-        await page.goto(PATHS.TEAM_LIST);
+        await loginAs(page, SGC_ADMIN.email, SGC_ADMIN.password);
+        await page.getByRole('link', { name: 'TEAM LIST'}).click();
 
         await page.getByRole('button', { name: 'Add Team' }).click();
 
@@ -278,7 +291,7 @@ test.describe('write then delete', async () =>{
     });
 
     test('saving a new record navigates to list view', async ({ page }) =>{
-        await page.goto(PATHS.HOME);
+        await loginAs(page, SGC_ADMIN.email, SGC_ADMIN.password);
         await page.getByRole('link', { name: 'TEAM LIST' }).click();
         await page.getByRole('button', { name: 'Add Team' }).click();
 
@@ -294,7 +307,9 @@ test.describe('write then delete', async () =>{
 
     test('saving an edited record navigates to list view', async ({ page }) =>{
         // Add test team to edit
-        await page.goto(PATHS.TEAM_NEW);
+        await loginAs(page, SGC_ADMIN.email, SGC_ADMIN.password);
+        await page.getByRole('link', { name: 'TEAM LIST' }).click();
+        await page.getByRole('button', { name: 'Add Team' }).click();
 
         await page.getByLabel('Designation').fill(SGC_MOCK_TEST);
         await page.getByLabel('Commanding Officer').selectOption(e2eTestTeam1.commanding_officer); // use real personnel UUID from mock data hydration
@@ -322,7 +337,9 @@ test.describe('write then delete', async () =>{
 
     test('confirming delete returns to list view', async ({ page }) =>{
         // Add test team to delete
-        await page.goto(PATHS.TEAM_NEW);
+        await loginAs(page, SGC_ADMIN.email, SGC_ADMIN.password);
+        await page.getByRole('link', { name: 'TEAM LIST' }).click();
+        await page.getByRole('button', { name: 'Add Team' }).click();
 
         await page.getByLabel('Designation').fill(SGC_MOCK_TEST);
         await page.getByLabel('Commanding Officer').selectOption(e2eTestTeam1.commanding_officer); // use real personnel UUID from mock data hydration
@@ -342,7 +359,9 @@ test.describe('write then delete', async () =>{
 
     test('cancelling delete stays on detail page', async ({ page }) =>{
         // Add test team
-        await page.goto(PATHS.TEAM_NEW);
+        await loginAs(page, SGC_ADMIN.email, SGC_ADMIN.password);
+        await page.getByRole('link', { name: 'TEAM LIST' }).click();
+        await page.getByRole('button', { name: 'Add Team' }).click();
 
         await page.getByLabel('Designation').fill(SGC_MOCK_TEST);
         await page.getByLabel('Commanding Officer').selectOption(e2eTestTeam1.commanding_officer); // use real personnel UUID from mock data hydration

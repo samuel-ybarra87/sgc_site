@@ -19,13 +19,16 @@ import {
     fetchTestObjectives,
     fetchTestRoles,
     fetchTestTeams,
+    loginAs,
     seedMissionTeamLinks,
     seedTeamPersonnelLinks,
     seedTestMissions,
     seedTestObjectives,
     seedTestPersonnel,
     seedTestRoles,
-    seedTestTeams
+    seedTestTeams,
+    SGC_ADMIN,
+    SGC_USER
 } from './testUtils';
 import { Mission, MissionObjective, MissionTeamLink, Personnel, Team, TeamPersonnelLink } from './interface';
 
@@ -262,8 +265,11 @@ test.afterAll(async () =>{
 
 test.describe('read and verify (Missions)', async () => {
     test('should show list on mission home page view', async ({ page }) => {
+        // login
+        await loginAs(page, SGC_USER.email, SGC_USER.password);
+
         // Test navigation
-        await page.goto(PATHS.MISSION_LIST);
+        await page.getByRole('link', { name: 'MISSION LIST' }).click();
         
         // Read data
         const heading = page.getByRole('heading', { name: 'SGC Mission Records', level: 1 });
@@ -278,7 +284,8 @@ test.describe('read and verify (Missions)', async () => {
     });
 
     test('should navigate to detail page (completed mission)', async ({ page }) =>{
-        await page.goto(PATHS.MISSION_LIST);
+        await loginAs(page, SGC_USER.email, SGC_USER.password);
+        await page.getByRole('link', { name: 'MISSION LIST' }).click();
         await page.getByRole('link', { name: mockMissionLink1 }).click();
 
         await expect(page.getByRole('heading', { name: 'Mission Record', level: 1 })).toBeVisible();
@@ -319,7 +326,8 @@ test.describe('read and verify (Missions)', async () => {
     });
     
     test('should navigate to detail page (active mission)', async ({ page }) =>{
-        await page.goto(PATHS.MISSION_LIST);
+        await loginAs(page, SGC_USER.email, SGC_USER.password);
+        await page.getByRole('link', { name: 'MISSION LIST' }).click();
         await page.getByRole('link', { name: mockMissionLink2 }).click();
 
         await expect(page.getByRole('heading', { name: 'Mission Record', level: 1 })).toBeVisible();
@@ -359,7 +367,8 @@ test.describe('read and verify (Missions)', async () => {
     });
 
     test('back button returns to list view', async ({ page }) =>{
-        await page.goto(PATHS.MISSION_LIST);
+        await loginAs(page, SGC_USER.email, SGC_USER.password);
+        await page.getByRole('link', { name: 'MISSION LIST' }).click();
         
         await page.getByRole('link', { name: mockMissionLink2 }).click();
 
@@ -373,7 +382,8 @@ test.describe('read and verify (Missions)', async () => {
     });
 
     test('edit button navigates to form with pre-populated data', async ({ page }) =>{
-        await page.goto(PATHS.MISSION_LIST);
+        await loginAs(page, SGC_ADMIN.email, SGC_ADMIN.password);
+        await page.getByRole('link', { name: 'MISSION LIST' }).click();
         
         await page.getByRole('link', { name: mockMissionLink1 }).click();
 
@@ -408,7 +418,8 @@ test.describe('read and verify (Missions)', async () => {
     });
 
     test('cancel button on edit form returns to list view', async ({ page }) =>{
-        await page.goto(PATHS.MISSION_LIST);
+        await loginAs(page, SGC_ADMIN.email, SGC_ADMIN.password);
+        await page.getByRole('link', { name: 'MISSION LIST' }).click();
         
         await page.getByRole('link', { name: mockMissionLink1 }).click();
 
@@ -426,7 +437,8 @@ test.describe('read and verify (Missions)', async () => {
     });
 
     test('Add Personnel button navigates to empty form', async ({ page }) =>{
-        await page.goto(PATHS.MISSION_LIST);
+        await loginAs(page, SGC_ADMIN.email, SGC_ADMIN.password);
+        await page.getByRole('link', { name: 'MISSION LIST' }).click();
 
         await page.getByRole('button', { name: 'Add Mission Record' }).click();
 
@@ -449,7 +461,8 @@ test.describe('read and verify (Missions)', async () => {
     });
 
     test('new form cancel button returns to list view', async ({ page }) =>{
-        await page.goto(PATHS.MISSION_LIST);
+        await loginAs(page, SGC_ADMIN.email, SGC_ADMIN.password);
+        await page.getByRole('link', { name: 'MISSION LIST' }).click();
 
         await page.getByRole('button', { name: 'Add Mission Record' }).click();
 
@@ -504,7 +517,8 @@ test.describe('write then delete', async () =>{
     });
 
     test('saving a new record navigates to list view', async ({ page }) =>{
-        await page.goto(PATHS.MISSION_LIST);
+        await loginAs(page, SGC_ADMIN.email, SGC_ADMIN.password);
+        await page.getByRole('link', { name: 'MISSION LIST' }).click();
         await expect(page.getByRole('link', { name: newLink })).not.toBeVisible();
         await page.getByRole('button', { name: 'Add Mission Record' }).click();
 
@@ -586,7 +600,9 @@ test.describe('write then delete', async () =>{
     });
 
     test('saving an edited record navigates to list view', async ({ page }) =>{
-        await page.goto(PATHS.MISSION_NEW);
+        await loginAs(page, SGC_ADMIN.email, SGC_ADMIN.password);
+        await page.getByRole('link', { name: 'MISSION LIST' }).click();
+        await page.getByRole('button', { name: 'Add Mission Record' }).click();
 
         const addTeam = page.getByRole('button', { name: 'Add Team' });
         const addObj = page.getByRole('button', { name: 'Add Objective' });
@@ -666,7 +682,9 @@ test.describe('write then delete', async () =>{
     });
 
     test('confirming delete returns to list view', async ({ page }) =>{
-        await page.goto(PATHS.MISSION_NEW);
+        await loginAs(page, SGC_ADMIN.email, SGC_ADMIN.password);
+        await page.getByRole('link', { name: 'MISSION LIST' }).click();
+        await page.getByRole('button', { name: 'Add Mission Record' }).click();
 
         const addObj = page.getByRole('button', { name: 'Add Objective' });
         const listHeader = page.getByRole('heading', { name: 'SGC Mission Records', level: 1 });
@@ -698,7 +716,9 @@ test.describe('write then delete', async () =>{
     });
 
     test('cancelling delete stays on detail page', async ({ page }) =>{
-        await page.goto(PATHS.MISSION_NEW);
+        await loginAs(page, SGC_ADMIN.email, SGC_ADMIN.password);
+        await page.getByRole('link', { name: 'MISSION LIST' }).click();
+        await page.getByRole('button', { name: 'Add Mission Record' }).click();
 
         const addObj = page.getByRole('button', { name: 'Add Objective' });
         const listHeader = page.getByRole('heading', { name: 'SGC Mission Records', level: 1 });
