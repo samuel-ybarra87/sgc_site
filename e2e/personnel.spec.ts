@@ -12,6 +12,8 @@ import {
     seedTestPersonnel,
     seedTestRoles,
     seedTestTeams,
+    SGC_ADMIN,
+    SGC_OFFICER,
     SGC_USER
 } from './testUtils';
 
@@ -141,7 +143,8 @@ test.describe('read and verify (Personnel)', async () => {
     });
 
     test('back button returns to list view', async ({ page }) =>{
-        await page.goto(PATHS.PERSONNEL_LIST);
+        await loginAs(page, SGC_USER.email, SGC_USER.password);
+        await page.getByRole('link', { name: 'PERSONNEL LIST' }).click();
         
         await page.getByRole('link', { name: link }).click();
 
@@ -153,7 +156,8 @@ test.describe('read and verify (Personnel)', async () => {
     });
 
     test('detail page shows correct record data', async ({ page }) =>{
-        await page.goto(PATHS.PERSONNEL_LIST);
+        await loginAs(page, SGC_USER.email, SGC_USER.password);
+        await page.getByRole('link', { name: 'PERSONNEL LIST' }).click();
 
         await page.getByRole('link', { name: link}).click();
         
@@ -185,7 +189,8 @@ test.describe('read and verify (Personnel)', async () => {
     });
 
     test('edit button navigates to form with pre-populated data', async ({ page }) =>{
-        await page.goto(PATHS.PERSONNEL_LIST);
+        await loginAs(page, SGC_ADMIN.email, SGC_ADMIN.password);
+        await page.getByRole('link', { name: 'PERSONNEL LIST' }).click();
         
         await page.getByRole('link', { name: link }).click();
 
@@ -205,7 +210,8 @@ test.describe('read and verify (Personnel)', async () => {
     });
 
     test('cancel button on edit form returns to list view', async ({ page }) =>{
-        await page.goto(PATHS.PERSONNEL_LIST);
+        await loginAs(page, SGC_ADMIN.email, SGC_ADMIN.password);
+        await page.getByRole('link', { name: 'PERSONNEL LIST' }).click();
         
         await page.getByRole('link', { name: link }).click();
 
@@ -218,8 +224,8 @@ test.describe('read and verify (Personnel)', async () => {
         await expect(page.getByText(link)).toBeVisible();
     });
 
-    test('Add Personnel button navigates to empty form', async ({ page }) =>{  
-        await page.goto(PATHS.HOME);
+    test('Add Personnel button navigates to empty form', async ({ page }) =>{ 
+        await loginAs(page, SGC_ADMIN.email, SGC_ADMIN.password);
         await page.getByRole('link', { name: 'PERSONNEL LIST' }).click();
         await page.getByRole('button', { name: 'Add Personnel' }).click();
 
@@ -239,7 +245,8 @@ test.describe('read and verify (Personnel)', async () => {
     });
 
     test('new form cancel button returns to list view', async ({ page }) =>{
-        await page.goto(PATHS.PERSONNEL_LIST);
+        await loginAs(page, SGC_ADMIN.email, SGC_ADMIN.password);
+        await page.getByRole('link', { name: 'PERSONNEL LIST' }).click();
 
         await page.getByRole('button', { name: 'Add Personnel' }).click();
 
@@ -292,8 +299,8 @@ test.describe('write then delete', async () =>{
             .eq('last_name', e2eTestMilitary.last_name);
     });
 
-    test('saving a new record navigates to list view', async ({ page }) =>{    
-        await page.goto(PATHS.HOME);
+    test('saving a new record navigates to list view', async ({ page }) =>{ 
+        await loginAs(page, SGC_ADMIN.email, SGC_ADMIN.password);
         await page.getByRole('link', { name: 'PERSONNEL LIST' }).click();
         await page.getByRole('button', { name: 'Add Personnel' }).click();
 
@@ -317,8 +324,10 @@ test.describe('write then delete', async () =>{
         await expect(page.getByText(link)).toBeVisible();
     });
 
-    test('saving an edited record navigates to list view', async ({ page }) =>{     
-        await page.goto(PATHS.PERSONNEL_NEW);
+    test('saving an edited record navigates to list view', async ({ page }) =>{
+        await loginAs(page, SGC_ADMIN.email, SGC_ADMIN.password);
+        await page.getByRole('link', { name: 'PERSONNEL LIST' }).click();
+        await page.getByRole('button', { name: 'Add Personnel' }).click();
 
         // Select Options
         await page.getByLabel('Prefix').selectOption(e2eTestMilitary.prefix ?? '');
@@ -353,8 +362,10 @@ test.describe('write then delete', async () =>{
         await expect(page.getByText(new RegExp(/Status: kia/))).toBeVisible();
     });
 
-    test('confirming delete returns to list view', async ({ page }) =>{        
-        await page.goto(PATHS.PERSONNEL_NEW);
+    test('confirming delete returns to list view', async ({ page }) =>{
+        await loginAs(page, SGC_ADMIN.email, SGC_ADMIN.password);
+        await page.getByRole('link', { name: 'PERSONNEL LIST' }).click();
+        await page.getByRole('button', { name: 'Add Personnel' }).click();
 
         // Select Options
         await page.getByLabel('Prefix').selectOption(e2eTestMilitary.prefix ?? '');
@@ -382,8 +393,10 @@ test.describe('write then delete', async () =>{
         await expect(page.getByText(link)).not.toBeVisible();
     });
 
-    test('cancelling delete stays on detail page', async ({ page }) =>{     
-        await page.goto(PATHS.PERSONNEL_NEW);
+    test('cancelling delete stays on detail page', async ({ page }) =>{
+        await loginAs(page, SGC_ADMIN.email, SGC_ADMIN.password);
+        await page.getByRole('link', { name: 'PERSONNEL LIST' }).click();
+        await page.getByRole('button', { name: 'Add Personnel' }).click();
 
         // Select Options
         await page.getByLabel('Prefix').selectOption(e2eTestMilitary.prefix ?? '');
