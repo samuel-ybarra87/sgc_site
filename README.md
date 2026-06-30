@@ -137,8 +137,13 @@ src/
   - [x] Missions unit test suite
   - [x] Missions integration test suite
   - [x] Missions e2e test suite
-- [ ] Role-based access control (In Progress) 
-  - [ ] Modify tests to check for user access control
+- [x] Role-based access control
+  - [ ] Modify tests to check for user access control (In Progress) 
+  - [ ] Create Unit/Integration tests
+  - [ ] Create API tests
+    - [ ] Personnel
+    - [ ] Teams
+    - [ ] Missions
 - [ ] GitHub Pages deployment
 - Quality of Life Updates
   - Styling
