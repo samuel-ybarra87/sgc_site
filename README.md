@@ -62,6 +62,7 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 e2e/
   interface.ts            # Test Objects for mock entries
+  mission.spec.ts
   mockData.ts             # Temp values for E2E tests
   personnel.spec.ts
   teams.spec.ts
@@ -82,6 +83,7 @@ src/
     server.ts
   pages/
     Homepage.tsx
+    LoginForm.tsx
     MissionDetail.tsx
     MissionForm.tsx
     MissionList.tsx
@@ -104,7 +106,6 @@ src/
       TeamForm.integration.test.tsx
       TeamList.integration.test.tsx
     Homepage.test.tsx
-    LoginForm.tsx
     MissionDetail.test.tsx
     MissionForm.test.tsx
     MissionList.test.tsx
