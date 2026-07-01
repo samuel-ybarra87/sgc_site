@@ -25,16 +25,16 @@ export default function Navbar({ userEmail }: NavbarProps) {
       color: '#ecf0f1',
       borderBottom: '2px solid #34495e'
     }}>
-      <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+      <div style={{ display: 'flex', margin: '0 0 auto', alignItems: 'center', maxWidth: '350px' }}>
         <Link to="/" style={{ color: '#fff', textDecoration: 'none', fontWeight: 'bold' }}>
-          🌌 SGC DATABASE
+          SGC DATABASE
         </Link>
         <Link to={PATHS.PERSONNEL_LIST} style={{ color: '#bdc3c7', textDecoration: 'none' }}>Personnel</Link>
         <Link to={PATHS.TEAM_LIST} style={{ color: '#bdc3c7', textDecoration: 'none' }}>Teams</Link>
         <Link to={PATHS.MISSION_LIST} style={{ color: '#bdc3c7', textDecoration: 'none' }}>Missions</Link>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+      <div style={{ display: 'flex', margin: '0 0 0 auto', alignItems: 'center', gap: '5px' }}>
         {userEmail && <span style={{ fontSize: '0.9rem', color: '#95a5a6' }}>{userEmail}</span>}
         <button 
           onClick={handleLogout}
