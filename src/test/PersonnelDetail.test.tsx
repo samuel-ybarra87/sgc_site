@@ -16,7 +16,7 @@ vi.mock('../lib/supabase', () => ({
   },
 }));
 
-vi.mock('../../components/AuthContext.tsx', () => ({
+vi.mock('../components/AuthContext.tsx', () => ({
     useAuth: () => ({
         session: { user: { id: 'mock-admin-id' } },
         error: null,

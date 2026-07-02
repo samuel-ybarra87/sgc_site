@@ -16,6 +16,15 @@ vi.mock('../lib/supabase', () => ({
   },
 }));
 
+vi.mock('../components/AuthContext.tsx', () => ({
+    useAuth: () => ({
+        session: { user: { id: 'mock-admin-id' } },
+        error: null,
+        role: 'admin',
+        loading: false,
+    }),
+}));
+
 const user = userEvent.setup();
 const { objectives: abydosObjectives, teams: abydosTeams, id: abydosID, ...abydos } = mockMissions[0];
 const { objectives: missionObjectives, teams: missionTeams, id: missionID, ...mission } = mockMissions[1];
