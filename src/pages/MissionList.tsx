@@ -3,8 +3,10 @@ import { supabase } from '../lib/supabase';
 import { Link, useNavigate } from 'react-router-dom';
 import type { Mission } from '../lib/types';
 import { PATHS } from '../lib/paths';
+import { useAuth } from '../components/AuthContext';
 
 export default function missionsList() {
+    const { role } = useAuth();
     const [missions, setMissions] = useState<Mission[]>([]);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
@@ -34,7 +36,7 @@ export default function missionsList() {
         <div>
         <h1>SGC Mission Records</h1>
         <button onClick={() => navigate(PATHS.HOME)}>Home</button>
-        <button onClick={() => navigate(PATHS.MISSION_NEW)}>Add Mission Record</button>
+        {(role === 'admin') && (<button onClick={() => navigate(PATHS.MISSION_NEW)}>Add Mission Record</button>)}
         {missions.length === 0 ? (
             <p>No mission records found.</p>
         ) : (

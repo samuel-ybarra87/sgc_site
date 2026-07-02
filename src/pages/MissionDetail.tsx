@@ -4,8 +4,10 @@ import { supabase } from '../lib/supabase';
 import { type TeamPersonnelLink, type Mission, type Personnel } from '../lib/types';
 import { PATHS } from '../lib/paths';
 import { extractDate, extractName } from '../lib/utils';
+import { useAuth } from '../components/AuthContext';
 
 export default function MissionDetail(){
+    const { role } = useAuth();
     const user = { authorized: true };
     const { id } = useParams();
     const navigate = useNavigate();
@@ -202,8 +204,8 @@ export default function MissionDetail(){
             <div className="form-actions">
                 <div className='submit-buttons'>
                     <button onClick={() => navigate(PATHS.MISSION_LIST)}>Back</button>
-                    <button onClick={() => navigate(PATHS.MISSION_EDIT(mission.id))}>Edit</button>
-                    <button onClick={handleDelete}>Delete</button>
+                    {(role === 'officer' || role === 'admin') && (<button onClick={() => navigate(PATHS.MISSION_EDIT(mission.id))}>Edit</button>)}
+                    {(role === 'admin') && (<button onClick={handleDelete}>Delete</button>)}
                 </div>
             </div>
         </div>

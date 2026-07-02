@@ -3,8 +3,10 @@ import { supabase } from '../lib/supabase';
 import { Link, useNavigate } from 'react-router-dom';
 import type { Team } from '../lib/types';
 import { PATHS } from '../lib/paths';
+import { useAuth } from '../components/AuthContext';
 
 export default function TeamsList() {
+    const { role } = useAuth();
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -34,7 +36,7 @@ export default function TeamsList() {
     <div>
       <h1>SGC Team List</h1>
       <button onClick={() => navigate(PATHS.HOME)}>Home</button>
-      <button onClick={() => navigate(PATHS.TEAM_NEW)}>Add Team</button>
+      {(role === 'admin') && (<button onClick={() => navigate(PATHS.TEAM_NEW)}>Add Team</button>)}
       {teams.length === 0 ? (
         <p>No team records found.</p>
       ) : (

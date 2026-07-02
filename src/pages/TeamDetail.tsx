@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { PATHS } from '../lib/paths';
 import type { Personnel, Team } from '../lib/types';
+import { useAuth } from '../components/AuthContext';
 
 interface TeamInfo extends Team {
   commanding_officer_details: Personnel | null;
@@ -10,6 +11,7 @@ interface TeamInfo extends Team {
 }
 
 export default function TeamDetail() {
+  const { role } = useAuth();
   const { id } = useParams();
   const navigate = useNavigate();
   const [team, setTeams] = useState<TeamInfo | null>(null);
@@ -141,8 +143,8 @@ export default function TeamDetail() {
         </div>
       ) : ''}
       <button onClick={() => navigate(PATHS.TEAM_LIST)}>Back</button>
-      <button onClick={() => navigate(PATHS.TEAM_EDIT(team.id))}>Edit</button>
-      <button onClick={handleDelete}>Delete</button>
+      {(role === 'officer' || role === 'admin') && (<button onClick={() => navigate(PATHS.TEAM_EDIT(team.id))}>Edit</button>)}
+      {(role === 'admin') && (<button onClick={handleDelete}>Delete</button>)}
     </div>
   );
 }
