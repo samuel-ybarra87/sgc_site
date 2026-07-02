@@ -16,6 +16,15 @@ vi.mock('../lib/supabase', () => ({
   },
 }));
 
+vi.mock('../../components/AuthContext.tsx', () => ({
+    useAuth: () => ({
+        session: { user: { id: 'mock-admin-id' } },
+        error: null,
+        role: 'admin',
+        loading: false,
+    }),
+}));
+
 describe('PersonnelDetail', () => {
     it('displays a message when no record is found', async () => {
         vi.mocked(supabase.from).mockReturnValueOnce({

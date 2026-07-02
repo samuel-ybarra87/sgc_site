@@ -14,6 +14,15 @@ import { PERSONNEL, TEAM_PERSONNEL } from '../../lib/utils';
 
 const user = userEvent.setup();
 
+vi.mock('../../components/AuthContext.tsx', () => ({
+    useAuth: () => ({
+        session: { user: { id: 'mock-admin-id' } },
+        error: null,
+        role: 'admin',
+        loading: false,
+    }),
+}));
+
 describe('PersonnelForm (integration)', () => {
     it('navigates to add form and show empty fields for new entries', async () =>{
         render(

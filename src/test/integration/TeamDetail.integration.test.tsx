@@ -12,6 +12,15 @@ import TeamDetail from '../../pages/TeamDetail';
 
 const user = userEvent.setup();
 
+vi.mock('../../components/AuthContext.tsx', () => ({
+    useAuth: () => ({
+        session: { user: { id: 'mock-admin-id' } },
+        error: null,
+        role: 'admin',
+        loading: false,
+    }),
+}));
+
 // Clear overrides from server.use()
 afterEach(() => {
     server.resetHandlers(); 

@@ -14,6 +14,15 @@ import { PERSONNEL } from '../../lib/utils';
 
 const user = userEvent.setup();
 
+vi.mock('../../components/AuthContext.tsx', () => ({
+    useAuth: () => ({
+        session: { user: { id: 'mock-admin-id' } },
+        error: null,
+        role: 'admin',
+        loading: false,
+    }),
+}));
+
 describe('PersonnelDetail (integration)', () => {
     it('fetches and displays detailed military personnel record from the API', async () =>{
         render(

@@ -17,6 +17,15 @@ const { objectives: abydosObjectives, teams: abydosTeams, id: abydosID, ...abydo
 const { objectives: missionObjectives, teams: missionTeams, id: missionID, ...mission } = mockMissions[1];
 abydosTeams.sort((a,b)=>a.designation.localeCompare(b.designation));
 
+vi.mock('../../components/AuthContext.tsx', () => ({
+    useAuth: () => ({
+        session: { user: { id: 'mock-admin-id' } },
+        error: null,
+        role: 'admin',
+        loading: false,
+    }),
+}));
+
 describe('MissionDetail (integration)', () => {
     it('fetches and displays detailed completed mission record from the API', async () =>{
         render(

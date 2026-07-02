@@ -16,6 +16,15 @@ const user = userEvent.setup();
 const abydos = mockMissions[0];
 const { objectives, teams, id: mockMissionID, ...mockMission } = mockMissionData;
 
+vi.mock('../../components/AuthContext.tsx', () => ({
+    useAuth: () => ({
+        session: { user: { id: 'mock-admin-id' } },
+        error: null,
+        role: 'admin',
+        loading: false,
+    }),
+}));
+
 // Clear overrides from server.use()
 afterEach(() => {
     server.resetHandlers(); 

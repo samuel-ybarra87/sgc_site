@@ -12,6 +12,15 @@ import { PATHS, ROUTES } from '../../lib/paths';
 
 const user = userEvent.setup();
 
+vi.mock('../../components/AuthContext.tsx', () => ({
+    useAuth: () => ({
+        session: { user: { id: 'mock-admin-id' } },
+        error: null,
+        role: 'admin',
+        loading: false,
+    }),
+}));
+
 describe('PersonnelList (integration)', () => {
     it('fetches and displays personnel records from the API', async () =>{
         render(

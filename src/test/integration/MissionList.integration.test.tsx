@@ -14,6 +14,15 @@ import { mockMissions } from '../../lib/mockData';
 const user = userEvent.setup();
 const abydos = mockMissions[0];
 
+vi.mock('../../components/AuthContext.tsx', () => ({
+    useAuth: () => ({
+        session: { user: { id: 'mock-admin-id' } },
+        error: null,
+        role: 'admin',
+        loading: false,
+    }),
+}));
+
 describe('MissionList', () => {
     it('displays a message when no records are found', async () => {
         server.use(
