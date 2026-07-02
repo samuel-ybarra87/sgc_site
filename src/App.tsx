@@ -17,26 +17,17 @@ import { PATHS, ROUTES } from './lib/paths';
 import './App.css';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
+import { useAuth } from './components/AuthContext';
 
 function App() {
-  const [session, setSession] = useState<Session | null>(null);
+  const { session, loading: contextLoading } = useAuth();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for an active session on load
-    supabase.auth.getSession().then(({ data: { session } }) =>{
-      setSession(session);
+    if(!contextLoading){
       setLoading(false);
-    });
-
-    // Listen for changes (login, logout, token refresh)
-    const { data: { subscription } } = supabase
-      .auth.onAuthStateChange((_event, session) => {
-        setSession(session);
-      });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    }
+  }, [contextLoading]);
 
   if(loading) return <div>Accessing SGC Database...</div>
 
