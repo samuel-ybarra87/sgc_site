@@ -1,7 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { supabase } from './lib/supabase';
-import type { Session } from '@supabase/supabase-js';
 import LoginForm from './pages/LoginForm';
 import Homepage from './pages/Homepage'
 import PersonnelList from './pages/PersonnelList';
@@ -20,15 +18,28 @@ import Navbar from './components/Navbar';
 import { useAuth } from './components/AuthContext';
 
 function App() {
-  const { session, loading: contextLoading } = useAuth();
+  const {
+    session,
+    error: contextError,
+    loading: contextLoading
+  } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<any>(null);
 
   useEffect(() => {
-    if(!contextLoading){
-      setLoading(false);
+    if(contextError){
+      setError(contextError)
+      return;
     }
-  }, [contextLoading]);
+    if(!contextLoading) setLoading(false);
+  }, [contextLoading, contextError]);
 
+  if(error) return (
+    <div>
+      Accessing SGC Database...
+      {error.message}
+    </div>
+  );
   if(loading) return <div>Accessing SGC Database...</div>
 
   return (

@@ -3,8 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import type { Personnel } from '../lib/types';
 import { PATHS } from '../lib/paths';
+import { useAuth } from '../components/AuthContext';
 
 export default function PersonnelDetail() {
+  const { role } = useAuth();
   const { id } = useParams();
   const navigate = useNavigate();
   const [person, setPerson] = useState<Personnel | null>(null);
@@ -76,8 +78,8 @@ export default function PersonnelDetail() {
       <div className="form-actions">
         <div className='submit-buttons'>
           <button onClick={() => navigate(PATHS.PERSONNEL_LIST)}>Back</button>
-          <button onClick={() => navigate(PATHS.PERSONNEL_EDIT(person.id))}>Edit</button>
-          <button onClick={handleDelete}>Delete</button>
+          {(role === 'officer' || role === 'admin') && (<button onClick={() => navigate(PATHS.PERSONNEL_EDIT(person.id))}>Edit</button>)}
+          {(role === 'admin') && (<button onClick={handleDelete}>Delete</button>)}
         </div>
       </div>
     </div>

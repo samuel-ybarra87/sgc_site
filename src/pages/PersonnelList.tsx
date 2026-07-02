@@ -4,8 +4,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { rankAbbreviations } from '../lib/rankAbbreviations';
 import type { Personnel } from '../lib/types';
 import { PATHS } from '../lib/paths';
+import { useAuth } from '../components/AuthContext';
 
 export default function PersonnelList() {
+  const { role } = useAuth();
   const [personnel, setPersonnel] = useState<Personnel[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -35,7 +37,7 @@ export default function PersonnelList() {
     <div>
       <h1>SGC Personnel</h1>
       <button onClick={() => navigate(PATHS.HOME)}>Home</button>
-      <button onClick={() => navigate(PATHS.PERSONNEL_NEW)}>Add Personnel</button>
+      {(role === 'admin') && (<button onClick={() => navigate(PATHS.PERSONNEL_NEW)}>Add Personnel</button>)}
       {personnel.length === 0 ? (
         <p>No personnel records found.</p>
       ) : (
