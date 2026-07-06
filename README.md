@@ -8,7 +8,7 @@ The in-universe premise: NORAD has contracted a developer to digitize the SGC's 
 
 - **Frontend:** React, TypeScript, Vite
 - **Backend/Data:** Supabase (PostgreSQL, auth/db/api)
-- **Testing:** Vitest, React Testing Library, userEvent
+- **Testing:** Vitest, React Testing Library, userEvent, Playwright (End to End)
 - **CI/CD:** GitHub Actions
 
 ## Features
@@ -22,6 +22,8 @@ The in-universe premise: NORAD has contracted a developer to digitize the SGC's 
   - Teams (commanding_officer)
   - Missions (status)
 - Comprehensive unit test suite with mocked Supabase client
+- Comprehensive integration test suite with MSW.
+- Comprehensive end-to-end test suite with Playwright.
 - Automated CI pipeline on push to main, staging, and dev branches
 
 ## Getting Started
@@ -46,6 +48,13 @@ Create a `.env` file in the project root:
 ```
 VITE_SUPABASE_URL=your_supabase_project_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_SUPABASE_VITE_SUPABASE_SERVICE_KEY=your_supabase_service_key
+SGC_USER_EMAIL=your_test_user_email
+SGC_USER_PASSWORD=your_test_user_password
+SGC_OFFICER_EMAIL=your_test_officer_email
+SGC_OFFICER_PASSWORD=your_test_officer_password
+SGC_ADMIN_EMAIL=your_test_admin_email
+SGC_ADMIN_PASSWORD=your_test_admin_password
 ```
 
 ### Running Locally
