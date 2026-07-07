@@ -31,6 +31,7 @@ export default function LoginForm() {
         <div>
           <label htmlFor="email">Email Address</label>
           <input 
+            id='email'
             type="email" 
             value={email} 
             onChange={(e) => setEmail(e.target.value)} 
@@ -40,6 +41,7 @@ export default function LoginForm() {
         <div style={{ marginTop: '15px' }}>
           <label htmlFor="password">Password</label>
           <input 
+            id='password'
             type="password" 
             value={password} 
             onChange={(e) => setPassword(e.target.value)} 
