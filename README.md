@@ -71,6 +71,7 @@ SGC_ADMIN_PASSWORD=your_test_admin_password
 ```
 e2e/
   interface.ts            # Test Objects for mock entries
+  login.spec.ts
   mission.spec.ts
   mockData.ts             # Temp values for E2E tests
   personnel.spec.ts
@@ -115,6 +116,7 @@ src/
       TeamForm.integration.test.tsx
       TeamList.integration.test.tsx
     Homepage.test.tsx
+    LoginForm.test.tsx
     MissionDetail.test.tsx
     MissionForm.test.tsx
     MissionList.test.tsx
