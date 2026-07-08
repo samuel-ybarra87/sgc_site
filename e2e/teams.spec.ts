@@ -16,7 +16,7 @@ import {
     SGC_USER,
     updateTeam
 } from './testUtils';
-import { Team } from './interface';
+import type { Team } from './interface';
 
 dotenv.config();
 

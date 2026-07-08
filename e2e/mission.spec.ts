@@ -30,7 +30,7 @@ import {
     SGC_ADMIN,
     SGC_USER
 } from './testUtils';
-import { Mission, MissionObjective, MissionTeamLink, Personnel, Team, TeamPersonnelLink } from './interface';
+import type { Mission, MissionObjective, MissionTeamLink, Personnel, Team, TeamPersonnelLink } from './interface';
 
 interface SeededPersonnel extends Personnel {
     id: string;
@@ -50,12 +50,12 @@ interface SeededMission extends Mission {
     objectives: SeededObjectives[];
 }
 
-enum STATUS {
-    ACTIVE = 'active',
-    COMPLETE = 'complete',
-    FAILED = 'failed',
-    ABORTED = 'aborted'
-}
+const STATUS = {
+    ACTIVE: 'active',
+    COMPLETE: 'complete',
+    FAILED: 'failed',
+    ABORTED: 'aborted'
+} as const;
 
 dotenv.config();
 
