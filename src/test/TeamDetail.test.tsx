@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase';
 import userEvent from '@testing-library/user-event';
 import { mockTeamData } from '../lib/mockData';
 import { PATHS, ROUTES } from '../lib/paths';
+import { mockLoginAs, TEST_USERS } from '../lib/utils';
 
 const user = userEvent.setup();
 
@@ -16,14 +17,14 @@ vi.mock('../lib/supabase', () => ({
   },
 }));
 
-vi.mock('../components/AuthContext.tsx', () => ({
-    useAuth: () => ({
-        session: { user: { id: 'mock-admin-id' } },
-        error: null,
-        role: 'admin',
-        loading: false,
-    }),
+// Mock authentication
+vi.mock('../components/AuthContext', () => ({
+    useAuth: vi.fn(),
 }));
+
+beforeEach(() => {
+    vi.resetAllMocks();
+});
 
 describe('TeamDetail', () => {
     it('displays a message when no record is found', async () => {
@@ -37,6 +38,8 @@ describe('TeamDetail', () => {
               }),
             }),
         } as any);
+
+        mockLoginAs(TEST_USERS.USER);
 
         render(
           <MemoryRouter initialEntries={[PATHS.TEAM_DETAIL(mockTeamData[0].id)]}>
@@ -62,6 +65,8 @@ describe('TeamDetail', () => {
         }),
       } as any);
 
+      mockLoginAs(TEST_USERS.USER);
+
       render(
         <MemoryRouter initialEntries={[PATHS.TEAM_DETAIL(mockTeamData[0].id)]}>
           <Routes>
@@ -82,6 +87,8 @@ describe('TeamDetail', () => {
           }),
         }),
       } as any);
+
+      mockLoginAs(TEST_USERS.USER);
 
       render(
         <MemoryRouter initialEntries={[PATHS.TEAM_DETAIL(mockTeamData[0].id)]}>
@@ -114,6 +121,8 @@ describe('TeamDetail', () => {
         }),
       } as any);
 
+      mockLoginAs(TEST_USERS.USER);
+
       render(
         <MemoryRouter initialEntries={[PATHS.TEAM_DETAIL(mockTeamData[1].id)]}>
           <Routes>
@@ -145,6 +154,8 @@ describe('TeamDetail', () => {
         }),
       } as any);
 
+      mockLoginAs(TEST_USERS.USER);
+
       render(
         <MemoryRouter initialEntries={[PATHS.TEAM_DETAIL(mockTeamData[2].id)]}>
           <Routes>
@@ -163,7 +174,154 @@ describe('TeamDetail', () => {
       expect(await screen.queryByText('Status: inactive')).not.toBeInTheDocument();
       expect(await screen.queryByText('Other Members')).not.toBeInTheDocument();
     });
+    
+    it('should show edit button for admins', async () =>{
+      vi.mocked(supabase.from).mockReturnValueOnce({
+        select: vi.fn().mockReturnValueOnce({
+          eq: vi.fn().mockReturnValueOnce({
+            single: vi.fn().mockResolvedValueOnce({ data: mockTeamData[0], error: null }),
+          }),
+        }),
+      } as any);
 
+      mockLoginAs(TEST_USERS.ADMIN);
+
+      render(
+        <MemoryRouter initialEntries={[PATHS.TEAM_DETAIL(mockTeamData[0].id)]}>
+          <Routes>
+            <Route path={ROUTES.TEAM_DETAIL} element={<TeamDetail />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await screen.findByText(/Current Members/);
+
+      expect(await screen.findByRole('button', { name: 'Edit' }));
+    });
+
+    it('should show edit button for officers', async () =>{
+      vi.mocked(supabase.from).mockReturnValueOnce({
+        select: vi.fn().mockReturnValueOnce({
+          eq: vi.fn().mockReturnValueOnce({
+            single: vi.fn().mockResolvedValueOnce({ data: mockTeamData[0], error: null }),
+          }),
+        }),
+      } as any);
+
+      mockLoginAs(TEST_USERS.OFFICER);
+
+      render(
+        <MemoryRouter initialEntries={[PATHS.TEAM_DETAIL(mockTeamData[0].id)]}>
+          <Routes>
+            <Route path={ROUTES.TEAM_DETAIL} element={<TeamDetail />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await screen.findByText(/Current Members/);
+
+      expect(await screen.findByRole('button', { name: 'Edit' }));
+    });
+
+    it('should hide edit button for standar users', async () =>{
+      vi.mocked(supabase.from).mockReturnValueOnce({
+        select: vi.fn().mockReturnValueOnce({
+          eq: vi.fn().mockReturnValueOnce({
+            single: vi.fn().mockResolvedValueOnce({ data: mockTeamData[0], error: null }),
+          }),
+        }),
+      } as any);
+
+      mockLoginAs(TEST_USERS.USER);
+
+      render(
+        <MemoryRouter initialEntries={[PATHS.TEAM_DETAIL(mockTeamData[0].id)]}>
+          <Routes>
+            <Route path={ROUTES.TEAM_DETAIL} element={<TeamDetail />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await screen.findByText(/Current Members/);
+
+      const editBtn = await screen.queryByRole('button', { name: 'Edit' });
+      expect(editBtn).not.toBeInTheDocument();
+    });
+
+    it('displays delete button only for admins', async () =>{
+      vi.mocked(supabase.from).mockReturnValueOnce({
+        select: vi.fn().mockReturnValueOnce({
+          eq: vi.fn().mockReturnValueOnce({
+            single: vi.fn().mockResolvedValueOnce({ data: mockTeamData[0], error: null }),
+          }),
+        }),
+      } as any);
+
+      mockLoginAs(TEST_USERS.ADMIN);
+
+      render(
+        <MemoryRouter initialEntries={[PATHS.TEAM_DETAIL(mockTeamData[0].id)]}>
+          <Routes>
+            <Route path={ROUTES.TEAM_DETAIL} element={<TeamDetail />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await screen.findByText(/Current Members/);
+
+      expect(await screen.findByRole('button', { name: 'Delete' }));
+    });
+
+    it('hides delete button for officers', async () =>{
+      vi.mocked(supabase.from).mockReturnValueOnce({
+        select: vi.fn().mockReturnValueOnce({
+          eq: vi.fn().mockReturnValueOnce({
+            single: vi.fn().mockResolvedValueOnce({ data: mockTeamData[0], error: null }),
+          }),
+        }),
+      } as any);
+
+      mockLoginAs(TEST_USERS.OFFICER);
+
+      render(
+        <MemoryRouter initialEntries={[PATHS.TEAM_DETAIL(mockTeamData[0].id)]}>
+          <Routes>
+            <Route path={ROUTES.TEAM_DETAIL} element={<TeamDetail />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await screen.findByText(/Current Members/);
+
+      const editBtn = await screen.queryByRole('button', { name: 'Delete' });
+      expect(editBtn).not.toBeInTheDocument();
+    });
+
+    it('hides delete button for standard users', async () =>{
+      vi.mocked(supabase.from).mockReturnValueOnce({
+        select: vi.fn().mockReturnValueOnce({
+          eq: vi.fn().mockReturnValueOnce({
+            single: vi.fn().mockResolvedValueOnce({ data: mockTeamData[0], error: null }),
+          }),
+        }),
+      } as any);
+
+      mockLoginAs(TEST_USERS.USER);
+
+      render(
+        <MemoryRouter initialEntries={[PATHS.TEAM_DETAIL(mockTeamData[0].id)]}>
+          <Routes>
+            <Route path={ROUTES.TEAM_DETAIL} element={<TeamDetail />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await screen.findByText(/Current Members/);
+
+      const editBtn = await screen.queryByRole('button', { name: 'Delete' });
+      expect(editBtn).not.toBeInTheDocument();
+    });
+    
     it('should retun to List view after confirming delete record', async () =>{
       vi.mocked(supabase.from).mockReturnValueOnce({
         select: vi.fn().mockReturnValueOnce({
@@ -190,6 +348,8 @@ describe('TeamDetail', () => {
         delete: deleteRecord,
       } as any);
 
+      mockLoginAs(TEST_USERS.ADMIN);
+
       render(
         <MemoryRouter initialEntries={[PATHS.TEAM_DETAIL(mockTeamData[1].id)]}>
           <Routes>
@@ -215,6 +375,8 @@ describe('TeamDetail', () => {
       } as any);
 
       vi.spyOn(window, 'confirm').mockReturnValueOnce(false);
+
+      mockLoginAs(TEST_USERS.ADMIN);
 
       render(
         <MemoryRouter initialEntries={[PATHS.TEAM_DETAIL(mockTeamData[1].id)]}>

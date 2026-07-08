@@ -6,7 +6,7 @@ import userEvent from '@testing-library/user-event';
 import MissionDetail from '../pages/MissionDetail';
 import { mockMissions, mockPersonnel, mockTeamPersonnelLink } from '../lib/mockData';
 import { PATHS, ROUTES } from '../lib/paths';
-import { extractDate, extractName } from '../lib/utils';
+import { extractDate, extractName, mockLoginAs, TEST_USERS } from '../lib/utils';
 import type { Personnel } from '../lib/types';
 
 // Mock the supabase client
@@ -16,14 +16,14 @@ vi.mock('../lib/supabase', () => ({
   },
 }));
 
-vi.mock('../components/AuthContext.tsx', () => ({
-    useAuth: () => ({
-        session: { user: { id: 'mock-admin-id' } },
-        error: null,
-        role: 'admin',
-        loading: false,
-    }),
+// Mock authentication
+vi.mock('../components/AuthContext', () => ({
+    useAuth: vi.fn(),
 }));
+
+beforeEach(() => {
+    vi.resetAllMocks();
+});
 
 const user = userEvent.setup();
 const { objectives: abydosObjectives, teams: abydosTeams, id: abydosID, ...abydos } = mockMissions[0];
@@ -82,6 +82,8 @@ describe('MissionDetail', () => {
                 }),
             }),
         } as any);
+
+        mockLoginAs(TEST_USERS.USER);
 
         render(
           <MemoryRouter initialEntries={[PATHS.MISSION_DETAIL(abydosID)]}>
@@ -147,6 +149,8 @@ describe('MissionDetail', () => {
                 }),
             }),
         } as any);
+
+        mockLoginAs(TEST_USERS.USER);
 
         render(
           <MemoryRouter initialEntries={[PATHS.MISSION_DETAIL(abydosID)]}>
@@ -216,6 +220,8 @@ describe('MissionDetail', () => {
                 }),
             }),
         } as any);
+
+        mockLoginAs(TEST_USERS.USER);
 
         render(
           <MemoryRouter initialEntries={[PATHS.MISSION_DETAIL(abydosID)]}>
@@ -319,6 +325,8 @@ describe('MissionDetail', () => {
             }),
         } as any);
 
+        mockLoginAs(TEST_USERS.USER);
+
         render(
           <MemoryRouter initialEntries={[PATHS.MISSION_DETAIL(missionID)]}>
             <Routes>
@@ -362,6 +370,441 @@ describe('MissionDetail', () => {
 
         expect(await screen.queryByText("Mission Debriefing")).not.toBeInTheDocument();
         expect(await screen.queryByTitle("mission-description")).not.toBeInTheDocument();
+    });
+
+    it('should show edit button for admins', async () =>{
+        // missions_teams
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                eq: vi.fn().mockReturnValueOnce({
+                    data: missionTeams.map(team => ({ team_id: team.id })),
+                    error: null
+                }),
+            }),
+        } as any);
+
+        // teams
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                in: vi.fn().mockReturnValueOnce({
+                    order: vi.fn().mockReturnValueOnce({
+                        data: missionTeams,
+                        error: null
+                    }),
+                }),
+            }),
+        } as any);
+
+        // team_personnel
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValue({
+                in: vi.fn().mockReturnValueOnce({
+                    data: mockTeamPersonnelLink.filter(l => missionTeams.some(t => t.id === l.team_id)),
+                    error: null })
+            }),
+        } as any);
+
+        // personnel
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                in: vi.fn().mockReturnValueOnce({
+                    data: mockPersonnel.filter(p => mockTeamPersonnelLink.some(l => l.personnel_id === p.id))
+                })
+            })
+        } as any);
+
+        // specific mission
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                eq: vi.fn().mockReturnValueOnce({
+                    single: vi.fn().mockResolvedValueOnce({
+                        data: {
+                            ...mission,
+                            id: missionID,
+                            objectives: missionObjectives
+                        },
+                        error: null
+                    }),
+                }),
+            }),
+        } as any);
+
+        mockLoginAs(TEST_USERS.ADMIN);
+
+        render(
+          <MemoryRouter initialEntries={[PATHS.MISSION_DETAIL(missionID)]}>
+            <Routes>
+              <Route path={ROUTES.MISSION_DETAIL} element={<MissionDetail />} />
+            </Routes>
+          </MemoryRouter>
+        );
+
+        await screen.findByText(/Mission Record/);
+
+        expect(await screen.findByRole('button', { name: 'Edit' }));
+    });
+
+    it('should show edit button for officers', async () =>{
+        // missions_teams
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                eq: vi.fn().mockReturnValueOnce({
+                    data: missionTeams.map(team => ({ team_id: team.id })),
+                    error: null
+                }),
+            }),
+        } as any);
+
+        // teams
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                in: vi.fn().mockReturnValueOnce({
+                    order: vi.fn().mockReturnValueOnce({
+                        data: missionTeams,
+                        error: null
+                    }),
+                }),
+            }),
+        } as any);
+
+        // team_personnel
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValue({
+                in: vi.fn().mockReturnValueOnce({
+                    data: mockTeamPersonnelLink.filter(l => missionTeams.some(t => t.id === l.team_id)),
+                    error: null })
+            }),
+        } as any);
+
+        // personnel
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                in: vi.fn().mockReturnValueOnce({
+                    data: mockPersonnel.filter(p => mockTeamPersonnelLink.some(l => l.personnel_id === p.id))
+                })
+            })
+        } as any);
+
+        // specific mission
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                eq: vi.fn().mockReturnValueOnce({
+                    single: vi.fn().mockResolvedValueOnce({
+                        data: {
+                            ...mission,
+                            id: missionID,
+                            objectives: missionObjectives
+                        },
+                        error: null
+                    }),
+                }),
+            }),
+        } as any);
+
+        mockLoginAs(TEST_USERS.OFFICER);
+
+        render(
+          <MemoryRouter initialEntries={[PATHS.MISSION_DETAIL(missionID)]}>
+            <Routes>
+              <Route path={ROUTES.MISSION_DETAIL} element={<MissionDetail />} />
+            </Routes>
+          </MemoryRouter>
+        );
+
+        await screen.findByText(/Mission Record/);
+
+        expect(await screen.findByRole('button', { name: 'Edit' }));
+    });
+
+    it('should hide edit button for standar users', async () =>{
+        // missions_teams
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                eq: vi.fn().mockReturnValueOnce({
+                    data: missionTeams.map(team => ({ team_id: team.id })),
+                    error: null
+                }),
+            }),
+        } as any);
+
+        // teams
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                in: vi.fn().mockReturnValueOnce({
+                    order: vi.fn().mockReturnValueOnce({
+                        data: missionTeams,
+                        error: null
+                    }),
+                }),
+            }),
+        } as any);
+
+        // team_personnel
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValue({
+                in: vi.fn().mockReturnValueOnce({
+                    data: mockTeamPersonnelLink.filter(l => missionTeams.some(t => t.id === l.team_id)),
+                    error: null })
+            }),
+        } as any);
+
+        // personnel
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                in: vi.fn().mockReturnValueOnce({
+                    data: mockPersonnel.filter(p => mockTeamPersonnelLink.some(l => l.personnel_id === p.id))
+                })
+            })
+        } as any);
+
+        // specific mission
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                eq: vi.fn().mockReturnValueOnce({
+                    single: vi.fn().mockResolvedValueOnce({
+                        data: {
+                            ...mission,
+                            id: missionID,
+                            objectives: missionObjectives
+                        },
+                        error: null
+                    }),
+                }),
+            }),
+        } as any);
+
+        mockLoginAs(TEST_USERS.USER);
+
+        render(
+          <MemoryRouter initialEntries={[PATHS.MISSION_DETAIL(missionID)]}>
+            <Routes>
+              <Route path={ROUTES.MISSION_DETAIL} element={<MissionDetail />} />
+            </Routes>
+          </MemoryRouter>
+        );
+
+        await screen.findByText(/Mission Record/);
+
+        const editBtn = await screen.queryByRole('button', { name: 'Edit' });
+        expect(editBtn).not.toBeInTheDocument();
+    });
+
+    it('displays delete button only for admins', async () =>{
+        // missions_teams
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                eq: vi.fn().mockReturnValueOnce({
+                    data: missionTeams.map(team => ({ team_id: team.id })),
+                    error: null
+                }),
+            }),
+        } as any);
+
+        // teams
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                in: vi.fn().mockReturnValueOnce({
+                    order: vi.fn().mockReturnValueOnce({
+                        data: missionTeams,
+                        error: null
+                    }),
+                }),
+            }),
+        } as any);
+
+        // team_personnel
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValue({
+                in: vi.fn().mockReturnValueOnce({
+                    data: mockTeamPersonnelLink.filter(l => missionTeams.some(t => t.id === l.team_id)),
+                    error: null })
+            }),
+        } as any);
+
+        // personnel
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                in: vi.fn().mockReturnValueOnce({
+                    data: mockPersonnel.filter(p => mockTeamPersonnelLink.some(l => l.personnel_id === p.id))
+                })
+            })
+        } as any);
+
+        // specific mission
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                eq: vi.fn().mockReturnValueOnce({
+                    single: vi.fn().mockResolvedValueOnce({
+                        data: {
+                            ...mission,
+                            id: missionID,
+                            objectives: missionObjectives
+                        },
+                        error: null
+                    }),
+                }),
+            }),
+        } as any);
+
+        mockLoginAs(TEST_USERS.ADMIN);
+
+        render(
+          <MemoryRouter initialEntries={[PATHS.MISSION_DETAIL(missionID)]}>
+            <Routes>
+              <Route path={ROUTES.MISSION_DETAIL} element={<MissionDetail />} />
+            </Routes>
+          </MemoryRouter>
+        );
+
+        await screen.findByText(/Mission Record/);
+
+        expect(await screen.findByRole('button', { name: 'Delete' }));
+    });
+
+    it('hides delete button for officers', async () =>{
+        // missions_teams
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                eq: vi.fn().mockReturnValueOnce({
+                    data: missionTeams.map(team => ({ team_id: team.id })),
+                    error: null
+                }),
+            }),
+        } as any);
+
+        // teams
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                in: vi.fn().mockReturnValueOnce({
+                    order: vi.fn().mockReturnValueOnce({
+                        data: missionTeams,
+                        error: null
+                    }),
+                }),
+            }),
+        } as any);
+
+        // team_personnel
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValue({
+                in: vi.fn().mockReturnValueOnce({
+                    data: mockTeamPersonnelLink.filter(l => missionTeams.some(t => t.id === l.team_id)),
+                    error: null })
+            }),
+        } as any);
+
+        // personnel
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                in: vi.fn().mockReturnValueOnce({
+                    data: mockPersonnel.filter(p => mockTeamPersonnelLink.some(l => l.personnel_id === p.id))
+                })
+            })
+        } as any);
+
+        // specific mission
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                eq: vi.fn().mockReturnValueOnce({
+                    single: vi.fn().mockResolvedValueOnce({
+                        data: {
+                            ...mission,
+                            id: missionID,
+                            objectives: missionObjectives
+                        },
+                        error: null
+                    }),
+                }),
+            }),
+        } as any);
+
+        mockLoginAs(TEST_USERS.OFFICER);
+
+        render(
+          <MemoryRouter initialEntries={[PATHS.MISSION_DETAIL(missionID)]}>
+            <Routes>
+              <Route path={ROUTES.MISSION_DETAIL} element={<MissionDetail />} />
+            </Routes>
+          </MemoryRouter>
+        );
+
+        await screen.findByText(/Mission Record/);
+
+        const delBtn = await screen.queryByRole('button', { name: 'Delete' });
+        expect(delBtn).not.toBeInTheDocument();
+    });
+
+    it('hides delete button for standard users', async () =>{
+        // missions_teams
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                eq: vi.fn().mockReturnValueOnce({
+                    data: missionTeams.map(team => ({ team_id: team.id })),
+                    error: null
+                }),
+            }),
+        } as any);
+
+        // teams
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                in: vi.fn().mockReturnValueOnce({
+                    order: vi.fn().mockReturnValueOnce({
+                        data: missionTeams,
+                        error: null
+                    }),
+                }),
+            }),
+        } as any);
+
+        // team_personnel
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValue({
+                in: vi.fn().mockReturnValueOnce({
+                    data: mockTeamPersonnelLink.filter(l => missionTeams.some(t => t.id === l.team_id)),
+                    error: null })
+            }),
+        } as any);
+
+        // personnel
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                in: vi.fn().mockReturnValueOnce({
+                    data: mockPersonnel.filter(p => mockTeamPersonnelLink.some(l => l.personnel_id === p.id))
+                })
+            })
+        } as any);
+
+        // specific mission
+        vi.mocked(supabase.from).mockReturnValueOnce({
+            select: vi.fn().mockReturnValueOnce({
+                eq: vi.fn().mockReturnValueOnce({
+                    single: vi.fn().mockResolvedValueOnce({
+                        data: {
+                            ...mission,
+                            id: missionID,
+                            objectives: missionObjectives
+                        },
+                        error: null
+                    }),
+                }),
+            }),
+        } as any);
+
+        mockLoginAs(TEST_USERS.USER);
+
+        render(
+          <MemoryRouter initialEntries={[PATHS.MISSION_DETAIL(missionID)]}>
+            <Routes>
+              <Route path={ROUTES.MISSION_DETAIL} element={<MissionDetail />} />
+            </Routes>
+          </MemoryRouter>
+        );
+
+        await screen.findByText(/Mission Record/);
+
+        const delBtn = await screen.queryByRole('button', { name: 'Delete' });
+        expect(delBtn).not.toBeInTheDocument();
     });
 
     it('should retun to List view after confirming delete record', async () =>{
@@ -440,6 +883,8 @@ describe('MissionDetail', () => {
             delete: mockDelete,
         } as any);
 
+        mockLoginAs(TEST_USERS.ADMIN);
+
         render(
           <MemoryRouter initialEntries={[PATHS.MISSION_DETAIL(missionID)]}>
             <Routes>
@@ -513,6 +958,8 @@ describe('MissionDetail', () => {
         } as any);
 
         vi.spyOn(window, 'confirm').mockReturnValueOnce(false);
+
+        mockLoginAs(TEST_USERS.ADMIN);
 
         render(
           <MemoryRouter initialEntries={[PATHS.MISSION_DETAIL(missionID)]}>

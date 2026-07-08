@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase';
 import userEvent from '@testing-library/user-event';
 import { mockPersonnel } from '../lib/mockData';
 import { PATHS, ROUTES } from '../lib/paths';
+import { mockLoginAs, TEST_USERS } from '../lib/utils';
 
 const user = userEvent.setup();
 
@@ -16,39 +17,41 @@ vi.mock('../lib/supabase', () => ({
   },
 }));
 
-vi.mock('../components/AuthContext.tsx', () => ({
-    useAuth: () => ({
-        session: { user: { id: 'mock-admin-id' } },
-        error: null,
-        role: 'admin',
-        loading: false,
-    }),
+// Mock authentication
+vi.mock('../components/AuthContext', () => ({
+    useAuth: vi.fn(),
 }));
+
+beforeEach(() => {
+    vi.resetAllMocks();
+});
 
 describe('PersonnelDetail', () => {
     it('displays a message when no record is found', async () => {
-        vi.mocked(supabase.from).mockReturnValueOnce({
-            select: vi.fn().mockReturnValueOnce({
-              eq: vi.fn().mockReturnValueOnce({
-                single: vi.fn().mockResolvedValueOnce({
-                  data: null,
-                  error:  { message: 'no rows returned', code: 'PGRST116' }
-                }),
+      vi.mocked(supabase.from).mockReturnValueOnce({
+          select: vi.fn().mockReturnValueOnce({
+            eq: vi.fn().mockReturnValueOnce({
+              single: vi.fn().mockResolvedValueOnce({
+                data: null,
+                error:  { message: 'no rows returned', code: 'PGRST116' }
               }),
             }),
-        } as any);
+          }),
+      } as any);
 
-        render(
-          <MemoryRouter initialEntries={[PATHS.PERSONNEL_DETAIL(mockPersonnel[0].id)]}>
-            <Routes>
-              <Route path={ROUTES.PERSONNEL_DETAIL} element={<PersonnelDetail />} />
-            </Routes>
-          </MemoryRouter>
-        );
+      mockLoginAs(TEST_USERS.USER);
 
-        const message = await screen.findByText('Personnel record not found.');
-        expect(message).toBeInTheDocument();
-      });
+      render(
+        <MemoryRouter initialEntries={[PATHS.PERSONNEL_DETAIL(mockPersonnel[0].id)]}>
+          <Routes>
+            <Route path={ROUTES.PERSONNEL_DETAIL} element={<PersonnelDetail />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      const message = await screen.findByText('Personnel record not found.');
+      expect(message).toBeInTheDocument();
+    });
 
     it('displays error message when fetch fails', async () =>{
       vi.mocked(supabase.from).mockReturnValueOnce({
@@ -61,6 +64,8 @@ describe('PersonnelDetail', () => {
           }),
         }),
       } as any);
+
+      mockLoginAs(TEST_USERS.USER);
 
       render(
         <MemoryRouter initialEntries={[PATHS.PERSONNEL_DETAIL(mockPersonnel[0].id)]}>
@@ -83,6 +88,8 @@ describe('PersonnelDetail', () => {
         }),
       } as any);
 
+      mockLoginAs(TEST_USERS.USER);
+
       render(
         <MemoryRouter initialEntries={[PATHS.PERSONNEL_DETAIL(mockPersonnel[0].id)]}>
           <Routes>
@@ -103,6 +110,154 @@ describe('PersonnelDetail', () => {
       expect(status).toBeInTheDocument();
     });
 
+    it('should show edit button for admins', async () =>{
+      vi.mocked(supabase.from).mockReturnValueOnce({
+        select: vi.fn().mockReturnValueOnce({
+          eq: vi.fn().mockReturnValueOnce({
+            single: vi.fn().mockResolvedValueOnce({ data: mockPersonnel[0], error: null }),
+          }),
+        }),
+      } as any);
+
+      mockLoginAs(TEST_USERS.ADMIN);
+
+      render(
+        <MemoryRouter initialEntries={[PATHS.PERSONNEL_DETAIL(mockPersonnel[0].id)]}>
+          <Routes>
+            <Route path={ROUTES.PERSONNEL_DETAIL} element={<PersonnelDetail />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await screen.findByText(/Rank:/);
+
+      expect(await screen.findByRole('button', { name: 'Edit' }));
+    });
+
+    it('should show edit button for officers', async () =>{
+      vi.mocked(supabase.from).mockReturnValueOnce({
+        select: vi.fn().mockReturnValueOnce({
+          eq: vi.fn().mockReturnValueOnce({
+            single: vi.fn().mockResolvedValueOnce({ data: mockPersonnel[0], error: null }),
+          }),
+        }),
+      } as any);
+
+      mockLoginAs(TEST_USERS.OFFICER);
+
+      render(
+        <MemoryRouter initialEntries={[PATHS.PERSONNEL_DETAIL(mockPersonnel[0].id)]}>
+          <Routes>
+            <Route path={ROUTES.PERSONNEL_DETAIL} element={<PersonnelDetail />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await screen.findByText(/Rank:/);
+
+      expect(await screen.findByRole('button', { name: 'Edit' }));
+    });
+
+    it('should show edit button for officers', async () =>{
+      vi.mocked(supabase.from).mockReturnValueOnce({
+        select: vi.fn().mockReturnValueOnce({
+          eq: vi.fn().mockReturnValueOnce({
+            single: vi.fn().mockResolvedValueOnce({ data: mockPersonnel[0], error: null }),
+          }),
+        }),
+      } as any);
+
+      mockLoginAs(TEST_USERS.USER);
+
+      render(
+        <MemoryRouter initialEntries={[PATHS.PERSONNEL_DETAIL(mockPersonnel[0].id)]}>
+          <Routes>
+            <Route path={ROUTES.PERSONNEL_DETAIL} element={<PersonnelDetail />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await screen.findByText(/Rank:/);
+
+      const editBtn = await screen.queryByRole('button', { name: 'Edit' });
+      expect(editBtn).not.toBeInTheDocument();
+    });
+
+    it('displays delete button only for admin', async () =>{
+      vi.mocked(supabase.from).mockReturnValueOnce({
+        select: vi.fn().mockReturnValueOnce({
+          eq: vi.fn().mockReturnValueOnce({
+            single: vi.fn().mockResolvedValueOnce({ data: mockPersonnel[0], error: null }),
+          }),
+        }),
+      } as any);
+
+      mockLoginAs(TEST_USERS.ADMIN);
+
+      render(
+        <MemoryRouter initialEntries={[PATHS.PERSONNEL_DETAIL(mockPersonnel[0].id)]}>
+          <Routes>
+            <Route path={ROUTES.PERSONNEL_DETAIL} element={<PersonnelDetail />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await screen.findByText(/Rank:/);
+
+      const delBtn = await screen.queryByRole('button', { name: 'Delete' });
+      expect(delBtn).toBeInTheDocument();
+    });
+
+    it('hides delete button for officers', async () =>{
+      vi.mocked(supabase.from).mockReturnValueOnce({
+        select: vi.fn().mockReturnValueOnce({
+          eq: vi.fn().mockReturnValueOnce({
+            single: vi.fn().mockResolvedValueOnce({ data: mockPersonnel[0], error: null }),
+          }),
+        }),
+      } as any);
+
+      mockLoginAs(TEST_USERS.OFFICER);
+
+      render(
+        <MemoryRouter initialEntries={[PATHS.PERSONNEL_DETAIL(mockPersonnel[0].id)]}>
+          <Routes>
+            <Route path={ROUTES.PERSONNEL_DETAIL} element={<PersonnelDetail />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await screen.findByText(/Rank:/);
+
+      const delBtn = await screen.queryByRole('button', { name: 'Delete' });
+      expect(delBtn).not.toBeInTheDocument();
+    });
+
+    it('hides delete button for standard users', async () =>{
+      vi.mocked(supabase.from).mockReturnValueOnce({
+        select: vi.fn().mockReturnValueOnce({
+          eq: vi.fn().mockReturnValueOnce({
+            single: vi.fn().mockResolvedValueOnce({ data: mockPersonnel[0], error: null }),
+          }),
+        }),
+      } as any);
+
+      mockLoginAs(TEST_USERS.USER);
+
+      render(
+        <MemoryRouter initialEntries={[PATHS.PERSONNEL_DETAIL(mockPersonnel[0].id)]}>
+          <Routes>
+            <Route path={ROUTES.PERSONNEL_DETAIL} element={<PersonnelDetail />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await screen.findByText(/Rank:/);
+
+      const delBtn = await screen.queryByRole('button', { name: 'Delete' });
+      expect(delBtn).not.toBeInTheDocument();
+    });
+
     it('should retun to List view after confirming delete record', async () =>{
       vi.mocked(supabase.from).mockReturnValueOnce({
         select: vi.fn().mockReturnValueOnce({
@@ -121,6 +276,8 @@ describe('PersonnelDetail', () => {
       vi.mocked(supabase.from).mockReturnValueOnce({
         delete: deleteRecord,
       } as any);
+
+      mockLoginAs(TEST_USERS.ADMIN);
 
       render(
         <MemoryRouter initialEntries={[PATHS.PERSONNEL_DETAIL(mockPersonnel[2].id)]}>
@@ -147,6 +304,8 @@ describe('PersonnelDetail', () => {
       } as any);
 
       vi.spyOn(window, 'confirm').mockReturnValueOnce(false);
+
+      mockLoginAs(TEST_USERS.ADMIN);
 
       render(
         <MemoryRouter initialEntries={[PATHS.PERSONNEL_DETAIL(mockPersonnel[2].id)]}>
