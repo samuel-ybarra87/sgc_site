@@ -149,8 +149,8 @@ src/
   - [x] Missions e2e test suite
 - [x] Role-based access control
   - [x] Modify tests to check for user access control
-  - [ ] Create Unit/Integration tests (In Progress)
-  - [ ] Create API tests
+  - [x] Create Unit tests
+  - [ ] Create API tests (In Progress)
     - [ ] Personnel
     - [ ] Teams
     - [ ] Missions
