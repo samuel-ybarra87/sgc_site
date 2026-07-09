@@ -60,6 +60,27 @@ export async function loginAs(page: Page, email: string, password: string){
     await page.waitForURL(PATHS.HOME);
 }
 
+export async function getApiToken(request: any, email: string, password: string): Promise<string> {
+    // Setup POST to Supabase Auth to log in and get a JWT
+    const response = await request.post(`${process.env.VITE_SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+        headers: {
+            'apikey': process.env.VITE_SUPABASE_ANON_KEY!,
+            'Content-Type': 'application/json'
+        },
+        data: {
+            email: email,
+            password: password
+        }
+    });
+
+    if(response.status() !== 200){
+        throw new Error(`API Login failed for ${email}: ${response.statusText()}`);
+    }
+
+    const data = await response.json();
+    return data.access_token;
+}
+
 export async function deleteTestData(supabase: SupabaseClient){
     // Nullify
     await supabase

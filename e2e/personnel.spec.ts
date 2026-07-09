@@ -8,6 +8,7 @@ import {
     extractName,
     fetchTestRoles,
     fetchTestTeams,
+    getApiToken,
     loginAs,
     seedTestPersonnel,
     seedTestRoles,
@@ -16,6 +17,7 @@ import {
     SGC_OFFICER,
     SGC_USER
 } from './testUtils';
+import type { Personnel } from './interface';
 
 dotenv.config();
 
@@ -115,7 +117,7 @@ test.describe('read and verify (Personnel)', async () => {
     });
 
     test('navigates to personnel detail page from personnel home page', async({ page }) =>{
-        await loginAs(page, SGC_USER.email, SGC_USER.password);
+        await loginAs(page, SGC_ADMIN.email, SGC_ADMIN.password);
         await page.getByRole('link', { name: 'PERSONNEL LIST' }).click();
 
         await page.getByRole('link', { name: link }).click();
@@ -425,3 +427,204 @@ test.describe('write then delete', async () =>{
         await expect(page.getByText(displayName)).toBeVisible();
     });
 });
+
+test.describe('Personnel - API RBAC Security', async () =>{
+    let userToken: string;
+    let officerToken: string;
+
+    const db = {
+        url: `${process.env.VITE_SUPABASE_URL}/rest/v1/personnel`,
+        apikey: process.env.VITE_SUPABASE_ANON_KEY
+    };
+
+    const header = (token: string) => {
+        return {
+                'apikey': db.apikey!,
+                'Authorization': `Bearer ${token}`, // Inject token
+                'Content-Type': 'application/json',
+                'Prefer': 'return=representation' // Tell PostgREST to return created object
+            }
+    }
+
+    const HACKER: Personnel =  {
+        prefix: 'Mr.',
+        first_name: 'Intruder',
+        middle_name: null,
+        last_name: 'Test',
+        suffix: 'TEST', // allows clean up on CRUD prevention failures
+        rank: null,
+        role: 'Test Hacker',
+        role_id: null,
+        team_id: null,
+        personnel_type: 'civilian',
+        status: 'active'
+    };
+
+    test.beforeAll(async ({ request }) =>{
+        // Fetch tokens for both user and officer
+        [userToken, officerToken] = await Promise.all([
+            getApiToken(request, SGC_USER.email, SGC_USER.password),
+            getApiToken(request, SGC_OFFICER.email, SGC_OFFICER.password)
+        ]);
+    });
+
+    test.afterAll(async () =>{
+        deleteTestData(supabase);
+    })
+
+    test('should reject unauthorized POST attempts with 403 Forbidden (User)', async ({ request }) =>{
+        // Send a raw HTTP POST request to the Personnel table endpoint
+        const response = await request.post(`${db.url}`, {
+            headers: header(userToken),
+            data: HACKER
+        });
+
+        // Assertions
+        const responseBody = await response.json();
+
+        // Print error on failure as Playwright does not report it.
+        if(response.status() !== 403) console.log("API Error Body:", responseBody);
+
+        await expect(response.status()).toBe(403);
+    });
+
+    test('should reject unauthorized POST attempts with 403 Forbidden (Officer)', async ({ request }) =>{
+        const response = await request.post(`${db.url}`, {
+            headers: header(officerToken),
+            data: HACKER
+        });
+
+        const responseBody = await response.json();
+        if(response.status() !== 403) console.log("API Error Body:", responseBody);
+
+        await expect(response.status()).toBe(403);
+    });
+
+    test('should silent block PATCH attempts (User)', async ({ request }) =>{
+        // Get real personnel id
+        const { data, error } = await supabase
+            .from('personnel')
+            .select()
+            .eq('first_name', 'Jack')
+            .eq('last_name', "O'Neill")
+            .single();
+        if(error) throw new Error(`Error occured - ${error.code}: ${error.message}`);
+        if(!data) throw new Error(`No data returned`);
+        const jack = data;
+
+        jack.middle_name = 'Hacker';
+
+        // Send raw HTTP PATCH request to the Personnel table endpoint
+        const response = await request.patch(`${db.url}?id=eq.${jack.id}`, {
+            headers: header(userToken),
+            data: jack
+        });
+
+        const responseBody = await response.json();
+        if(response.status() !== 200) console.log("API Error Body:", responseBody);
+
+        // Verify HTTP status is 200 (the defense trick)
+        await expect(response.status()).toBe(200);
+
+        // Verify EXACTLY 0 rows updated
+        await expect(responseBody).toHaveLength(0);
+    });
+
+    test('officers can edit entries', async ({ page }) =>{
+        const link = extractName(e2eTestMilitary).link;
+        const displayName = extractName(e2eTestMilitary).displayName;
+
+        await loginAs(page, SGC_ADMIN.email, SGC_ADMIN.password);
+        await page.getByRole('link', { name: 'PERSONNEL LIST' }).click();
+        await page.getByRole('button', { name: 'Add Personnel' }).click();
+
+        // Select Options
+        await page.getByLabel('Prefix').selectOption(e2eTestMilitary.prefix ?? '');
+        await page.getByLabel('Rank').selectOption(e2eTestMilitary.rank ?? '');
+        await page.getByLabel('Personnel Type').selectOption(e2eTestMilitary.personnel_type ?? '');
+        await page.getByLabel('Status').selectOption(e2eTestMilitary.status ?? '');
+        await page.getByLabel('Team').selectOption(e2eTestMilitary.team_id ?? '');
+        await page.getByLabel('Role').selectOption(e2eTestMilitary.role_id);
+        // Fill fields
+        await page.getByLabel('First Name').fill(e2eTestMilitary.first_name ?? '');
+        await page.getByLabel('Middle Name').fill(e2eTestMilitary.middle_name ?? '');
+        await page.getByLabel('Last Name').fill(e2eTestMilitary.last_name ?? '');
+        await page.getByLabel('Suffix').fill(e2eTestMilitary.suffix ?? '');
+        
+        await page.getByRole("button", { name: "Save" }).click();
+
+        // Log Admin out; Log Officer in
+        await page.getByRole('button', { name: 'Log Out' }).click();
+        await expect(page.getByText('SGC Personnel Access Portal')).toBeVisible();
+        await loginAs(page, SGC_OFFICER.email, SGC_OFFICER.password);
+        await page.getByRole('link', { name: 'PERSONNEL LIST' }).click();
+
+        await page.getByRole("link", { name: link }).click();
+
+        await page.getByRole("button", { name: "Edit" }).click();
+
+        await page.getByLabel('Status').selectOption('kia');
+
+        await page.getByRole("button", { name: "Save" }).click();
+
+        await expect(page).toHaveURL(PATHS.PERSONNEL_LIST);
+        await expect(page.getByText('SGC Personnel')).toBeVisible();
+        await expect(page.getByText(link)).toBeVisible();
+
+        await page.getByRole("link", { name: link }).click();
+        
+        await expect(page.getByText(displayName)).toBeVisible();
+        await expect(page.getByText(new RegExp(/Status: kia/))).toBeVisible();
+    });
+
+    test('should silently block DELETE attempts (User)', async ({ request }) => {
+        // Fetch a real personnel record to target
+        const { data, error } = await supabase
+            .from('personnel')
+            .select()
+            .eq('first_name', 'Jack')
+            .eq('last_name', "O'Neill")
+            .single();
+        if (error) throw new Error(`Error occurred - ${error.code}: ${error.message}`);
+        if (!data) throw new Error(`No data returned`);
+        const jack = data;
+
+        // Attempt raw HTTP DELETE request
+        const response = await request.delete(`${db.url}?id=eq.${jack.id}`, {
+            headers: header(userToken)
+        });
+
+        const responseBody = await response.json();
+        if (response.status() !== 200) console.log("API Error Body:", responseBody);
+
+        // Verify HTTP status is 200 (PostgREST silent defense)
+        await expect(response.status()).toBe(200);
+
+        // Verify EXACTLY 0 rows were returned/deleted
+        await expect(responseBody).toHaveLength(0);
+    });
+
+    test('should silently block DELETE attempts (Officer)', async ({ request }) => {
+        // Fetch the same personnel record
+        const { data, error } = await supabase
+            .from('personnel')
+            .select()
+            .eq('first_name', 'Jack')
+            .eq('last_name', "O'Neill")
+            .single();
+        if (error) throw new Error(`Error occurred - ${error.code}: ${error.message}`);
+        if (!data) throw new Error(`No data returned`);
+        const jack = data;
+
+        // Attempt raw HTTP DELETE request using the Officer's token
+        const response = await request.delete(`${db.url}?id=eq.${jack.id}`, {
+            headers: header(officerToken)
+        });
+
+        const responseBody = await response.json();
+        if (response.status() !== 200) console.log("API Error Body:", responseBody);
+
+        await expect(response.status()).toBe(200);
+        await expect(responseBody).toHaveLength(0);
+    });
+})
