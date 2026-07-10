@@ -154,7 +154,7 @@ src/
   - [x] Create Unit tests
   - [ ] Create API tests (In Progress)
     - [x] Personnel
-    - [ ] Teams
+    - [x] Teams
     - [x] Missions
 - [ ] GitHub Pages deployment
 - Quality of Life Updates

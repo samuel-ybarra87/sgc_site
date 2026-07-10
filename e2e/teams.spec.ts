@@ -8,13 +8,16 @@ import {
     extractName,
     fetchTestRoles,
     fetchTestTeams,
+    getApiToken,
     loginAs,
     seedTestPersonnel,
     seedTestRoles,
     seedTestTeams,
     SGC_ADMIN,
+    SGC_OFFICER,
     SGC_USER,
-    updateTeam
+    updateTeam,
+    type SeededTeam
 } from './testUtils';
 import type { Team } from './interface';
 
@@ -34,8 +37,10 @@ const e2eTestCivilian = e2eTestRecords.e2eTestCivilian;
 // teams
 const SGC_MOCK_TEST = 'SGC-MOCK-TEST';
 const SGC_EDIT_TEST = 'SGC-EDIT-TEST';
+const SGC_HACK_TEST = 'SGC-HACK-TEST';
 TEST_TEAM_DESIGNATIONS.push(SGC_MOCK_TEST);
 TEST_TEAM_DESIGNATIONS.push(SGC_EDIT_TEST);
+TEST_TEAM_DESIGNATIONS.push(SGC_HACK_TEST);
 const e2eTestTeam1 = e2eTestTeams[0];
 const e2eTestTeam2 = e2eTestTeams[1];
 const members =[
@@ -379,3 +384,182 @@ test.describe('write then delete', async () =>{
         await expect(page).not.toHaveURL(PATHS.TEAM_LIST);
     });
 });
+
+test.describe('Team - API RBAC Security', async () =>{
+    let userToken: string;
+    let officerToken: string;
+
+    const db = {
+        url: `${process.env.VITE_SUPABASE_URL}/rest/v1/teams`,
+        apikey: process.env.VITE_SUPABASE_ANON_KEY
+    };
+
+    const header = (token: string) => {
+        return {
+                'apikey': db.apikey!,
+                'Authorization': `Bearer ${token}`, // Inject token
+                'Content-Type': 'application/json',
+                'Prefer': 'return=representation' // Tell PostgREST to return created object
+            }
+    }
+
+    const HACKER: Team = {
+        designation: SGC_HACK_TEST,
+        commanding_officer: e2eTestTeam1.commanding_officer,
+        status: 'active'
+    }
+
+    test.beforeAll(async ({ request }) =>{
+        // Fetch tokens for both user and officer
+        [userToken, officerToken] = await Promise.all([
+            getApiToken(request, SGC_USER.email, SGC_USER.password),
+            getApiToken(request, SGC_OFFICER.email, SGC_OFFICER.password)
+        ]);
+    });
+
+    test.afterAll(async () =>{
+        deleteTestData(supabase);
+    })
+
+    test('should reject unauthorized POST attempts with 403 Forbidden (User)', async ({ request }) =>{
+        // Send a raw HTTP POST request to the Teams table endpoint
+        const response = await request.post(`${db.url}`, {
+            headers: header(userToken),
+            data: HACKER
+        });
+
+        // Assertions
+        const responseBody = await response.json();
+
+        // Print error on failure as Playwright does not report it.
+        if(response.status() !== 403) console.log("API Error Body:", responseBody);
+
+        await expect(response.status()).toBe(403);
+    });
+
+    test('should reject unauthorized POST attempts with 403 Forbidden (Officer)', async ({ request }) =>{
+        const response = await request.post(`${db.url}`, {
+            headers: header(officerToken),
+            data: HACKER
+        });
+
+        const responseBody = await response.json();
+        if(response.status() !== 403) console.log("API Error Body:", responseBody);
+
+        await expect(response.status()).toBe(403);
+    });
+
+    test('should silent block PATCH attempts (User)', async ({ request }) =>{
+        // Get real team id
+        const { data, error } = await supabase
+            .from('teams')
+            .select()
+            .eq('designation', 'SG-1')
+            .single();
+        if(error) throw new Error(`Error occured - ${error.code}: ${error.message}`);
+        if(!data) throw new Error(`No data returned`);
+        const team: SeededTeam = data;
+
+        team.designation = 'Hacked Team';
+
+        // Send raw HTTP PATCH request to the Team table endpoint
+        const response = await request.patch(`${db.url}?id=eq.${team.id}`, {
+            headers: header(userToken),
+            data: team
+        });
+
+        const responseBody = await response.json();
+        if(response.status() !== 200) console.log("API Error Body:", responseBody);
+
+        // Verify HTTP status is 200 (the defense trick)
+        await expect(response.status()).toBe(200);
+
+        // Verify EXACTLY 0 rows updated
+        await expect(responseBody).toHaveLength(0);
+    });
+
+    test('officers can edit entries', async ({ page }) =>{
+        // Add test team to edit
+        await loginAs(page, SGC_ADMIN.email, SGC_ADMIN.password);
+        await page.getByRole('link', { name: 'TEAM LIST' }).click();
+        await page.getByRole('button', { name: 'Add Team' }).click();
+
+        await page.getByLabel('Designation').fill(SGC_MOCK_TEST);
+        await page.getByLabel('Commanding Officer').selectOption(e2eTestTeam1.commanding_officer); // use real personnel UUID from mock data hydration
+        await page.getByLabel('Status').selectOption(e2eTestTeam1.status);
+
+        await page.getByRole('button', { name: 'Save' }).click();
+
+        // Log Admin out; Log Officer in
+        await page.getByRole('button', { name: 'Log Out' }).click();
+        await expect(page.getByText('SGC Personnel Access Portal')).toBeVisible();
+        await loginAs(page, SGC_OFFICER.email, SGC_OFFICER.password);
+        await page.getByRole('link', { name: 'TEAM LIST' }).click();
+
+        await expect(page).toHaveURL(PATHS.TEAM_LIST);
+        await expect(page.getByText('SGC Team List')).toBeVisible();
+        await expect(page.getByRole('link', { name: SGC_MOCK_TEST })).toBeVisible();
+        await expect(page.getByRole('link', { name: SGC_EDIT_TEST })).not.toBeVisible();
+
+        // Edit test team
+        await page.getByRole('link', { name: SGC_MOCK_TEST }).click();
+        await page.getByRole('button', { name: 'Edit' }).click();
+        await page.getByLabel('Designation').fill(SGC_EDIT_TEST);
+        await page.getByRole('button', { name: 'Save' }).click();
+
+        // Assertions
+        await expect(page).toHaveURL(PATHS.TEAM_LIST);
+        await expect(page.getByText('SGC Team List')).toBeVisible();
+        await expect(page.getByRole('link', { name: SGC_EDIT_TEST })).toBeVisible();
+        await expect(page.getByRole('link', { name: SGC_MOCK_TEST })).not.toBeVisible();
+    });
+
+    test('should silently block DELETE attempts (User)', async ({ request }) => {
+        // Fetch a real team record to target
+        const { data, error } = await supabase
+            .from('teams')
+            .select()
+            .eq('designation', 'SG-1')
+            .single();
+        if(error) throw new Error(`Error occured - ${error.code}: ${error.message}`);
+        if(!data) throw new Error(`No data returned`);
+        const team: SeededTeam = data;
+
+        // Attempt raw HTTP DELETE request
+        const response = await request.delete(`${db.url}?id=eq.${team.id}`, {
+            headers: header(userToken)
+        });
+
+        const responseBody = await response.json();
+        if (response.status() !== 200) console.log("API Error Body:", responseBody);
+
+        // Verify HTTP status is 200 (PostgREST silent defense)
+        await expect(response.status()).toBe(200);
+
+        // Verify EXACTLY 0 rows were returned/deleted
+        await expect(responseBody).toHaveLength(0);
+    });
+
+    test('should silently block DELETE attempts (Officer)', async ({ request }) => {
+        // Fetch the same team record
+        const { data, error } = await supabase
+            .from('teams')
+            .select()
+            .eq('designation', 'SG-1')
+            .single();
+        if(error) throw new Error(`Error occured - ${error.code}: ${error.message}`);
+        if(!data) throw new Error(`No data returned`);
+        const team: SeededTeam = data;
+
+        // Attempt raw HTTP DELETE request using the Officer's token
+        const response = await request.delete(`${db.url}?id=eq.${team.id}`, {
+            headers: header(officerToken)
+        });
+
+        const responseBody = await response.json();
+        if (response.status() !== 200) console.log("API Error Body:", responseBody);
+
+        await expect(response.status()).toBe(200);
+        await expect(responseBody).toHaveLength(0);
+    });
+})

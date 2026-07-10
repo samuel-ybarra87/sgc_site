@@ -778,7 +778,7 @@ test.describe('Mission - API RBAC Security', async () =>{
     })
 
     test('should reject unauthorized POST attempts with 403 Forbidden (User)', async ({ request }) =>{
-        // Send a raw HTTP POST request to the Personnel table endpoint
+        // Send a raw HTTP POST request to the Missions table endpoint
         const response = await request.post(`${db.url}`, {
             headers: header(userToken),
             data: HACKER
@@ -818,7 +818,7 @@ test.describe('Mission - API RBAC Security', async () =>{
 
         mission.name = 'Hacked Mission';
 
-        // Send raw HTTP PATCH request to the Personnel table endpoint
+        // Send raw HTTP PATCH request to the Missions table endpoint
         const response = await request.patch(`${db.url}?id=eq.${mission.id}`, {
             headers: header(userToken),
             data: mission
@@ -926,7 +926,7 @@ test.describe('Mission - API RBAC Security', async () =>{
     });
 
     test('should silently block DELETE attempts (User)', async ({ request }) => {
-        // Fetch a real team record to target
+        // Fetch a real mission record to target
         const { data, error } = await supabase
             .from('missions')
             .select()
@@ -952,7 +952,7 @@ test.describe('Mission - API RBAC Security', async () =>{
     });
 
     test('should silently block DELETE attempts (Officer)', async ({ request }) => {
-        // Fetch the same personnel record
+        // Fetch the same mission record
         const { data, error } = await supabase
             .from('missions')
             .select()
