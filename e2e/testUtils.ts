@@ -2,7 +2,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { rankAbbreviations } from "../src/lib/rankAbbreviations"
 import { e2eTestTeams, e2eMockMissions, TEST_PERSONNEL_NAMES, TEST_ROLE_NAMES, TEST_TEAM_DESIGNATIONS, TEST_MISSIONS, TEST_OBJECTIVES } from "./mockData";
 import type { Mission, MissionObjective, MissionTeamLink, Personnel, Role, Team, TeamPersonnelLink } from "./interface";
-import { expect, type Page } from "playwright/test";
+import { type Page } from "playwright/test";
 import { PATHS } from "../src/lib/paths";
 
 interface loginCredentials {

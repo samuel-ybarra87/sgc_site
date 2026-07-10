@@ -153,9 +153,9 @@ src/
   - [x] Modify tests to check for user access control
   - [x] Create Unit tests
   - [ ] Create API tests (In Progress)
-    - [ ] Personnel
+    - [x] Personnel
     - [ ] Teams
-    - [ ] Missions
+    - [x] Missions
 - [ ] GitHub Pages deployment
 - Quality of Life Updates
   - Styling

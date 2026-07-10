@@ -19,6 +19,7 @@ import {
     fetchTestObjectives,
     fetchTestRoles,
     fetchTestTeams,
+    getApiToken,
     loginAs,
     seedMissionTeamLinks,
     seedTeamPersonnelLinks,
@@ -28,27 +29,14 @@ import {
     seedTestRoles,
     seedTestTeams,
     SGC_ADMIN,
-    SGC_USER
+    SGC_OFFICER,
+    SGC_USER,
+    type SeededMission,
+    type SeededObjectives,
+    type SeededPersonnel,
+    type SeededTeam
 } from './testUtils';
-import type { Mission, MissionObjective, MissionTeamLink, Personnel, Team, TeamPersonnelLink } from './interface';
-
-interface SeededPersonnel extends Personnel {
-    id: string;
-}
-
-interface SeededTeam extends Team {
-    id: string;
-}
-
-interface SeededObjectives extends MissionObjective {
-    id: string;
-}
-
-interface SeededMission extends Mission {
-    id: string;
-    teams: SeededTeam[];
-    objectives: SeededObjectives[];
-}
+import type { Mission, MissionObjective, MissionTeamLink, TeamPersonnelLink } from './interface';
 
 const STATUS = {
     ACTIVE: 'active',
@@ -247,8 +235,8 @@ test.beforeAll(async () =>{
         is_completed: false
     }));
 
-    const seededObjectives1 = await seedTestObjectives(supabase, missionObjectives1);
-    const seededObjectives2 = await seedTestObjectives(supabase, missionObjectives2);
+    const seededObjectives1: SeededObjectives[] = await seedTestObjectives(supabase, missionObjectives1);
+    const seededObjectives2: SeededObjectives[] = await seedTestObjectives(supabase, missionObjectives2);
 
     // Update e2eTestMission Records
     MOCKMISSION1.id = mockMission1.id;
@@ -746,5 +734,243 @@ test.describe('write then delete', async () =>{
 
         await expect(page).not.toHaveURL(PATHS.MISSION_LIST);
         await expect(listHeader).not.toBeVisible();
+    });
+});
+
+test.describe('Mission - API RBAC Security', async () =>{
+    let userToken: string;
+    let officerToken: string;
+
+    const db = {
+        url: `${process.env.VITE_SUPABASE_URL}/rest/v1/missions`,
+        apikey: process.env.VITE_SUPABASE_ANON_KEY
+    };
+
+    const header = (token: string) => {
+        return {
+                'apikey': db.apikey!,
+                'Authorization': `Bearer ${token}`, // Inject token
+                'Content-Type': 'application/json',
+                'Prefer': 'return=representation' // Tell PostgREST to return created object
+            }
+    }
+
+    // Mission object
+    const HACKER: Mission = {
+        name: 'Hacked Mission',
+        destination: 'Earth',
+        description: null,
+        start_date: '2026-10-28T04:00:00.000Z',
+        end_date: null,
+        status: STATUS.ABORTED
+    }
+
+    test.beforeAll(async ({ request }) =>{
+        // Fetch tokens for both user and officer
+        [userToken, officerToken] = await Promise.all([
+            getApiToken(request, SGC_USER.email, SGC_USER.password),
+            getApiToken(request, SGC_OFFICER.email, SGC_OFFICER.password)
+        ]);
+    });
+
+    test.afterAll(async () =>{
+        deleteTestData(supabase);
+    })
+
+    test('should reject unauthorized POST attempts with 403 Forbidden (User)', async ({ request }) =>{
+        // Send a raw HTTP POST request to the Personnel table endpoint
+        const response = await request.post(`${db.url}`, {
+            headers: header(userToken),
+            data: HACKER
+        });
+
+        // Assertions
+        const responseBody = await response.json();
+
+        // Print error on failure as Playwright does not report it.
+        if(response.status() !== 403) console.log("API Error Body:", responseBody);
+
+        await expect(response.status()).toBe(403);
+    });
+
+    test('should reject unauthorized POST attempts with 403 Forbidden (Officer)', async ({ request }) =>{
+        const response = await request.post(`${db.url}`, {
+            headers: header(officerToken),
+            data: HACKER
+        });
+
+        const responseBody = await response.json();
+        if(response.status() !== 403) console.log("API Error Body:", responseBody);
+
+        await expect(response.status()).toBe(403);
+    });
+
+    test('should silent block PATCH attempts (User)', async ({ request }) =>{
+        // Get real mission id
+        const { data, error } = await supabase
+            .from('missions')
+            .select()
+            .eq('name', 'Abydos Recon')
+            .single();
+        if(error) throw new Error(`Error occured - ${error.code}: ${error.message}`);
+        if(!data) throw new Error(`No data returned`);
+        const mission: SeededMission = data;
+
+        mission.name = 'Hacked Mission';
+
+        // Send raw HTTP PATCH request to the Personnel table endpoint
+        const response = await request.patch(`${db.url}?id=eq.${mission.id}`, {
+            headers: header(userToken),
+            data: mission
+        });
+
+        const responseBody = await response.json();
+        if(response.status() !== 200) console.log("API Error Body:", responseBody);
+
+        // Verify HTTP status is 200 (the defense trick)
+        await expect(response.status()).toBe(200);
+
+        // Verify EXACTLY 0 rows updated
+        await expect(responseBody).toHaveLength(0);
+    });
+
+    test('officers can edit entries', async ({ page }) =>{
+        await loginAs(page, SGC_ADMIN.email, SGC_ADMIN.password);
+        await page.getByRole('link', { name: 'MISSION LIST' }).click();
+        await page.getByRole('button', { name: 'Add Mission Record' }).click();
+
+        const addTeam = page.getByRole('button', { name: 'Add Team' });
+        const addObj = page.getByRole('button', { name: 'Add Objective' });
+        
+        // add mission info
+        await page.getByLabel('Name').fill(MOCKMISSIONENTRY.name);
+        await page.getByLabel('Destination').fill(MOCKMISSIONENTRY.destination);
+        await page.getByLabel('Start Date').fill(MOCKMISSIONENTRY.start_date.slice(0, 16));
+
+        await expect(addTeam).not.toBeVisible();
+
+        await page.getByLabel('Team 1').selectOption(SGTEST1.id);
+
+        await expect(addTeam).toBeVisible();
+
+        await addTeam.click();
+
+        await page.getByLabel('Team 2').selectOption(SGTEST2.id);
+
+        for(const [i, obj] of missionObjectives.entries()){
+            await page.getByLabel(new RegExp(`Objective ${i+1}`)).fill(obj.objective);
+            await addObj.click();
+        }
+
+        const classifiedBtns = page.getByRole('button', { name: 'Classified' });
+
+        for(const [i, obj] of secretObjectives.entries()){
+            const index = i + missionObjectives.length;
+            await page.getByLabel(new RegExp(`Objective ${index + 1}`)).fill(obj.objective);
+            await classifiedBtns.nth(index).click();
+            if(i < secretObjectives.length - 1) await addObj.click();
+        }
+
+        // Save
+        await page.getByRole('button', { name: 'Save' }).click();
+        await expect(page.getByRole('link', { name: newLink })).toBeVisible();
+        await page.getByRole('link', { name: newLink }).click();
+        await expect(page.getByText(SGTEST1.designation)).toBeVisible();
+
+        // Log Admin out; Log Officer in
+        await page.getByRole('button', { name: 'Log Out' }).click();
+        await expect(page.getByText('SGC Personnel Access Portal')).toBeVisible();
+        await loginAs(page, SGC_OFFICER.email, SGC_OFFICER.password);
+        await page.getByRole('link', { name: 'MISSION LIST' }).click();
+        await expect(page.getByRole('link', { name: newLink })).toBeVisible();
+        await page.getByRole('link', { name: newLink }).click();
+        await page.getByRole('button', { name: 'Edit' }).click();
+
+        // Edit record
+        const endDate = new Date().toISOString().slice(0, 16);
+        const completedBtns = await page.getByRole('button', { name: 'Completed' });
+
+        await expect(page.getByRole('heading', { name: 'Edit Mission Record', level: 1 })).toBeVisible();
+        await expect(completedBtns.first()).toBeVisible();
+        await page.getByLabel('Status').selectOption('complete');
+        await page.getByLabel('End Date').fill(endDate);
+
+        for(const [i, obj] of MOCKMISSIONENTRY.objectives.entries()){
+            if(obj.is_completed) await completedBtns.nth(i).click();
+            await expect(completedBtns.nth(i)).toHaveAttribute('aria-pressed', `${obj.is_completed}`);
+            await expect(classifiedBtns.nth(i)).toHaveAttribute('aria-pressed', `${obj.secret_objective}`);
+        }
+
+        await page.getByLabel('Report').fill(MOCKMISSIONENTRY.description);
+
+        await page.getByRole('button', { name: 'Save' }).click();
+        await page.pause();
+        await expect(await page.getByRole('heading', { name: 'SGC Mission Records', level: 1 })).toBeVisible();
+        await page.getByRole('link', { name: editedLink }).click();
+
+        // assertions
+        await expect(page.getByText(new RegExp(`Status: ${STATUS.COMPLETE}`))).toBeVisible();
+        await expect(page.getByText(new RegExp(`Mission End: ${extractDate(endDate)}`))).toBeVisible();
+
+        for(const [i, obj] of MOCKMISSIONENTRY.objectives.entries()){
+            const objectiveTitle = await page.getByTitle(new RegExp(`objective ${i}`));
+            await expect(objectiveTitle).toContainText(obj.objective);
+
+            const checkbox = await page.getByTitle(new RegExp(`objective-status ${i}`));
+            if(obj.is_completed) await expect(checkbox).toBeChecked();
+            else await expect(checkbox).not.toBeChecked();
+        }
+
+        await expect(page.getByText('Mission Debriefing')).toBeVisible();
+        await expect(page.getByText(MOCKMISSIONENTRY.description)).toBeVisible();
+    });
+
+    test('should silently block DELETE attempts (User)', async ({ request }) => {
+        // Fetch a real team record to target
+        const { data, error } = await supabase
+            .from('missions')
+            .select()
+            .eq('name', 'Abydos Recon')
+            .single();
+        if(error) throw new Error(`Error occured - ${error.code}: ${error.message}`);
+        if(!data) throw new Error(`No data returned`);
+        const mission: SeededMission = data;
+
+        // Attempt raw HTTP DELETE request
+        const response = await request.delete(`${db.url}?id=eq.${mission.id}`, {
+            headers: header(userToken)
+        });
+
+        const responseBody = await response.json();
+        if (response.status() !== 200) console.log("API Error Body:", responseBody);
+
+        // Verify HTTP status is 200 (PostgREST silent defense)
+        await expect(response.status()).toBe(200);
+
+        // Verify EXACTLY 0 rows were returned/deleted
+        await expect(responseBody).toHaveLength(0);
+    });
+
+    test('should silently block DELETE attempts (Officer)', async ({ request }) => {
+        // Fetch the same personnel record
+        const { data, error } = await supabase
+            .from('missions')
+            .select()
+            .eq('name', 'Abydos Recon')
+            .single();
+        if(error) throw new Error(`Error occured - ${error.code}: ${error.message}`);
+        if(!data) throw new Error(`No data returned`);
+        const mission: SeededMission = data;
+
+        // Attempt raw HTTP DELETE request using the Officer's token
+        const response = await request.delete(`${db.url}?id=eq.${mission.id}`, {
+            headers: header(officerToken)
+        });
+
+        const responseBody = await response.json();
+        if (response.status() !== 200) console.log("API Error Body:", responseBody);
+
+        await expect(response.status()).toBe(200);
+        await expect(responseBody).toHaveLength(0);
     });
 });
