@@ -2,12 +2,30 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { rankAbbreviations } from "../src/lib/rankAbbreviations"
 import { e2eTestTeams, e2eMockMissions, TEST_PERSONNEL_NAMES, TEST_ROLE_NAMES, TEST_TEAM_DESIGNATIONS, TEST_MISSIONS, TEST_OBJECTIVES } from "./mockData";
 import type { Mission, MissionObjective, MissionTeamLink, Personnel, Role, Team, TeamPersonnelLink } from "./interface";
-import type { Page } from "playwright/test";
+import { expect, type Page } from "playwright/test";
 import { PATHS } from "../src/lib/paths";
 
 interface loginCredentials {
   email: string;
   password: string;
+}
+
+export interface SeededPersonnel extends Personnel {
+    id: string;
+}
+
+export interface SeededTeam extends Team {
+    id: string;
+}
+
+export interface SeededObjectives extends MissionObjective {
+    id: string;
+}
+
+export interface SeededMission extends Mission {
+    id: string;
+    teams: SeededTeam[];
+    objectives: SeededObjectives[];
 }
 
 export const SGC_USER: loginCredentials = {

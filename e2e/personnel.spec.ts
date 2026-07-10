@@ -15,7 +15,8 @@ import {
     seedTestTeams,
     SGC_ADMIN,
     SGC_OFFICER,
-    SGC_USER
+    SGC_USER,
+    type SeededPersonnel
 } from './testUtils';
 import type { Personnel } from './interface';
 
@@ -510,7 +511,7 @@ test.describe('Personnel - API RBAC Security', async () =>{
             .single();
         if(error) throw new Error(`Error occured - ${error.code}: ${error.message}`);
         if(!data) throw new Error(`No data returned`);
-        const jack = data;
+        const jack: SeededPersonnel = data;
 
         jack.middle_name = 'Hacker';
 
@@ -587,7 +588,7 @@ test.describe('Personnel - API RBAC Security', async () =>{
             .single();
         if (error) throw new Error(`Error occurred - ${error.code}: ${error.message}`);
         if (!data) throw new Error(`No data returned`);
-        const jack = data;
+        const jack: SeededPersonnel = data;
 
         // Attempt raw HTTP DELETE request
         const response = await request.delete(`${db.url}?id=eq.${jack.id}`, {
@@ -614,7 +615,7 @@ test.describe('Personnel - API RBAC Security', async () =>{
             .single();
         if (error) throw new Error(`Error occurred - ${error.code}: ${error.message}`);
         if (!data) throw new Error(`No data returned`);
-        const jack = data;
+        const jack: SeededPersonnel = data;
 
         // Attempt raw HTTP DELETE request using the Officer's token
         const response = await request.delete(`${db.url}?id=eq.${jack.id}`, {
@@ -627,4 +628,4 @@ test.describe('Personnel - API RBAC Security', async () =>{
         await expect(response.status()).toBe(200);
         await expect(responseBody).toHaveLength(0);
     });
-})
+});
