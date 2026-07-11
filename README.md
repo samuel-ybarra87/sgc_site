@@ -152,11 +152,11 @@ src/
 - [x] Role-based access control
   - [x] Modify tests to check for user access control
   - [x] Create Unit tests
-  - [ ] Create API tests (In Progress)
+  - [x] Create API tests
     - [x] Personnel
     - [x] Teams
     - [x] Missions
-- [ ] GitHub Pages deployment
+- [ ] GitHub Pages deployment (In Progress)
 - Quality of Life Updates
   - Styling
   - Join Table for team member population and history
