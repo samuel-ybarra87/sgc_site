@@ -43,7 +43,7 @@ function App() {
   if(loading) return <div>Accessing SGC Database...</div>
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename='/sgc_site'>
       {session && <Navbar userEmail={session.user.email} />} {/* Global Navbar */}
       <Routes>
         {/* Public Route: If logged in, go to Homepage, otherwise show LoginFrom */}
