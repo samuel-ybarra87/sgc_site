@@ -156,8 +156,8 @@ src/
     - [x] Personnel
     - [x] Teams
     - [x] Missions
-- [ ] GitHub Pages deployment  (In Progress)
-- Quality of Life Updates
+- [x] GitHub Pages deployment
+- Quality of Life Updates (In Progress)
   - Styling
   - Join Table for team member population and history
   - Edit team members from Team Detail page
