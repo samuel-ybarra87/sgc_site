@@ -124,14 +124,26 @@ export default function PersonnelForm() {
 
     if (isEditing) {
       if(updateAssignment){
-        const { error } = await supabase
+        const { data, error: linkReadError } = await supabase
           .from('team_personnel')
-          .insert({ team_id: formData.team_id, personnel_id: id});
-        if (error) {
-          console.error(error);
-          setSubmitError(error.message);
+          .select()
+          .eq('personnel_id', id);
+        if (linkReadError) {
+          console.error(linkReadError);
+          setSubmitError(linkReadError.message);
           setLoading(false);
           return;
+        }
+        if(!data || data.length === 0){
+          const { error: linkUpdateError } = await supabase
+            .from('team_personnel')
+            .insert({ team_id: formData.team_id, personnel_id: id});
+          if (linkUpdateError) {
+            console.error(linkUpdateError);
+            setSubmitError(linkUpdateError.message);
+            setLoading(false);
+            return;
+          }
         }
       }
       const { error } = await supabase

@@ -7,6 +7,7 @@ import userEvent from '@testing-library/user-event';
 import PersonnelList from '../pages/PersonnelList';
 import { mockEntry, mockPersonnel, mockRoles, mockTeams } from '../lib/mockData';
 import { PATHS, ROUTES } from '../lib/paths';
+import { error } from 'console';
 
 const user = userEvent.setup();
 
@@ -364,7 +365,7 @@ describe('PersonnelForm', () => {
     expect(insertMock).not.toHaveBeenCalled();
   });
 
-  it('should update team assignment into database after clicking save', async () => {
+  it('should update team assignment in database after clicking save', async () => {
     // Populate mock database with data
     // roles
     vi.mocked(supabase.from).mockReturnValueOnce({
@@ -402,7 +403,17 @@ describe('PersonnelForm', () => {
       error: null
     });
 
+    const selectMock = vi.fn().mockReturnValueOnce({
+      eq: vi.fn().mockResolvedValueOnce({
+        data: [],
+        error: null
+      }),
+    });
+
     // Save to mock db
+    vi.mocked(supabase.from).mockReturnValueOnce({
+      select: selectMock,
+    } as any);
     vi.mocked(supabase.from).mockReturnValueOnce({
         insert: insertMock,
     } as any);
@@ -425,8 +436,83 @@ describe('PersonnelForm', () => {
     await user.click(await screen.findByRole('button', { name: 'Save' }));
 
     // Expected behavior
-    expect(updateMock).toHaveBeenCalled();
+    expect(selectMock).toHaveBeenCalled();
     expect(insertMock).toHaveBeenCalled();
+    expect(updateMock).toHaveBeenCalled();
+    expect(await screen.findByText(/Personnel List/)).toBeInTheDocument();
+  });
+
+  it('should only update personnel record after clicking save with existing team link', async () => {
+    // Populate mock database with data
+    // roles
+    vi.mocked(supabase.from).mockReturnValueOnce({
+      select: vi.fn().mockReturnValueOnce({
+        order: vi.fn().mockReturnValueOnce({ data: mockRoles, error: null }),
+      }),
+    } as any);
+
+    // teams
+    vi.mocked(supabase.from).mockReturnValueOnce({
+      select: vi.fn().mockReturnValueOnce({
+        order: vi.fn().mockReturnValueOnce({ data: mockTeams, error: null }),
+      }),
+    } as any);
+
+    vi.mocked(supabase.from).mockReturnValueOnce({
+      select: vi.fn().mockReturnValueOnce({
+        eq: vi.fn().mockReturnValueOnce({
+          single: vi.fn().mockResolvedValueOnce({ data: mockPersonnel[1], error: null }),
+        }),
+      }),
+    } as any);
+
+    const { teams, roles, ...person } = mockPersonnel[1];
+
+    const updateMock = vi.fn().mockReturnValueOnce({
+      eq: vi.fn().mockResolvedValueOnce({
+        data: { ...person, team_id: mockTeams[1].id },
+        error: null
+      }),
+    });
+
+    const insertMock = vi.fn().mockReturnValueOnce({
+      data: { team_id: mockTeams[0].id, personnel_id: mockPersonnel[1].id },
+      error: null
+    });
+
+    const selectMock = vi.fn().mockReturnValueOnce({
+      eq: vi.fn().mockResolvedValueOnce({
+        data: [{ team_id: mockTeams[0].id, personnel_id: mockPersonnel[1].id }],
+        error: null
+      }),
+    });
+
+    // Save to mock db
+    vi.mocked(supabase.from).mockReturnValueOnce({
+      select: selectMock,
+    } as any);
+    vi.mocked(supabase.from).mockReturnValueOnce({
+        update: updateMock,
+    } as any);
+
+    render(
+        <MemoryRouter initialEntries={[PATHS.PERSONNEL_EDIT(mockPersonnel[1].id)]}>
+            <Routes>
+                <Route path={ROUTES.PERSONNEL_EDIT} element={<PersonnelForm />} />
+                <Route path={PATHS.PERSONNEL_LIST} element={<h1>Personnel List</h1>} />
+            </Routes>
+        </MemoryRouter>
+    );
+
+    // Type into fields
+    await user.selectOptions(await screen.findByLabelText('Team:'), mockTeams[1].id);
+    // click save
+    await user.click(await screen.findByRole('button', { name: 'Save' }));
+
+    // Expected behavior
+    expect(selectMock).toHaveBeenCalled();
+    expect(updateMock).toHaveBeenCalled();
+    expect(insertMock).not.toHaveBeenCalled();
     expect(await screen.findByText(/Personnel List/)).toBeInTheDocument();
   });
 
