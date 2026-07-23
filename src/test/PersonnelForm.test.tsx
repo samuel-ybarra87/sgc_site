@@ -7,7 +7,6 @@ import userEvent from '@testing-library/user-event';
 import PersonnelList from '../pages/PersonnelList';
 import { mockEntry, mockPersonnel, mockRoles, mockTeams } from '../lib/mockData';
 import { PATHS, ROUTES } from '../lib/paths';
-import { error } from 'console';
 
 const user = userEvent.setup();
 

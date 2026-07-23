@@ -158,7 +158,7 @@ src/
     - [x] Missions
 - [x] GitHub Pages deployment
 - Quality of Life Updates
-  - Fix logicial bugs  (In Progress)
+  - Fix logicial bugs (In Progress)
   - Styling
   - Join Table for team member population and history
   - Edit team members from Team Detail page
